@@ -99,6 +99,7 @@ interface OrgDocument {
   title: string;
   content: string;
   headlines: OrgHeadline[];
+  filetags: string[];
   parsed_at: string;
 }
 
@@ -111,6 +112,33 @@ interface OrgHeadline {
   priority?: string;
   content: string;
   children: OrgHeadline[];
+  properties: Record<string, string>; // For PROPERTIES drawer content
+  is_task: boolean; // Whether this headline is a TODO item
+}
+
+// Base interface for pages
+interface OrgPage {
+  id: string;
+  title: string;
+  source_headline_id: string;
+  content: string;
+  tags: string[];
+  categories: string[];
+  properties: Record<string, string>;
+}
+
+// Note-specific page type
+interface OrgNote extends OrgPage {
+  type: 'note';
+  nested_tasks: OrgTask[]; // TODO items nested within this note
+}
+
+// Task-specific page type
+interface OrgTask extends OrgPage {
+  type: 'task';
+  todo_keyword: string;
+  priority?: string;
+  subtasks: OrgTask[]; // Nested TODO items as subtasks
 }
 ```
 
@@ -119,9 +147,25 @@ interface OrgHeadline {
 // Document state
 const orgDocuments = signal<OrgDocument[]>([]);
 
+// Derived content organization
+const orgPages = computed<(OrgNote | OrgTask)[]>(() => {
+  // Transform first-level headlines into notes or tasks based on TODO status
+});
+
+const notesCollection = computed<OrgNote[]>(() => {
+  // Filter pages to only include notes
+  return orgPages().filter((page): page is OrgNote => page.type === 'note');
+});
+
+const tasksCollection = computed<OrgTask[]>(() => {
+  // Filter pages to only include tasks
+  return orgPages().filter((page): page is OrgTask => page.type === 'task');
+});
+
 // Filter state
 const todoFilter = signal<string | null>(null);
 const tagFilter = signal<string[]>([]);
+const categoryFilter = signal<string[]>([]);
 
 // View state
 const viewMode = signal<'list' | 'kanban' | 'timeline'>('list');

@@ -16,6 +16,9 @@
 - Specialized filtering and view functions for TODO tasks
 - Monitor and automatically update multiple files
 - UI optimized for keyboard operations
+- Separate handling of notes and tasks based on headline structure
+- Page-based view for first-level headlines, with different treatment for TODO and non-TODO items
+- Categorization and filtering based on PROPERTIES, tags, and FILETAGS
 
 ## User Experience
 
@@ -30,6 +33,9 @@
 3. **External Integration**: Open selected items in an external editor for editing
 4. **Directory Monitoring**: Automatically detect and update changes to org-mode files in specific directories
 5. **Keyboard Operation**: Perform all operations from the keyboard without using a mouse
+6. **Content Organization**: View first-level headlines as separate pages, with TODO headlines treated as tasks and non-TODO headlines as notes
+7. **Nested Content Handling**: Extract nested TODO items from notes and recognize nested TODO items in tasks as subtasks
+8. **Content Filtering**: Filter notes and tasks by categories, tags, and FILETAGS defined in PROPERTIES
 
 ## Visual Design Principles
 
