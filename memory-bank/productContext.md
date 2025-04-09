@@ -4,9 +4,12 @@
 
 ### Targeted Problems
 - Org-mode files are plain text, making them visually difficult to comprehend
+- While org-agenda enables cross-file analysis, its interface in Emacs lacks modern visual appeal
 - Managing TODO tasks and tracking progress can become complicated
-- Analyzing multiple org-mode files across directories is challenging
-- There are few convenient org-mode viewers for desktop environments
+- When reviewing notes in org-mode, other headlines and content are visible, which can be distracting and reduce focus
+- Filtering and sorting TODO items in flexible, visually appealing ways is limited in traditional org-mode
+- There are few convenient org-mode viewers for desktop environments that maintain org-mode's power while enhancing visualization
+
 
 ### Solutions Provided
 - Display org-mode files with a visually superior interface similar to Notion
