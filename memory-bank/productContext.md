@@ -59,3 +59,53 @@
 - After initial MVP release, focus on collecting feedback about keyboard operation usability
 - Publish product roadmap and manage feature requests through GitHub Issues
 - Aim for quarterly release cycles
+
+## Future Expansion: Document Mode
+
+While the initial focus of Org-X is on the Agenda mode (cross-file headline management similar to org-agenda), we plan to implement a Document mode (or Paper mode) in the future to enhance the application's capabilities.
+
+### Document Mode Vision
+
+Document mode will focus on displaying a single org file as a continuous document or academic paper, with the following features:
+
+1. **Continuous Document Flow**
+   - Display the entire document with preserved heading hierarchy
+   - Format optimized for academic papers and technical documentation
+
+2. **Enhanced Markup Support**
+   - Native rendering of LaTeX equations
+   - Syntax highlighting for code blocks
+   - Advanced table display options
+   - Embedded image display
+
+3. **Navigation Features**
+   - Table of Contents (TOC) for document navigation
+   - Smooth jumping between sections
+   - Bidirectional links for footnotes and references
+
+4. **Export Capabilities**
+   - PDF export
+   - HTML export
+   - Export to other common document formats
+
+5. **Presentation Mode**
+   - Slideshow functionality similar to org-reveal
+   - Presentation themes and transitions
+
+### Integration Between Modes
+
+The Agenda and Document modes will complement each other with:
+
+1. **Seamless Switching**
+   - Find a headline in Agenda mode, then view its full context in Document mode
+   - Add specific headlines to task lists while browsing in Document mode
+
+2. **Consistent Experience**
+   - Shared keyboard shortcuts between modes
+   - Consistent visual design and interaction patterns
+
+3. **Shared Configuration**
+   - Common settings for fonts, color themes, etc.
+   - Shared file path and directory settings
+
+This dual-mode approach will make Org-X a comprehensive solution for org-mode file management and viewing, combining the power of org-mode with a modern, user-friendly interface.
