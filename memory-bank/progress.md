@@ -8,6 +8,8 @@
 - ✅ Implement basic org-mode parsing functionality
 - ✅ Design and implement OrgDocument and OrgHeadline structures
 - ✅ Implement extraction of titles, headings, tags, and TODO keywords
+- ✅ Implement headline hierarchy processing
+- ✅ Implement basic content extraction for headlines
 
 ### Development Environment
 - ✅ Set up basic Tauri + Svelte project
@@ -16,9 +18,8 @@
 ## Items in Progress
 
 ### Backend Development
-- 🔄 Complete implementation of heading hierarchy processing
-- 🔄 Detailed implementation of content text extraction
 - 🔄 Implementation of file monitoring functionality
+- 🔄 Enhancement of content extraction for complex org-mode elements
 
 ### Frontend Development
 - 🔄 Design of basic UI structure
@@ -56,12 +57,13 @@
 ## Progress Overview and Next Steps
 
 ### Current Progress Status
-Currently, the project is in its initial development stage. The basic implementation of org-mode parsing in the backend has been completed, enabling the extraction of structured data. This allows us to retrieve basic information such as titles, headings, tags, and TODO keywords from org-mode files.
+The project is progressing well in its initial development stage. We've successfully implemented headline hierarchy processing and basic content extraction, in addition to our earlier org-mode parsing functionality. This allows us to now represent the nested structure of org-mode documents and extract content from headlines, providing a more complete representation of org-mode files.
 
 ### Immediate Challenges
-- Complete implementation of hierarchy processing for `OrgHeadline` (child headings)
-- Improve content extraction processing
 - Implement file monitoring functionality
+- Set up type definition sharing with tauri-specta
+- Enhance content extraction to handle complex org-mode elements
+- Begin work on the frontend UI components
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
