@@ -3,6 +3,15 @@ use orgize::{Org, Element};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
+use specta::Type;
+
+// Serialize DateTime to RFC3339 format
+fn serialize_datetime<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&date.to_rfc3339())
+}
 
 #[derive(Debug, Error)]
 pub enum OrgError {
@@ -11,17 +20,19 @@ pub enum OrgError {
 }
 
 /// Basic information of an org-mode document
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct OrgDocument {
     pub id: String,
     pub title: String,
     pub content: String,
     pub headlines: Vec<OrgHeadline>,
+    #[serde(serialize_with = "serialize_datetime")]
+    #[specta(skip)]
     pub parsed_at: DateTime<Utc>,
 }
 
 /// Headline information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct OrgHeadline {
     pub id: String,
     pub level: u8,
