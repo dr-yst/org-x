@@ -22,12 +22,17 @@ The current project priority is implementing the backend org-mode parsing functi
 ## Recent Changes
 
 ### Technical Changes
-1. Added: Implementation of headline hierarchy processing
+1. Added: Type definition sharing with tauri-specta
+   - Implemented automatic TypeScript bindings generation for Rust API
+   - Created improved frontend components using the generated bindings
+   - Set up proper API error handling and typing
+
+2. Added: Implementation of headline hierarchy processing
    - Created an algorithm to convert flat headline list to proper hierarchy
    - Implemented index-based tracking to avoid Rust borrow checker issues
    - Added comprehensive tests for hierarchy processing
 
-2. Added: Basic content extraction for headlines
+3. Added: Basic content extraction for headlines
    - Implemented a simplified content extraction mechanism
    - Adapted tests to work with the current implementation
    - Provided foundation for more comprehensive content parsing in the future
@@ -70,10 +75,10 @@ The current project priority is implementing the backend org-mode parsing functi
 ## Next Steps
 
 ### Priority Tasks
-1. Implementation of file monitoring and re-parsing when files change
-2. Setup of type definition sharing between backend and frontend
+1. ✅ Setup of type definition sharing between backend and frontend (using tauri-specta)
+2. Implementation of file monitoring and re-parsing when files change
 3. Enhance content extraction functionality to handle complex org-mode elements
-4. Begin basic frontend UI implementation
+4. Improve the frontend UI components and styling
 
 ### Areas Requiring Exploration
 - Consideration of common APIs across platforms for editor integration
@@ -82,12 +87,18 @@ The current project priority is implementing the backend org-mode parsing functi
 
 ## Project Status Overview
 
-The project continues to make steady progress in the initial development stage. We have successfully implemented the headline hierarchy processing and basic content extraction functionality. These improvements allow us to correctly represent the nested nature of org-mode documents and extract content from headlines.
+The project continues to make steady progress in the initial development stage. We have successfully implemented the headline hierarchy processing, basic content extraction functionality, and type definition sharing between the Rust backend and TypeScript frontend using tauri-specta.
 
-With the basic org-mode parsing functionality now in place, including headline hierarchy and content extraction, we are shifting focus to file monitoring functionality. This will allow the application to detect changes in org-mode files and automatically update the parsed data.
+With these key components in place:
 
-In parallel, we will begin setting up type definition sharing between the Rust backend and TypeScript frontend using tauri-specta, which will ensure type safety across the application.
+1. **Org-mode Parsing**: Basic structure and hierarchy processing are complete, allowing for proper representation of nested org-mode documents.
 
-Once these backend components are in place, we will move forward with the frontend UI implementation using Svelte 5. The keyboard-first design principles will be applied throughout the UI development process.
+2. **Content Extraction**: Simple extraction of headline content is working, though more complex org-mode elements need further development.
 
-Keyboard shortcuts and the command palette remain important features that we plan to prioritize after completing the basic UI implementation.
+3. **Type-Safe API Communication**: The tauri-specta integration provides automatic TypeScript bindings generation, ensuring type safety between the Rust backend and Svelte frontend.
+
+4. **Component-Based UI**: Started implementing proper Svelte components that leverage the type definitions.
+
+Our next focus will be on implementing file monitoring functionality, allowing the application to detect changes in org-mode files and automatically update the parsed data. We'll also continue to improve the frontend UI components to better support interactive features.
+
+Keyboard shortcuts and the command palette remain important features that we plan to prioritize in upcoming development phases to align with our keyboard-first design principles.

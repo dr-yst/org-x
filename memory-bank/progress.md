@@ -26,7 +26,7 @@
 - 🔄 State management design using Svelte 5 runes
 
 ### Type Definitions and Integration
-- 🔄 Set up type definition sharing with tauri-specta
+- ✅ Set up type definition sharing with tauri-specta
 
 ## Unstarted Items
 
@@ -61,9 +61,9 @@ The project is progressing well in its initial development stage. We've successf
 
 ### Immediate Challenges
 - Implement file monitoring functionality
-- Set up type definition sharing with tauri-specta
 - Enhance content extraction to handle complex org-mode elements
-- Begin work on the frontend UI components
+- Improve frontend UI components with interactive features
+- Implement keyboard shortcuts for navigation and operations
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
