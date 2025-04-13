@@ -1,6 +1,7 @@
 <script>
     import SimpleViewer from "$lib/components/SimpleViewer.svelte";
     import * as OrgDocument from "$lib/components/OrgDocument.svelte";
+    import ListView from "$lib/components/ListView.svelte";
 </script>
 
 <main class="p-6 font-sans min-h-screen bg-gray-50">
@@ -10,6 +11,12 @@
             <h2 class="text-xl font-semibold mb-4 text-gray-700">Sample Org Document</h2>
             <div class="border border-gray-200 rounded-lg p-4">
                 <svelte:component this={OrgDocument.default} />
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <div class="border border-gray-200 rounded-lg p-4">
+                <ListView />
             </div>
         </div>
         <SimpleViewer />
