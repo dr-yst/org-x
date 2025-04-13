@@ -22,8 +22,10 @@
 - 🔄 Enhancement of content extraction for complex org-mode elements
 
 ### Frontend Development
-- 🔄 Design of basic UI structure
-- 🔄 State management design using Svelte 5 runes
+- ✅ Design of basic UI structure
+- ✅ State management design using Svelte 5 runes
+- ✅ Implementation of headline list view component
+- ✅ Implementation of filtering and organization features
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
