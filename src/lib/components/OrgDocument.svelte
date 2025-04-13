@@ -22,59 +22,22 @@
   });
 </script>
 
-<div class="org-document">
+<div class="w-full font-sans leading-normal">
   {#if loading}
-    <p class="loading">Loading document...</p>
+    <p class="text-gray-500 italic">Loading document...</p>
   {:else if error}
-    <div class="error">
+    <div class="text-red-600 border border-red-500 p-4 rounded bg-red-50">
       <p>Error: {error}</p>
     </div>
   {:else if document}
-    <h1 class="document-title">{document.title}</h1>
+    <h1 class="text-2xl mb-6 pb-2 border-b border-gray-200">{document.title}</h1>
     
-    <div class="headlines">
+    <div class="mt-4">
       {#each document.headlines as headline}
         <OrgHeadline {headline} level={1} />
       {/each}
     </div>
   {:else}
-    <p class="no-document">No document loaded</p>
+    <p class="text-gray-500 italic">No document loaded</p>
   {/if}
 </div>
-
-<style>
-  .org-document {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.5;
-    width: 100%;
-  }
-
-  .document-title {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #ddd;
-  }
-
-  .headlines {
-    margin-top: 1rem;
-  }
-
-  .loading {
-    color: #666;
-    font-style: italic;
-  }
-
-  .error {
-    color: #e63946;
-    border: 1px solid #e63946;
-    padding: 1rem;
-    border-radius: 4px;
-    background-color: #ffdfd6;
-  }
-
-  .no-document {
-    color: #666;
-    font-style: italic;
-  }
-</style>

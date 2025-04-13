@@ -9,42 +9,58 @@
   function toggleExpand() {
     isExpanded = !isExpanded;
   }
+
+  // Get appropriate border color based on level
+  $: borderColor = 
+    level === 1 ? 'border-blue-600' : 
+    level === 2 ? 'border-indigo-700' : 
+    level === 3 ? 'border-purple-600' : 
+    level === 4 ? 'border-pink-500' : 
+    'border-cyan-500';
 </script>
 
-<div class="headline level-{level}">
-  <div class="headline-header">
+<div class={`mb-2 border-l-2 ${borderColor} pl-2`}>
+  <div class="flex items-center cursor-pointer">
     {#if headline.children.length > 0}
-      <button class="toggle" on:click={toggleExpand} aria-label="Toggle expand">
+      <button 
+        class="w-5 h-5 mr-2 border border-gray-300 rounded flex items-center justify-center text-xs hover:bg-gray-100" 
+        on:click={toggleExpand} 
+        aria-label="Toggle expand"
+      >
         {isExpanded ? '−' : '+'}
       </button>
     {/if}
     
-    <div class="headline-title">
+    <div class="flex items-center gap-2">
       {#if headline.todo_keyword}
-        <span class="todo-keyword">{headline.todo_keyword}</span>
+        <span class="font-bold text-xs text-red-600 px-1 py-0.5 rounded">
+          {headline.todo_keyword}
+        </span>
       {/if}
       
       <span class="title">{headline.title}</span>
       
       {#if headline.tags.length > 0}
-        <span class="tags">
+        <div class="flex gap-1">
           {#each headline.tags as tag}
-            <span class="tag">{tag}</span>
+            <span class="text-xs text-white bg-blue-600 px-1.5 py-0.5 rounded">
+              {tag}
+            </span>
           {/each}
-        </span>
+        </div>
       {/if}
     </div>
   </div>
   
   {#if isExpanded}
     {#if headline.content}
-      <div class="content">
+      <div class="whitespace-pre-wrap my-2 pl-6 text-sm text-gray-700">
         {headline.content}
       </div>
     {/if}
     
     {#if headline.children.length > 0}
-      <div class="children">
+      <div class="ml-6">
         {#each headline.children as child}
           <svelte:self headline={child} level={level + 1} />
         {/each}
@@ -52,97 +68,3 @@
     {/if}
   {/if}
 </div>
-
-<style>
-  .headline {
-    margin-bottom: 0.5rem;
-    border-left: 2px solid transparent;
-    padding-left: 0.5rem;
-  }
-  
-  .headline-header {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .headline-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .toggle {
-    background: none;
-    border: 1px solid #ddd;
-    width: 20px;
-    height: 20px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 0.5rem;
-    cursor: pointer;
-    padding: 0;
-    font-size: 16px;
-    line-height: 1;
-  }
-  
-  .toggle:hover {
-    background-color: #f5f5f5;
-  }
-  
-  .todo-keyword {
-    font-weight: bold;
-    color: #e63946;
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
-    font-size: 0.8em;
-  }
-  
-  .tags {
-    display: flex;
-    gap: 0.3rem;
-  }
-  
-  .tag {
-    font-size: 0.7em;
-    color: #fff;
-    background-color: #457b9d;
-    padding: 0.1rem 0.3rem;
-    border-radius: 3px;
-  }
-  
-  .content {
-    white-space: pre-wrap;
-    margin: 0.5rem 0;
-    padding-left: 1.5rem;
-    font-size: 0.9em;
-    color: #333;
-  }
-  
-  .children {
-    margin-left: 1.5rem;
-  }
-  
-  /* Level-specific styling */
-  .level-1 {
-    border-left-color: #4361ee;
-  }
-  
-  .level-2 {
-    border-left-color: #3a0ca3;
-  }
-  
-  .level-3 {
-    border-left-color: #7209b7;
-  }
-  
-  .level-4 {
-    border-left-color: #f72585;
-  }
-  
-  .level-5, .level-6 {
-    border-left-color: #4cc9f0;
-  }
-</style>
