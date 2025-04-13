@@ -37,7 +37,12 @@ The current project priority is implementing the backend org-mode parsing functi
    - Adapted tests to work with the current implementation
    - Provided foundation for more comprehensive content parsing in the future
 
-3. Added: Implementation of `orgmode.rs` file
+4. Updated: Data model approach for tasks and notes
+   - Simplified the data model by unifying tasks and notes under OrgHeadline
+   - Defined helper methods for task/note distinction based on TODO keyword presence
+   - Made design more aligned with org-mode's inherent structure
+
+5. Added: Implementation of `orgmode.rs` file
    - Basic implementation using the Orgize parser
    - Definition of OrgDocument and OrgHeadline data structures
    - Basic parsing functionality for titles, headings, TODO items, tags, etc.
@@ -87,7 +92,7 @@ The current project priority is implementing the backend org-mode parsing functi
 
 ## Project Status Overview
 
-The project continues to make steady progress in the initial development stage. We have successfully implemented the headline hierarchy processing, basic content extraction functionality, and type definition sharing between the Rust backend and TypeScript frontend using tauri-specta.
+The project continues to make steady progress in the initial development stage. We have successfully implemented the headline hierarchy processing, basic content extraction functionality, type definition sharing, and improved frontend components for data visualization.
 
 With these key components in place:
 
@@ -97,7 +102,12 @@ With these key components in place:
 
 3. **Type-Safe API Communication**: The tauri-specta integration provides automatic TypeScript bindings generation, ensuring type safety between the Rust backend and Svelte frontend.
 
-4. **Component-Based UI**: Started implementing proper Svelte components that leverage the type definitions.
+4. **Component-Based UI**: Implemented several Svelte components that leverage the type definitions:
+   - Hierarchical tree view of org documents
+   - Notion-like list view of headlines
+   - Filtering capabilities for tags and TODO states
+
+5. **Unified Data Model**: Simplified the data model by representing both tasks and notes using the OrgHeadline structure, distinguished by the presence of a TODO keyword. This approach aligns better with org-mode's natural structure and simplifies UI development.
 
 Our next focus will be on implementing file monitoring functionality, allowing the application to detect changes in org-mode files and automatically update the parsed data. We'll also continue to improve the frontend UI components to better support interactive features.
 

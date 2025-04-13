@@ -263,63 +263,84 @@ pub struct OrgHeadline {
     pub etag: String, // Entity tag for change detection
 }
 
-// Task-specific type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OrgTask {
-    pub headline: OrgHeadline, // Composition instead of inheritance
-    pub status: TodoStatus,    // Using the dynamic TodoStatus
-    pub due_date: Option<String>, // Extracted from PROPERTIES
-    pub scheduled_date: Option<String>, // Extracted from PROPERTIES
-    pub subtasks: Vec<OrgTask>, // Nested tasks
-}
+// Unified headline approach for both tasks and notes
+// Tasks and notes are both represented by OrgHeadline, distinguished by todo_keyword
+// A headline with a todo_keyword is considered a task, one without is a note
 
-impl OrgTask {
-    pub fn from_headline(headline: OrgHeadline, status: TodoStatus) -> Self {
-        Self {
-            headline,
-            status,
-            due_date: None,
-            scheduled_date: None,
-            subtasks: Vec::new(),
-        }
+// Helper functions for working with headlines
+impl OrgHeadline {
+    // Check if this headline is a task (has a TODO keyword)
+    pub fn is_task(&self) -> bool {
+        self.todo_keyword.is_some()
     }
-
+    
+    // Check if this headline is a note (no TODO keyword)
+    pub fn is_note(&self) -> bool {
+        self.todo_keyword.is_none()
+    }
+    
+    // Get due date (from PROPERTIES)
+    pub fn due_date(&self) -> Option<&str> {
+        self.properties.get("DEADLINE").map(|s| s.as_str())
+    }
+    
+    // Get scheduled date (from PROPERTIES)
+    pub fn scheduled_date(&self) -> Option<&str> {
+        self.properties.get("SCHEDULED").map(|s| s.as_str())
+    }
+    
     // Get effective category (from headline properties or parent document)
     pub fn get_category(&self, document: &OrgDocument) -> String {
         // First check headline properties
-        if let Some(category) = self.headline.properties.get("CATEGORY") {
+        if let Some(category) = self.properties.get("CATEGORY") {
             return category.clone();
         }
 
         // Fall back to document category
         document.category.clone()
     }
-}
-
-// Note-specific type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OrgNote {
-    pub headline: OrgHeadline, // Composition instead of inheritance
-    pub nested_tasks: Vec<OrgTask>, // Tasks contained within this note
-}
-
-impl OrgNote {
-    pub fn from_headline(headline: OrgHeadline) -> Self {
-        Self {
-            headline,
-            nested_tasks: Vec::new(),
+    
+    // Get resolved TODO status with color and state information
+    pub fn get_todo_status(&self, config: &TodoConfiguration) -> Option<TodoStatus> {
+        if let Some(keyword) = &self.todo_keyword {
+            config.find_status(keyword).cloned()
+        } else {
+            None
         }
     }
-
-    // Get effective category (from headline properties or parent document)
-    pub fn get_category(&self, document: &OrgDocument) -> String {
-        // First check headline properties
-        if let Some(category) = self.headline.properties.get("CATEGORY") {
-            return category.clone();
+    
+    // Find all task headlines (recursive)
+    pub fn find_tasks(&self) -> Vec<&OrgHeadline> {
+        let mut tasks = Vec::new();
+        
+        // Add self if it's a task
+        if self.is_task() {
+            tasks.push(self);
         }
-
-        // Fall back to document category
-        document.category.clone()
+        
+        // Add tasks from children
+        for child in &self.children {
+            tasks.extend(child.find_tasks());
+        }
+        
+        tasks
+    }
+    
+    // Find all note headlines (recursive)
+    pub fn find_notes(&self) -> Vec<&OrgHeadline> {
+        let mut notes = Vec::new();
+        
+        // Add self if it's a note
+        if self.is_note() {
+            notes.push(self);
+        }
+        
+        // Add notes from children
+        for child in &self.children {
+            notes.extend(child.find_notes());
+        }
+        
+        notes
     }
 }
 
