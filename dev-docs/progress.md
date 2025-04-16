@@ -10,6 +10,9 @@
 - ✅ Implement extraction of titles, headings, tags, and TODO keywords
 - ✅ Implement headline hierarchy processing
 - ✅ Implement basic content extraction for headlines
+- ✅ Implement enhanced data model with TodoStatus, GlobalMetadata, etc.
+- ✅ Implement property inheritance mechanism
+- ✅ Add helper methods for working with headlines
 
 ### Development Environment
 - ✅ Set up basic Tauri + Svelte project
@@ -59,7 +62,7 @@
 ## Progress Overview and Next Steps
 
 ### Current Progress Status
-The project is progressing well in its initial development stage. We've successfully implemented headline hierarchy processing and basic content extraction, in addition to our earlier org-mode parsing functionality. This allows us to now represent the nested structure of org-mode documents and extract content from headlines, providing a more complete representation of org-mode files.
+The project continues to make good progress in its initial development stage. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, and other structures. This provides a solid foundation for the application's core functionality, enabling flexible TODO state management, tag and category tracking, and efficient change detection.
 
 ### Immediate Challenges
 - Implement file monitoring functionality
@@ -84,6 +87,8 @@ The project is progressing well in its initial development stage. We've successf
 - Decided to focus on integration with external editors rather than implementing editing functionality for org-mode files
 - Committed to keyboard-first design
 - Set a goal for performance, aiming for comfortable operation even with large files
+- Implemented a flexible TODO state system to accommodate user-defined TODO keywords
+- Designed a global metadata management system for efficient tag and category tracking
 
 ## Risks and Challenges
 
@@ -96,3 +101,4 @@ The project is progressing well in its initial development stage. We've successf
 - Performance optimization for large files using virtualized list display
 - Abstraction of platform-specific external editor integration code
 - Gradual implementation starting with high-priority org-mode features
+- Efficient change detection using etag-based approach
