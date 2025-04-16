@@ -2,7 +2,7 @@
 
 ## Current Work Focus
 
-The current project priority is implementing the backend org-mode parsing functionality. We've completed the basic headline hierarchy processing and content extraction, and have now enhanced the data model implementation according to the system patterns documentation.
+The current project priority is implementing the backend org-mode parsing functionality. We've completed the basic headline hierarchy processing and content extraction, and have now enhanced the data model implementation according to the system patterns documentation. We've also refactored the codebase for better organization and maintainability.
 
 ### Tasks in Progress
 - ✅ Basic implementation of org-mode parsing using the Orgize library
@@ -14,14 +14,12 @@ The current project priority is implementing the backend org-mode parsing functi
 - ⬜ Construction of basic frontend UI
 
 ### Recent Work and Fixes
-- Enhanced the data model implementation in `orgmode.rs` to match the system design
-- Implemented `TodoStatus`, `TodoConfiguration`, and related structures for flexible TODO state management
-- Added `GlobalMetadata` and `MetadataManager` for tracking tags and categories
-- Implemented property inheritance mechanism for headlines
-- Added helper methods for working with headlines (is_task, is_note, get_category, etc.)
-- Added etag generation for change detection
-- Fixed HashMap hashing implementation for proper etag generation
-- Replaced OnceLock with standard library's Once for singleton implementation
+- Refactored monolithic `orgmode.rs` into separate modules in an `orgmode` directory
+- Fixed MetadataManager singleton implementation to use `OnceLock` instead of unsafe code
+- Modified headline etag generation to prevent circular dependencies
+- Fixed warnings and improved code organization
+- Added comprehensive tests for all components
+- Added debug prints to help diagnose test failures
 
 ## Recent Changes
 
