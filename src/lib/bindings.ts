@@ -33,19 +33,26 @@ export const commands = {
 /** user-defined types **/
 
 /**
- * Basic information of an org-mode document
+ * Basic org-mode document structure
  */
 export type OrgDocument = {
   id: string;
   title: string;
   content: string;
   headlines: OrgHeadline[];
+  filetags: string[];
+  file_path: string;
+  properties: Partial<{ [key in string]: string }>;
+  category: string;
+  etag: string;
+  todo_config: TodoConfiguration | null;
 };
 /**
- * Headline information
+ * Basic headline structure
  */
 export type OrgHeadline = {
   id: string;
+  document_id: string;
   level: number;
   title: string;
   tags: string[];
@@ -53,6 +60,20 @@ export type OrgHeadline = {
   priority: string | null;
   content: string;
   children: OrgHeadline[];
+  properties: Partial<{ [key in string]: string }>;
+  etag: string;
+};
+export type StateType = "Active" | "Closed";
+export type TodoConfiguration = {
+  sequences: TodoSequence[];
+  default_sequence: string;
+};
+export type TodoSequence = { name: string; statuses: TodoStatus[] };
+export type TodoStatus = {
+  keyword: string;
+  state_type: StateType;
+  order: number;
+  color: string | null;
 };
 
 /** tauri-specta globals **/
