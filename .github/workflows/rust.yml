@@ -46,43 +46,50 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      # Collect environment information for debugging
-      - name: Collect environment info
-        run: |
-          mkdir -p logs
-          echo "OS: ${{ runner.os }}" > logs/env-info.txt
-          echo "Rust version:" >> logs/env-info.txt
-          rustc --version >> logs/env-info.txt
-          echo "Cargo version:" >> logs/env-info.txt
-          cargo --version >> logs/env-info.txt
-          echo "Dependencies:" >> logs/env-info.txt
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            dpkg -l | grep -E 'webkit|gtk|glib' >> logs/env-info.txt
-          elif [ "${{ runner.os }}" = "macOS" ]; then
-            brew list >> logs/env-info.txt
-          fi
-
       # Build the project
       - name: Build
+        id: build
         working-directory: src-tauri
-        run: cargo build --verbose 2>&1 | tee ../logs/build-log.txt
+        run: cargo build --verbose
 
       # Run tests
       - name: Run tests
+        id: tests
+        if: success() # Only run if build succeeded
         working-directory: src-tauri
-        run: cargo test --verbose 2>&1 | tee ../logs/test-log.txt
-        continue-on-error: true # Continue to save logs even if tests fail
+        run: cargo test --verbose
 
-      # Collect detailed dependency information
-      - name: Collect dependency info
-        working-directory: src-tauri
-        run: cargo tree > ../logs/cargo-tree.txt
-        continue-on-error: true # Continue workflow even if this step fails
-
-      # Save logs as artifacts
-      - name: Upload logs
+      # Upload artifacts only on failure
+      - name: Upload failure artifacts
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ runner.os }}
+          name: failure-logs-${{ runner.os }}
+          path: |
+            src-tauri/target/debug/deps/*
+            src-tauri/Cargo.lock
+            src-tauri/Cargo.toml
+          retention-days: 3
+
+      # Collect dependency info on failure
+      - name: Collect dependency info on failure
+        if: failure()
+        working-directory: src-tauri
+        run: |
+          mkdir -p ../logs
+          cargo tree > ../logs/cargo-tree.txt
+          echo "OS: ${{ runner.os }}" > ../logs/env-info.txt
+          rustc --version >> ../logs/env-info.txt
+          cargo --version >> ../logs/env-info.txt
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            dpkg -l | grep -E 'webkit|gtk|glib' >> ../logs/env-info.txt
+          fi
+
+      # Upload debug logs on failure
+      - name: Upload debug logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-logs-${{ runner.os }}
           path: logs/
-          retention-days: 7
+          retention-days: 3
