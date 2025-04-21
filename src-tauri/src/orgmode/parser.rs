@@ -204,7 +204,7 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
 
     for headline in all_headlines.drain(..) {
         let level = headline.level;
-        
+
         // We'll generate etags after building the full hierarchy
 
         // Pop from stack until we find the appropriate parent or reach the top level
@@ -288,7 +288,7 @@ fn generate_etags_recursively(headline: &mut OrgHeadline) {
     for child in &mut headline.children {
         generate_etags_recursively(child);
     }
-    
+
     // Now generate etag for this headline (children already have their etags)
     headline.etag = generate_headline_etag(headline);
 }
@@ -341,18 +341,31 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
 
 /// Extract properties from a headline
 fn extract_headline_properties(
-    _org: &Org,
-    _headline: &orgize::Headline,
+    org: &Org,
+    headline: &orgize::Headline,
 ) -> HashMap<String, String> {
     let mut properties = HashMap::new();
-
-    // This is a simplified version for now
-    // In a real implementation, we would need to parse the PROPERTIES drawer
-    // and extract all properties
-
-    // For now, just add some dummy properties for testing
-    properties.insert("CREATED".to_string(), Utc::now().to_rfc3339());
-
+    
+    // ヘッドラインのタイトル要素を取得
+    let title = headline.title(org);
+    
+    // タイトルからプロパティを取得
+    if !title.properties.is_empty() {
+        println!("Found properties in title for headline: {}", title.raw);
+        
+        // PropertiesMapからHashMapに変換
+        for (key, value) in title.properties.iter() {
+            properties.insert(key.to_string(), value.to_string());
+            println!("  Property from title: {}={}", key, value);
+        }
+    }
+    
+    // 作成タイムスタンプを追加（テスト用）
+    if !properties.contains_key("CREATED") {
+        properties.insert("CREATED".to_string(), Utc::now().to_rfc3339());
+    }
+    
+    println!("Extracted {} properties", properties.len());
     properties
 }
 
@@ -613,5 +626,47 @@ This is a quote.
         let h4 = &doc.headlines[3];
         assert_eq!(h4.title, "Headline with special elements");
         assert!(!h4.content.is_empty());
+    }
+    
+    #[test]
+    fn test_property_extraction() {
+        let content = r#"#+TITLE: Property Test
+
+* Headline with Properties                                                  :tag:
+:PROPERTIES:
+:CATEGORY: TestCategory
+:DEADLINE: <2025-05-01 Thu>
+:CUSTOM_PROP: CustomValue
+:END:
+Content of headline
+
+* Regular Headline
+No properties here
+
+* Shopping List [0/3]                                                 :shopping:
+:PROPERTIES:
+:CATEGORY: Shopping
+:DEADLINE: <2025-04-15 Tue>
+:END:
+"#;
+
+        // 既存の関数を直接使って正しいプロパティが抽出されるかテスト
+        let doc = parse_org_document(content, Some("test.org")).unwrap();
+        
+        // Shopping List ヘッドラインがCATEGORYプロパティを持っていることを確認
+        let h3 = &doc.headlines[2];
+        assert_eq!(h3.title, "Shopping List [0/3]");
+        assert_eq!(h3.get_category(&doc), "Shopping");
+        
+        // CATEGORYプロパティが正しくヘッドラインから抽出されていることを確認
+        let h1 = &doc.headlines[0];
+        assert_eq!(h1.title, "Headline with Properties");
+        assert_eq!(h1.get_category(&doc), "TestCategory");
+        
+        // プロパティのないヘッドラインでは、ドキュメントのカテゴリが使用されること
+        let h2 = &doc.headlines[1];
+        assert_eq!(h2.title, "Regular Headline");
+        // この場合、プロパティがないので、ドキュメントのカテゴリが継承される
+        assert_eq!(h2.get_category(&doc), ""); // ドキュメントに設定されていないので空文字
     }
 }

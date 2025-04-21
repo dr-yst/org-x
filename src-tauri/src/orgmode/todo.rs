@@ -106,14 +106,10 @@ impl TodoConfiguration {
 
     // Find status by keyword
     pub fn find_status(&self, keyword: &str) -> Option<&TodoStatus> {
-        for sequence in &self.sequences {
-            for status in &sequence.statuses {
-                if status.keyword == keyword {
-                    return Some(status);
-                }
-            }
-        }
-        None
+        self.sequences
+            .iter()
+            .flat_map(|seq| &seq.statuses)
+            .find(|status| status.keyword == keyword)
     }
 
     // Parse org-mode TODO configuration
