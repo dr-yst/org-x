@@ -84,6 +84,7 @@ impl OrgDocumentRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::orgmode::OrgTitle;
     use std::collections::HashMap;
 
     #[test]
@@ -148,7 +149,7 @@ mod tests {
             id: "h1".to_string(),
             document_id: "doc1".to_string(),
             level: 1,
-            title: "Headline 1".to_string(),
+            title: OrgTitle::simple("Headline 1"),
             tags: Vec::new(),
             todo_keyword: None,
             priority: None,
@@ -162,7 +163,7 @@ mod tests {
             id: "h2".to_string(),
             document_id: "doc1".to_string(),
             level: 1,
-            title: "Headline 2".to_string(),
+            title: OrgTitle::simple("Headline 2"),
             tags: Vec::new(),
             todo_keyword: None,
             priority: None,
@@ -176,7 +177,7 @@ mod tests {
             id: "h3".to_string(),
             document_id: "doc1".to_string(),
             level: 2,
-            title: "Headline 3".to_string(),
+            title: OrgTitle::simple("Headline 3"),
             tags: Vec::new(),
             todo_keyword: None,
             priority: None,

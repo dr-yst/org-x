@@ -37,6 +37,7 @@ pub fn generate_headline_etag(headline: &OrgHeadline) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::orgmode::OrgTitle;
     use std::collections::HashMap;
 
     #[test]
@@ -65,7 +66,7 @@ mod tests {
             id: "1".to_string(),
             document_id: "doc1".to_string(),
             level: 1,
-            title: "Test Headline".to_string(),
+            title: OrgTitle::simple("Test Headline"),
             tags: vec!["tag1".to_string()],
             todo_keyword: Some("TODO".to_string()),
             priority: None,
@@ -79,7 +80,7 @@ mod tests {
             id: "2".to_string(), // Different ID
             document_id: "doc1".to_string(),
             level: 1,
-            title: "Test Headline".to_string(),
+            title: OrgTitle::simple("Test Headline"),
             tags: vec!["tag1".to_string()],
             todo_keyword: Some("TODO".to_string()),
             priority: None,
@@ -94,7 +95,7 @@ mod tests {
             id: "3".to_string(),
             document_id: "doc1".to_string(),
             level: 1,
-            title: "Different Headline".to_string(), // Different title
+            title: OrgTitle::simple("Different Headline"),
             tags: vec!["tag1".to_string()],
             todo_keyword: Some("TODO".to_string()),
             priority: None,

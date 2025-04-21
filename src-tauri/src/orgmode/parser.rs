@@ -1,5 +1,6 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
+use crate::orgmode::title::OrgTitle;
 use crate::orgmode::todo::TodoConfiguration;
 use crate::orgmode::utils::{generate_document_etag, generate_headline_etag};
 use chrono::Utc;
@@ -297,13 +298,13 @@ fn generate_etags_recursively(headline: &mut OrgHeadline) {
 fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     // Get title
     let title_element = headline.title(org);
-    let title = title_element.raw.to_string();
+    let raw_title = title_element.raw.to_string();
 
     // Get level
     let level = headline.level() as u32;
 
     // Extract tags
-    let tags = title_element
+    let tags: Vec<String> = title_element
         .tags
         .iter()
         .map(|tag| tag.to_string())
@@ -314,6 +315,15 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
 
     // Extract priority and convert to string
     let priority = title_element.priority.map(|p| p.to_string());
+
+    // Create OrgTitle
+    let org_title = OrgTitle {
+        raw: raw_title,
+        priority: title_element.priority,
+        tags: tags.clone(), // Clone for backward compatibility
+        todo_keyword: todo_keyword.clone(), // Clone for backward compatibility
+        properties: extract_properties_from_title(&title_element),
+    };
 
     // Extract content from the headline
     let content = extract_headline_content(org, &headline);
@@ -328,7 +338,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
         id: Uuid::new_v4().to_string(),
         document_id: String::new(), // Will be filled in later
         level,
-        title,
+        title: org_title,
         tags,
         todo_keyword,
         priority,
@@ -337,6 +347,19 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
         properties,
         etag: String::new(), // Will be generated later
     }
+}
+
+/// Extract properties from a title element
+fn extract_properties_from_title(title: &orgize::elements::Title) -> HashMap<String, String> {
+    let mut properties = HashMap::new();
+    
+    if !title.properties.is_empty() {
+        for (key, value) in title.properties.iter() {
+            properties.insert(key.to_string(), value.to_string());
+        }
+    }
+    
+    properties
 }
 
 /// Extract properties from a headline
