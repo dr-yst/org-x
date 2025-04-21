@@ -1053,7 +1053,71 @@ The data flow between the Rust backend and Svelte frontend follows these pattern
 5. UI rendering (Svelte Components)
 6. Handling keyboard events
 
-## Flexible TODO State System
+## Parse Configuration
+
+### Utilizing Orgize ParseConfig
+
+The orgize library provides a `ParseConfig` struct that allows customization of the parsing process. This is particularly useful for working with custom TODO keywords defined in org files.
+
+```rust
+// Customize parse configuration
+pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
+    // Extract TODO keywords from content
+    let todo_keywords = extract_todo_keywords_from_content(content);
+    
+    // Create ParseConfig with extracted TODO keywords
+    let config = orgize::ParseConfig {
+        todo_keywords,
+        ..Default::default()
+    };
+    
+    // Parse with custom configuration
+    let org = orgize::Org::parse_custom(content, &config);
+    
+    // Process the parsed content...
+}
+
+// Extract TODO keywords from content
+fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String>) {
+    // Look for lines like:
+    // #+TODO: TODO(t) NEXT(n) WAITING(w) | DONE(d) CANCELLED(c)
+    // and extract the keywords
+}
+```
+
+### Integration with TodoConfiguration
+
+The extracted TODO keywords from the org file are integrated with our TodoConfiguration system, ensuring that any custom TODO states defined in the org files are properly rendered and color-coded in the UI:
+
+```rust
+fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option<TodoConfiguration> {
+    // First check for TODO keywords in the org file content
+    let mut todo_lines = Vec::new();
+    
+    for event in org.iter() {
+        if let orgize::Event::Start(Element::Keyword(keyword)) = event {
+            if keyword.key.eq_ignore_ascii_case("TODO") {
+                todo_lines.push(keyword.value.to_string());
+            }
+        }
+    }
+
+    // If we have TODO lines defined in the org file, use them to build configuration
+    if !todo_lines.is_empty() {
+        return Some(TodoConfiguration::from_org_config(&todo_lines));
+    }
+    
+    // Otherwise, use the TODO keywords from ParseConfig
+    let (active_keywords, closed_keywords) = &config.todo_keywords;
+    
+    // Create TodoConfiguration from the ParseConfig keywords
+}
+```
+
+This approach ensures that:
+1. Custom TODO states defined in org files are respected
+2. Color coding and state management are consistent
+3. The application can handle various TODO workflow styles
 
 The system implements a highly customizable TODO state management approach that accommodates user-defined TODO keywords and sequences.
 

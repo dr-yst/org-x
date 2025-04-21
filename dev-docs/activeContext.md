@@ -2,7 +2,7 @@
 
 ## Current Work Focus
 
-The current project priority is implementing the backend org-mode parsing functionality. We've completed the basic headline hierarchy processing and content extraction, further enhanced the data model implementation, and improved the organization and maintainability of the code. Most recently, we've implemented a new OrgTitle structure to better represent headline titles and their associated metadata, and enhanced property handling to properly extract properties from headlines.
+The current project priority is implementing the backend org-mode parsing functionality. We've completed the basic headline hierarchy processing and content extraction, further enhanced the data model implementation, and improved the organization and maintainability of the code. Most recently, we've implemented a new OrgTitle structure to better represent headline titles and their associated metadata, enhanced property handling to properly extract properties from headlines, and implemented orgize::ParseConfig to better handle custom TODO keywords from org files.
 
 ### Tasks in Progress
 - ✅ Basic implementation of org-mode parsing using the Orgize library
@@ -16,10 +16,14 @@ The current project priority is implementing the backend org-mode parsing functi
 - ✅ Improved navigation between headlines with parent, previous, and next methods
 - ✅ Implemented headline property extraction from Orgize parser
 - ✅ Improved property handling with inheritance and access mechanisms
+- ✅ Enhanced TODO keyword handling with orgize::ParseConfig
 - 🔄 Implementation of file monitoring functionality
 - ⬜ Construction of basic frontend UI
 
 ### Recent Work and Fixes
+- Implemented custom TODO keyword extraction from org files using orgize::ParseConfig
+- Created helper functions for assigning colors to different TODO states
+- Enhanced todo_configuration creation to utilize org-mode's native TODO keyword definitions
 - Implemented proper headline property extraction from Orgize parser
 - Created a new OrgTitle structure to better represent headline titles and their metadata
 - Refactored headline structure to use OrgTitle instead of raw fields

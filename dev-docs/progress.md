@@ -13,6 +13,7 @@
 - ✅ Implement enhanced data model with TodoStatus, GlobalMetadata, etc.
 - ✅ Create OrgTitle structure for better headline title representation
 - ✅ Implement proper headline property extraction and handling
+- ✅ Add support for custom TODO keywords using orgize::ParseConfig
 - ✅ Implement property inheritance mechanism
 - ✅ Add helper methods for working with headlines
 - ✅ Add navigation methods for headline hierarchy traversal (parent, previous, next)
@@ -69,7 +70,7 @@
 ## Progress Overview and Next Steps
 
 ### Current Progress Status
-The project continues to make good progress in its initial development stage. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing. These improvements provide a solid foundation for the application's core functionality, enabling flexible TODO state management, tag and category tracking, and efficient change detection.
+The project continues to make good progress in its initial development stage. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. We've also enhanced our TODO keyword handling by implementing orgize::ParseConfig support to properly handle custom TODO workflows defined in org files. All parser module tests have been fixed and are now passing. These improvements provide a solid foundation for the application's core functionality, enabling flexible TODO state management, tag and category tracking, and efficient change detection.
 
 ### Immediate Challenges
 - Implement file monitoring functionality
