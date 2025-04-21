@@ -105,6 +105,55 @@ During updates:
 
 ## Data Model
 
+// OrgTitle structure representing headline titles in org-mode
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrgTitle {
+    pub raw: String,                   // Raw title text
+    pub priority: Option<char>,        // Priority cookie (A, B, C, etc)
+    pub tags: Vec<String>,             // Tags associated with the title
+    pub todo_keyword: Option<String>,  // TODO keyword if present
+    pub properties: HashMap<String, String>, // Properties associated with this headline
+}
+
+impl OrgTitle {
+    // Create a new OrgTitle from basic components
+    pub fn new(
+        raw: String,
+        priority: Option<char>,
+        tags: Vec<String>,
+        todo_keyword: Option<String>,
+    ) -> Self {
+        Self {
+            raw,
+            priority,
+            tags,
+            todo_keyword,
+            properties: HashMap::new(),
+        }
+    }
+
+    // Create a simple OrgTitle with just the raw title text
+    pub fn simple(raw: &str) -> Self {
+        Self {
+            raw: raw.to_string(),
+            priority: None,
+            tags: Vec::new(),
+            todo_keyword: None,
+            properties: HashMap::new(),
+        }
+    }
+
+    // Get a property value if it exists
+    pub fn get_property(&self, key: &str) -> Option<&str> {
+        self.properties.get(key).map(|s| s.as_str())
+    }
+    
+    // Set a property value
+    pub fn set_property(&mut self, key: String, value: String) {
+        self.properties.insert(key, value);
+    }
+}
+
 ### Dynamic TODO status representation
 ```rust
 // Dynamic TODO status representation
@@ -253,14 +302,182 @@ pub struct OrgHeadline {
     pub id: String,
     pub document_id: String, // Reference to parent document
     pub level: u32,
-    pub title: String,
-    pub tags: Vec<String>,
-    pub todo_keyword: Option<String>, // Raw todo keyword from org file
-    pub priority: Option<String>,
+    pub title: OrgTitle, // Using OrgTitle instead of plain String
+    pub tags: Vec<String>, // Kept for backward compatibility (also in OrgTitle)
+    pub todo_keyword: Option<String>, // Kept for backward compatibility (also in OrgTitle)
+    pub priority: Option<String>, // Kept for backward compatibility (also in OrgTitle)
     pub content: String,
     pub children: Vec<OrgHeadline>,
     pub properties: HashMap<String, String>, // Content from PROPERTIES drawer
     pub etag: String, // Entity tag for change detection
+}
+
+impl OrgHeadline {
+    // Check if this headline is a task (has a TODO keyword)
+    pub fn is_task(&self) -> bool {
+        self.todo_keyword.is_some()
+    }
+
+    // Check if this headline is a note (no TODO keyword)
+    pub fn is_note(&self) -> bool {
+        !self.is_task()
+    }
+
+    // Get due date (from PROPERTIES)
+    pub fn due_date(&self) -> Option<&str> {
+        self.get_property("DEADLINE")
+    }
+
+    // Get scheduled date (from PROPERTIES)
+    pub fn scheduled_date(&self) -> Option<&str> {
+        self.get_property("SCHEDULED")
+    }
+
+    // Generic property accessor
+    pub fn get_property(&self, key: &str) -> Option<&str> {
+        // First check headline properties
+        if let Some(value) = self.properties.get(key) {
+            return Some(value);
+        }
+        
+        // Then check title properties
+        self.title.get_property(key)
+    }
+
+    // Get effective category (from headline properties or parent document)
+    pub fn get_category(&self, document: &OrgDocument) -> String {
+        // First check headline properties
+        if let Some(category) = self.get_property("CATEGORY") {
+            return category.to_string();
+        }
+
+        // Fall back to document category
+        document.category.clone()
+    }
+    
+    // Get the TODO status information
+    pub fn get_todo_status(&self, config: &Option<TodoConfiguration>) -> Option<&TodoStatus> {
+        let keyword = self.todo_keyword.as_ref()?;
+        
+        if let Some(config) = config {
+            config.find_status(keyword)
+        } else {
+            None
+        }
+    }
+
+    // Find parent headline
+    pub fn parent<'a>(&self, document: &'a OrgDocument) -> Option<&'a OrgHeadline> {
+        // Helper function to find parent recursively
+        fn find_parent<'a>(headline: &OrgHeadline, candidates: &'a [OrgHeadline]) -> Option<&'a OrgHeadline> {
+            for candidate in candidates {
+                // Direct child check
+                if candidate.children.iter().any(|child| child.id == headline.id) {
+                    return Some(candidate);
+                }
+                
+                // Recursive search in children
+                if let Some(parent) = find_parent(headline, &candidate.children) {
+                    return Some(parent);
+                }
+            }
+            None
+        }
+        
+        find_parent(self, &document.headlines)
+    }
+
+    // Find previous sibling
+    pub fn previous<'a>(&self, document: &'a OrgDocument) -> Option<&'a OrgHeadline> {
+        if let Some(parent) = self.parent(document) {
+            // Find position in parent's children
+            let self_index = parent.children.iter().position(|child| child.id == self.id)?;
+            if self_index > 0 {
+                return Some(&parent.children[self_index - 1]);
+            }
+        } else if self.level == 1 {
+            // Top-level headline, search in document.headlines
+            let self_index = document.headlines.iter().position(|h| h.id == self.id)?;
+            if self_index > 0 {
+                return Some(&document.headlines[self_index - 1]);
+            }
+        }
+        None
+    }
+    
+    // Find next sibling
+    pub fn next<'a>(&self, document: &'a OrgDocument) -> Option<&'a OrgHeadline> {
+        if let Some(parent) = self.parent(document) {
+            // Find position in parent's children
+            let self_index = parent.children.iter().position(|child| child.id == self.id)?;
+            if self_index < parent.children.len() - 1 {
+                return Some(&parent.children[self_index + 1]);
+            }
+        } else if self.level == 1 {
+            // Top-level headline, search in document.headlines
+            let self_index = document.headlines.iter().position(|h| h.id == self.id)?;
+            if self_index < document.headlines.len() - 1 {
+                return Some(&document.headlines[self_index + 1]);
+            }
+        }
+        None
+    }
+    
+    // Check if content has changed compared to another headline
+    pub fn content_changed(&self, other: &OrgHeadline) -> bool {
+        self.content != other.content || self.title.raw != other.title.raw
+    }
+    
+    // Check if structure has changed compared to another headline
+    pub fn structure_changed(&self, other: &OrgHeadline) -> bool {
+        if self.children.len() != other.children.len() {
+            return true;
+        }
+        
+        // Check children recursively
+        for (self_child, other_child) in self.children.iter().zip(other.children.iter()) {
+            if self_child.structure_changed(other_child) {
+                return true;
+            }
+        }
+        
+        false
+    }
+
+    // Find all task headlines (recursive)
+    pub fn find_tasks(&self) -> Vec<&OrgHeadline> {
+        let mut tasks = Vec::new();
+        
+        // Add self if it's a task
+        if self.is_task() {
+            tasks.push(self);
+        }
+        
+        // Recursively add tasks from children
+        for child in &self.children {
+            tasks.extend(child.find_tasks());
+        }
+        
+        tasks
+    }
+    
+    // Find all note headlines (recursive)
+    pub fn find_notes(&self) -> Vec<&OrgHeadline> {
+        let mut notes = Vec::new();
+        
+        // Add self if it's a note
+        if self.is_note() {
+            notes.push(self);
+        }
+        
+        // Recursively add notes from children
+        for child in &self.children {
+            notes.extend(child.find_notes());
+        }
+        
+        notes
+    }
+}
 }
 
 // Unified headline approach for both tasks and notes
