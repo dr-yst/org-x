@@ -2,6 +2,9 @@ use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
 use crate::orgmode::title::OrgTitle;
 use crate::orgmode::todo::TodoConfiguration;
+use crate::orgmode::todo::TodoSequence;
+use crate::orgmode::todo::TodoStatus;
+use crate::orgmode::todo::StateType;
 use crate::orgmode::utils::{generate_document_etag, generate_headline_etag};
 use chrono::Utc;
 use orgize::{Element, Org};
@@ -17,11 +20,96 @@ pub enum OrgError {
     FileError(String),
 }
 
+/// Extract TODO keywords from org file content
+///
+/// Looks for lines like:
+/// #+TODO: TODO(t) NEXT(n) WAITING(w) | DONE(d) CANCELLED(c)
+/// #+SEQ_TODO: TODO | DONE
+///
+/// Returns a tuple of (active_keywords, closed_keywords)
+fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String>) {
+    // Default keywords if no custom ones are found
+    let mut active_keywords = vec!["TODO".to_string()];
+    let mut closed_keywords = vec!["DONE".to_string()];
+    let mut custom_keywords_found = false;
+    
+    // Look for TODO keyword definitions in the content
+    for line in content.lines() {
+        let line = line.trim();
+        
+        if line.starts_with("#+TODO:") || line.starts_with("#+SEQ_TODO:") {
+            let definition = line.split_once(':').map(|(_, rest)| rest.trim()).unwrap_or("");
+            
+            // Split by pipe to separate active and closed states
+            if let Some((active, closed)) = definition.split_once('|') {
+                // Process active keywords
+                let active_words: Vec<String> = active
+                    .split_whitespace()
+                    .filter_map(|word| {
+                        // Extract just the keyword (without shortcut in parentheses)
+                        if let Some(keyword) = word.split('(').next() {
+                            if !keyword.is_empty() {
+                                return Some(keyword.to_string());
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+                
+                // Process closed keywords
+                let closed_words: Vec<String> = closed
+                    .split_whitespace()
+                    .filter_map(|word| {
+                        // Extract just the keyword (without shortcut in parentheses)
+                        if let Some(keyword) = word.split('(').next() {
+                            if !keyword.is_empty() {
+                                return Some(keyword.to_string());
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+                
+                if !active_words.is_empty() {
+                    active_keywords = active_words;
+                    custom_keywords_found = true;
+                }
+                
+                if !closed_words.is_empty() {
+                    closed_keywords = closed_words;
+                    custom_keywords_found = true;
+                }
+                
+                // We found a definition, no need to process more lines
+                break;
+            }
+        }
+    }
+    
+    // If no custom keywords were found, use the defaults
+    if custom_keywords_found {
+        println!("Found custom TODO keywords: {:?} | {:?}", active_keywords, closed_keywords);
+    } else {
+        println!("Using default TODO keywords: TODO | DONE");
+    }
+    
+    (active_keywords, closed_keywords)
+}
+
 /// Function to parse an org-mode document
 pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
-    // Parse with Orgize
-    println!("Starting to parse document");
-    let org = Org::parse(content);
+    // Extract TODO keywords from content
+    let todo_keywords = extract_todo_keywords_from_content(content);
+    
+    // Create ParseConfig with extracted TODO keywords
+    let config = orgize::ParseConfig {
+        todo_keywords,
+        ..Default::default()
+    };
+    
+    // Parse with Orgize using custom configuration
+    println!("Starting to parse document with custom config");
+    let org = orgize::Org::parse_custom(content, &config);
     println!("Orgize parsing complete");
 
     // Get document title (use default if not found)
@@ -41,7 +129,7 @@ pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgD
     println!("Properties extracted");
 
     // Extract TODO configuration
-    let todo_config = extract_todo_configuration(&org);
+    let todo_config = extract_todo_configuration(&org, &config);
     println!("TODO config extracted");
 
     // Extract headlines
@@ -145,10 +233,47 @@ fn extract_document_properties(org: &Org) -> HashMap<String, String> {
     properties
 }
 
+/// Helper function to get a color for an active TODO status
+fn get_color_for_active_status(index: usize) -> String {
+    // Color palette for active statuses
+    let colors = [
+        "#ff0000", // Red for TODO
+        "#ff9900", // Orange for IN-PROGRESS
+        "#ffff00", // Yellow for WAITING
+        "#0099ff", // Blue for other active statuses
+        "#9966cc", // Purple
+    ];
+    
+    if index < colors.len() {
+        colors[index].to_string()
+    } else {
+        // Fallback color for additional active statuses
+        "#0099ff".to_string()
+    }
+}
+
+/// Helper function to get a color for a closed TODO status
+fn get_color_for_closed_status(index: usize) -> String {
+    // Color palette for closed statuses
+    let colors = [
+        "#00ff00", // Green for DONE
+        "#999999", // Gray for CANCELLED
+        "#666666", // Dark Gray for other closed statuses
+    ];
+    
+    if index < colors.len() {
+        colors[index].to_string()
+    } else {
+        // Fallback color for additional closed statuses
+        "#666666".to_string()
+    }
+}
+
 /// Extract TODO configuration from an Org document
-fn extract_todo_configuration(org: &Org) -> Option<TodoConfiguration> {
+fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option<TodoConfiguration> {
     let mut todo_lines = Vec::new();
 
+    // First check for TODO keywords in the org file content
     for event in org.iter() {
         if let orgize::Event::Start(Element::Keyword(keyword)) = event {
             if keyword.key.eq_ignore_ascii_case("TODO") {
@@ -157,11 +282,51 @@ fn extract_todo_configuration(org: &Org) -> Option<TodoConfiguration> {
         }
     }
 
-    if todo_lines.is_empty() {
-        None
-    } else {
-        Some(TodoConfiguration::from_org_config(&todo_lines))
+    // If we have TODO lines defined in the org file, use them to build configuration
+    if !todo_lines.is_empty() {
+        return Some(TodoConfiguration::from_org_config(&todo_lines));
     }
+    
+    // Otherwise, use the TODO keywords from ParseConfig
+    let (active_keywords, closed_keywords) = &config.todo_keywords;
+    
+    if active_keywords.is_empty() && closed_keywords.is_empty() {
+        return None;
+    }
+    
+    // Create statuses from the keywords
+    let mut statuses = Vec::new();
+    
+    // Add active keywords
+    for (i, keyword) in active_keywords.iter().enumerate() {
+        statuses.push(TodoStatus {
+            keyword: keyword.clone(),
+            state_type: StateType::Active,
+            order: i as u32,
+            color: Some(get_color_for_active_status(i)), // Assign color based on index
+        });
+    }
+    
+    // Add closed keywords
+    for (i, keyword) in closed_keywords.iter().enumerate() {
+        statuses.push(TodoStatus {
+            keyword: keyword.clone(),
+            state_type: StateType::Closed,
+            order: (active_keywords.len() + i) as u32,
+            color: Some(get_color_for_closed_status(i)), // Assign color based on index
+        });
+    }
+    
+    // Create a sequence with the statuses
+    let sequence = TodoSequence {
+        name: "default".to_string(),
+        statuses,
+    };
+    
+    Some(TodoConfiguration {
+        sequences: vec![sequence],
+        default_sequence: "default".to_string(),
+    })
 }
 
 /// Function to extract headlines with proper hierarchy
