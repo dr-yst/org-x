@@ -26,21 +26,34 @@
 - ✅ Set up basic Tauri + Svelte project
 - ✅ Build memory bank system
 
+### Frontend Design
+- ✅ Design of basic UI structure
+- ✅ State management design using Svelte 5 runes
+- ✅ Design of multi-view tab system
+- ✅ Design of advanced filtering system with multiple conditions
+- ✅ Design of multi-criteria sorting system
+- ✅ Design of flexible grouping system
+- ✅ Design of settings screen for customization
+
+### Type Definitions and Integration
+- ✅ Set up type definition sharing with tauri-specta
+
 ## Items in Progress
 
 ### Backend Development
 - ⬜ Implementation of file monitoring functionality
 - 🔄 Enhancement of content extraction for complex org-mode elements
+- 🔄 Implementation of settings management and persistence
 
 ### Frontend Development
-- ✅ Design of basic UI structure
-- ✅ State management design using Svelte 5 runes
-- ✅ Implementation of headline list view component
-- ✅ Implementation of filtering and organization features
+- 🔄 Implementation of headline list view component
+- 🔄 Implementation of filtering and organization features
 - 🔄 Construction of basic frontend UI components
-
-### Type Definitions and Integration
-- ✅ Set up type definition sharing with tauri-specta
+- 🔄 Implementation of multi-view tab system
+- 🔄 Implementation of advanced filtering UI
+- 🔄 Implementation of multi-criteria sorting UI
+- 🔄 Implementation of flexible grouping UI
+- 🔄 Implementation of settings screen
 
 ## Unstarted Items
 
@@ -48,6 +61,7 @@
 - ⬜ File system scanning and support for multiple files
 - ⬜ External editor integration
 - ⬜ Detection of file changes and automatic reloading
+- ⬜ Implementation of view and settings persistence
 
 ### Frontend Features
 - ⬜ OrgDocument viewer component
@@ -56,6 +70,9 @@
 - ⬜ TODO item filtering functionality
 - ⬜ Filtering functionality by tags
 - ⬜ Switching between list/kanban/timeline views
+- ⬜ Implementation of Kanban view
+- ⬜ Implementation of Timeline view
+- ⬜ Implementation of grouped view displays
 
 ### Keyboard Operations
 - ⬜ Keyboard shortcut system
@@ -67,31 +84,39 @@
 - ✅ Backend unit tests (parser tests fixed)
 - ⬜ Frontend component tests
 - ⬜ E2E tests
+- ⬜ Filter, sort, and group logic tests
 
 ## Progress Overview and Next Steps
 
 ### Current Progress Status
-The project continues to make good progress in its initial development stage. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing. These improvements provide a solid foundation for the application's core functionality, enabling flexible TODO state management, tag and category tracking, and efficient change detection.
+The project continues to make good progress in its development. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing.
+
+On the frontend side, we've designed a comprehensive UI structure with multiple view tabs, display mode tabs, advanced filtering, multi-criteria sorting, and flexible grouping. We've also designed a settings screen for customizing TODO keywords, monitoring settings, and user-defined properties. These designs provide a solid foundation for implementing a flexible and powerful user interface.
 
 ### Immediate Challenges
-- Improve frontend UI components with interactive features
-- Implement keyboard shortcuts for navigation and operations
+- Implement the designed UI components with interactive features
+- Implement view state management and persistence
+- Implement the advanced filtering, sorting, and grouping functionality
+- Implement the settings screen and persistence
 - Implement file monitoring functionality
 - Enhance content extraction to handle complex org-mode elements
-
+- Design clear visual representation for grouped content
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
    - Basic org-mode file display functionality
    - Loading and displaying a single file
    - Hierarchical display of headings with collapsing functionality
-   - Basic keyboard operations
+   - Basic view management with filtering, sorting, and grouping
+   - Settings screen for customization
 
 2. **MVP Phase 2** (Goal within 8 weeks):
    - Management of multiple files
    - TODO item filtering and views
    - Integration with external editors
-   - Extended keyboard shortcuts
+   - Multiple view tabs with different display modes
+   - Advanced filtering, sorting, and grouping
+   - File monitoring and automatic updates
 
 ### Project Direction and Evolution of Decisions
 - Implemented modular architecture for better separation of concerns
@@ -104,14 +129,20 @@ The project continues to make good progress in its initial development stage. We
 - Implemented a flexible TODO state system to accommodate user-defined TODO keywords
 - Designed a global metadata management system for efficient tag and category tracking
 - Prioritized code quality and safety by fixing unsafe code patterns
+- Designed a multi-view tab system for better organization and customization
+- Created a comprehensive filtering and sorting system for powerful content organization
+- Added flexible grouping functionality to organize related content
+- Designed a settings screen for centralizing all customization options
 
 ## Risks and Challenges
 
 ### Technical Risks
-- Test failures in parser module that need resolution
-- Performance with large org-mode files
+- Performance with large org-mode files and complex filters/groups
 - Consistent editor integration across platforms
 - Complete support for complex org-mode syntax
+- Efficient persistence of view configurations and settings
+- Maintaining performance with multiple views and complex filters/groups
+- Visual clarity with nested groups
 
 ### Solutions and Mitigation Strategies
 - Improved debugging techniques to identify and fix test failures
@@ -120,3 +151,6 @@ The project continues to make good progress in its initial development stage. We
 - Gradual implementation starting with high-priority org-mode features
 - Efficient change detection using etag-based approach
 - Modular code organization to improve maintainability and isolate issues
+- Optimization of filter and group evaluation with short-circuit logic
+- Efficient serialization and storage of view configurations
+- Clear visual design for grouped content with collapsible sections

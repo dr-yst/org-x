@@ -81,6 +81,14 @@ During updates:
   - Providing filtering capabilities based on metadata
   - Maintaining metadata statistics
 
+#### Settings Manager
+- `settings_manager.rs` - Manages user settings and preferences (planned)
+- Responsibilities:
+  - Storing and retrieving user settings
+  - Managing custom TODO keywords
+  - Configuring file monitoring targets and intervals
+  - Handling user-defined properties
+
 ### Frontend Components
 
 #### Core Components
@@ -91,7 +99,7 @@ During updates:
 #### View Components
 - `ListView.svelte` - List format display (basic view)
 - `KanbanView.svelte` - Kanban format display (planned)
-- `TimelineView.svelte` - Timeline format display (planned)
+- `TimelineView.svelte` - Timeline (Gantt chart) format display (planned)
 
 #### Interaction Components
 - `KeyboardHandler.svelte` - Processing keyboard shortcuts
@@ -102,6 +110,102 @@ During updates:
 - `TagBrowser.svelte` - Browse and filter by tags
 - `CategoryBrowser.svelte` - Browse and filter by categories
 - `MetadataStatistics.svelte` - Display statistics about tags and categories
+
+#### New UI Components
+- `AppHeader.svelte` - Main application header with view tabs
+- `ViewTabs.svelte` - Tabs for switching between saved views
+- `ViewDisplayTabs.svelte` - Tabs for switching display modes within a view
+- `FilterPanel.svelte` - Advanced filtering with multiple conditions
+- `SortPanel.svelte` - Multi-criteria sorting controls
+- `GroupPanel.svelte` - Flexible grouping controls
+- `SettingsDialog.svelte` - Settings screen for customization
+- `Sidebar.svelte` - Application sidebar with navigation and filters
+
+## UI Patterns
+
+### Multi-View Tab System
+The application uses a two-level tab system:
+
+1. **View Tabs (top level)**
+   - Each tab represents a saved view with its own configuration
+   - Users can create, rename, and delete views
+   - View state (filters, sort, grouping, display mode) is persisted
+
+2. **Display Mode Tabs (second level)**
+   - Within each view, users can switch between display modes:
+     - List view
+     - Kanban board
+     - Timeline (Gantt chart)
+   - Each display mode maintains its own layout settings
+
+### Advanced Filtering
+The filtering system allows combining multiple conditions:
+
+1. **Filter Types**
+   - Tags (multiple selection with AND/OR)
+   - Categories (multiple selection with AND/OR)
+   - TODO status
+   - Priority
+   - Date ranges (due, scheduled, created)
+   - Custom properties
+
+2. **Compound Filters**
+   - Ability to create complex filters with nested conditions
+   - Support for AND/OR/NOT operators
+   - Save and reuse filter presets
+
+### Multi-Criteria Sorting
+The sorting system supports:
+
+1. **Primary and Secondary Sort**
+   - Multiple sort criteria in order of precedence
+   - Each criterion can be ascending or descending
+
+2. **Sort Fields**
+   - Date fields (due, scheduled, created)
+   - Priority
+   - TODO status
+   - Title
+   - Custom properties
+
+### Flexible Grouping
+The grouping system allows organizing content by:
+
+1. **Group By Fields**
+   - TODO status
+   - Priority
+   - Tags
+   - Categories
+   - Custom properties
+   - Due/scheduled dates (by day, week, month)
+
+2. **Group Visualization**
+   - Collapsible groups
+   - Group headers with count and summary
+   - Nested groups (up to 2 levels)
+   - Visual separation between groups
+
+3. **Group Operations**
+   - Collapse/expand all groups
+   - Focus on specific group
+   - Sort groups by name, count, or custom criteria
+
+### Settings Dialog
+The settings dialog provides centralized configuration:
+
+1. **TODO Keywords**
+   - Define custom TODO keywords
+   - Set colors and states (active/closed)
+   - Create custom sequences
+
+2. **File Monitoring**
+   - Add/remove monitored folders and files
+   - Set monitoring interval
+   - Configure auto-reload behavior
+
+3. **Custom Properties**
+   - Define user properties for filtering, sorting, and grouping
+   - Configure property inheritance rules
 
 ## Data Model
 
@@ -147,7 +251,7 @@ impl OrgTitle {
     pub fn get_property(&self, key: &str) -> Option<&str> {
         self.properties.get(key).map(|s| s.as_str())
     }
-    
+
     // Set a property value
     pub fn set_property(&mut self, key: String, value: String) {
         self.properties.insert(key, value);
@@ -339,7 +443,7 @@ impl OrgHeadline {
         if let Some(value) = self.properties.get(key) {
             return Some(value);
         }
-        
+
         // Then check title properties
         self.title.get_property(key)
     }
@@ -354,11 +458,11 @@ impl OrgHeadline {
         // Fall back to document category
         document.category.clone()
     }
-    
+
     // Get the TODO status information
     pub fn get_todo_status(&self, config: &Option<TodoConfiguration>) -> Option<&TodoStatus> {
         let keyword = self.todo_keyword.as_ref()?;
-        
+
         if let Some(config) = config {
             config.find_status(keyword)
         } else {
@@ -375,7 +479,7 @@ impl OrgHeadline {
                 if candidate.children.iter().any(|child| child.id == headline.id) {
                     return Some(candidate);
                 }
-                
+
                 // Recursive search in children
                 if let Some(parent) = find_parent(headline, &candidate.children) {
                     return Some(parent);
@@ -383,7 +487,7 @@ impl OrgHeadline {
             }
             None
         }
-        
+
         find_parent(self, &document.headlines)
     }
 
@@ -404,7 +508,7 @@ impl OrgHeadline {
         }
         None
     }
-    
+
     // Find next sibling
     pub fn next<'a>(&self, document: &'a OrgDocument) -> Option<&'a OrgHeadline> {
         if let Some(parent) = self.parent(document) {
@@ -422,59 +526,59 @@ impl OrgHeadline {
         }
         None
     }
-    
+
     // Check if content has changed compared to another headline
     pub fn content_changed(&self, other: &OrgHeadline) -> bool {
         self.content != other.content || self.title.raw != other.title.raw
     }
-    
+
     // Check if structure has changed compared to another headline
     pub fn structure_changed(&self, other: &OrgHeadline) -> bool {
         if self.children.len() != other.children.len() {
             return true;
         }
-        
+
         // Check children recursively
         for (self_child, other_child) in self.children.iter().zip(other.children.iter()) {
             if self_child.structure_changed(other_child) {
                 return true;
             }
         }
-        
+
         false
     }
 
     // Find all task headlines (recursive)
     pub fn find_tasks(&self) -> Vec<&OrgHeadline> {
         let mut tasks = Vec::new();
-        
+
         // Add self if it's a task
         if self.is_task() {
             tasks.push(self);
         }
-        
+
         // Recursively add tasks from children
         for child in &self.children {
             tasks.extend(child.find_tasks());
         }
-        
+
         tasks
     }
-    
+
     // Find all note headlines (recursive)
     pub fn find_notes(&self) -> Vec<&OrgHeadline> {
         let mut notes = Vec::new();
-        
+
         // Add self if it's a note
         if self.is_note() {
             notes.push(self);
         }
-        
+
         // Recursively add notes from children
         for child in &self.children {
             notes.extend(child.find_notes());
         }
-        
+
         notes
     }
 }
@@ -490,22 +594,22 @@ impl OrgHeadline {
     pub fn is_task(&self) -> bool {
         self.todo_keyword.is_some()
     }
-    
+
     // Check if this headline is a note (no TODO keyword)
     pub fn is_note(&self) -> bool {
         self.todo_keyword.is_none()
     }
-    
+
     // Get due date (from PROPERTIES)
     pub fn due_date(&self) -> Option<&str> {
         self.properties.get("DEADLINE").map(|s| s.as_str())
     }
-    
+
     // Get scheduled date (from PROPERTIES)
     pub fn scheduled_date(&self) -> Option<&str> {
         self.properties.get("SCHEDULED").map(|s| s.as_str())
     }
-    
+
     // Get effective category (from headline properties or parent document)
     pub fn get_category(&self, document: &OrgDocument) -> String {
         // First check headline properties
@@ -516,7 +620,7 @@ impl OrgHeadline {
         // Fall back to document category
         document.category.clone()
     }
-    
+
     // Get resolved TODO status with color and state information
     pub fn get_todo_status(&self, config: &TodoConfiguration) -> Option<TodoStatus> {
         if let Some(keyword) = &self.todo_keyword {
@@ -525,40 +629,208 @@ impl OrgHeadline {
             None
         }
     }
-    
+
     // Find all task headlines (recursive)
     pub fn find_tasks(&self) -> Vec<&OrgHeadline> {
         let mut tasks = Vec::new();
-        
+
         // Add self if it's a task
         if self.is_task() {
             tasks.push(self);
         }
-        
+
         // Add tasks from children
         for child in &self.children {
             tasks.extend(child.find_tasks());
         }
-        
+
         tasks
     }
-    
+
     // Find all note headlines (recursive)
     pub fn find_notes(&self) -> Vec<&OrgHeadline> {
         let mut notes = Vec::new();
-        
+
         // Add self if it's a note
         if self.is_note() {
             notes.push(self);
         }
-        
+
         // Add notes from children
         for child in &self.children {
             notes.extend(child.find_notes());
         }
-        
+
         notes
     }
+}
+
+// New models for UI state management
+
+// View configuration model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ViewConfig {
+    pub id: String,
+    pub name: String,
+    pub display_mode: DisplayMode,
+    pub filter: FilterConfig,
+    pub sort: SortConfig,
+    pub group: GroupConfig,
+    pub is_default: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DisplayMode {
+    List,
+    Kanban,
+    Timeline,
+    Custom(String),
+}
+
+// Filter configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterConfig {
+    pub conditions: Vec<FilterCondition>,
+    pub operator: FilterOperator,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FilterOperator {
+    And,
+    Or,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FilterCondition {
+    Tag(TagFilter),
+    Category(CategoryFilter),
+    TodoStatus(TodoStatusFilter),
+    Priority(PriorityFilter),
+    Date(DateFilter),
+    Property(PropertyFilter),
+    Compound(Box<FilterConfig>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TagFilter {
+    pub tags: Vec<String>,
+    pub operator: FilterOperator,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CategoryFilter {
+    pub categories: Vec<String>,
+    pub operator: FilterOperator,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TodoStatusFilter {
+    pub statuses: Vec<String>,
+    pub include_active: Option<bool>,
+    pub include_closed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PriorityFilter {
+    pub priorities: Vec<char>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DateFilter {
+    pub field: DateField,
+    pub operator: DateOperator,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DateField {
+    Due,
+    Scheduled,
+    Created,
+    Modified,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DateOperator {
+    Before,
+    After,
+    On,
+    Between,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PropertyFilter {
+    pub property: String,
+    pub operator: PropertyOperator,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PropertyOperator {
+    Equals,
+    Contains,
+    StartsWith,
+    EndsWith,
+    GreaterThan,
+    LessThan,
+}
+
+// Sort configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SortConfig {
+    pub criteria: Vec<SortCriterion>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SortCriterion {
+    pub field: SortField,
+    pub direction: SortDirection,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SortField {
+    Title,
+    Priority,
+    TodoStatus,
+    DueDate,
+    ScheduledDate,
+    CreatedDate,
+    ModifiedDate,
+    Property(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SortDirection {
+    Ascending,
+    Descending,
+}
+
+// Group configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GroupConfig {
+    pub enabled: bool,
+    pub fields: Vec<GroupField>,
+    pub collapsed_by_default: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GroupField {
+    TodoStatus,
+    Priority,
+    Tag(String),
+    Category,
+    Property(String),
+    DueDate(DateGrouping),
+    ScheduledDate(DateGrouping),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DateGrouping {
+    Day,
+    Week,
+    Month,
+    Quarter,
+    Year,
 }
 
 // Optional view models for UI-specific state
@@ -681,6 +953,42 @@ impl GlobalMetadata {
     }
 }
 
+// User settings model
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserSettings {
+    pub todo_configuration: TodoConfiguration,
+    pub monitored_paths: Vec<MonitoredPath>,
+    pub monitoring_interval_seconds: u32,
+    pub custom_properties: Vec<CustomProperty>,
+    pub views: Vec<ViewConfig>,
+    pub default_view_id: String,
+    pub theme: Theme,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MonitoredPath {
+    pub id: String,
+    pub path: String,
+    pub is_directory: bool,
+    pub include_subdirectories: bool,
+    pub file_pattern: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomProperty {
+    pub name: String,
+    pub description: Option<String>,
+    pub default_value: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Theme {
+    Light,
+    Dark,
+    System,
+    Custom(String),
+}
+
 // Model representing update information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OrgUpdateInfo {
@@ -690,7 +998,6 @@ pub struct OrgUpdateInfo {
     pub new_headlines: Vec<String>, // IDs of newly added headlines
     pub timestamp: String,
 }
-```
 
 ## State Management
 
@@ -843,6 +1150,115 @@ impl MetadataManager {
     }
 }
 
+// Settings manager singleton
+pub struct SettingsManager {
+    settings: Arc<RwLock<UserSettings>>,
+}
+
+impl SettingsManager {
+    // Get singleton instance
+    pub fn instance() -> &'static SettingsManager {
+        static INSTANCE: OnceLock<SettingsManager> = OnceLock::new();
+        INSTANCE.get_or_init(|| {
+            SettingsManager {
+                settings: Arc::new(RwLock::new(Self::load_settings().unwrap_or_else(|_| Self::default_settings()))),
+            }
+        })
+    }
+
+    // Load settings from disk
+    fn load_settings() -> Result<UserSettings, Box<dyn std::error::Error>> {
+        // Load settings from file
+        // Return error if file doesn't exist or can't be parsed
+        todo!()
+    }
+
+    // Save settings to disk
+    fn save_settings(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // Save settings to file
+        todo!()
+    }
+
+    // Get default settings
+    fn default_settings() -> UserSettings {
+        UserSettings {
+            todo_configuration: TodoConfiguration::default(),
+            monitored_paths: Vec::new(),
+            monitoring_interval_seconds: 30,
+            custom_properties: Vec::new(),
+            views: vec![
+                ViewConfig {
+                    id: "default".to_string(),
+                    name: "Default View".to_string(),
+                    display_mode: DisplayMode::List,
+                    filter: FilterConfig {
+                        conditions: Vec::new(),
+                        operator: FilterOperator::And,
+                    },
+                    sort: SortConfig {
+                        criteria: Vec::new(),
+                    },
+                    group: GroupConfig {
+                        enabled: false,
+                        fields: Vec::new(),
+                        collapsed_by_default: false,
+                    },
+                    is_default: true,
+                }
+            ],
+            default_view_id: "default".to_string(),
+            theme: Theme::System,
+        }
+    }
+
+    // Get settings
+    pub fn get_settings(&self) -> UserSettings {
+        let settings = self.settings.read().unwrap();
+        settings.clone()
+    }
+
+    // Update settings
+    pub fn update_settings(&self, settings: UserSettings) -> Result<(), Box<dyn std::error::Error>> {
+        {
+            let mut current_settings = self.settings.write().unwrap();
+            *current_settings = settings;
+        }
+        self.save_settings()
+    }
+
+    // Add or update view
+    pub fn upsert_view(&self, view: ViewConfig) -> Result<(), Box<dyn std::error::Error>> {
+        let mut settings = self.settings.write().unwrap();
+
+        // Remove existing view with same ID if it exists
+        settings.views.retain(|v| v.id != view.id);
+
+        // Add new view
+        settings.views.push(view);
+
+        // Save settings
+        drop(settings);
+        self.save_settings()
+    }
+
+    // Remove view
+    pub fn remove_view(&self, view_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let mut settings = self.settings.write().unwrap();
+
+        // Check if we're trying to remove the default view
+        if settings.default_view_id == view_id {
+            return Err("Cannot remove default view".into());
+        }
+
+        // Remove view
+        settings.views.retain(|v| v.id != view_id);
+
+        // Save settings
+        drop(settings);
+        self.save_settings()
+    }
+}
+
 // File watcher service - monitors file changes
 pub struct FileWatcherService {
     watcher: RecommendedWatcher,
@@ -889,6 +1305,29 @@ const allCategories = signal<CategoryInfo[]>([]);
 // Update history
 const updateHistory = signal<OrgUpdateInfo[]>([]);
 
+// User settings
+const userSettings = signal<UserSettings | null>(null);
+
+// View state
+const views = signal<ViewConfig[]>([]);
+const activeViewId = signal<string>("");
+const activeDisplayMode = signal<DisplayMode>(DisplayMode.List);
+
+// Derived view state
+const activeView = computed(() => {
+  const viewId = activeViewId();
+  return views().find(view => view.id === viewId) || views()[0];
+});
+
+// Filter state
+const activeFilter = computed(() => activeView()?.filter || { conditions: [], operator: FilterOperator.And });
+
+// Sort state
+const activeSort = computed(() => activeView()?.sort || { criteria: [] });
+
+// Group state
+const activeGroup = computed(() => activeView()?.group || { enabled: false, fields: [], collapsed_by_default: false });
+
 // Derived content organization
 const orgTasks = computed(() => {
   // Extract tasks from all documents
@@ -904,6 +1343,52 @@ const orgNotes = computed(() => {
   return orgDocuments().flatMap(doc => {
     return extractNotesFromDocument(doc);
   });
+});
+
+// Filtered and sorted content
+const filteredTasks = computed(() => {
+  let tasks = orgTasks();
+
+  // Apply active filter
+  tasks = applyFilter(tasks, activeFilter());
+
+  // Apply active sort
+  tasks = applySort(tasks, activeSort());
+
+  return tasks;
+});
+
+const filteredNotes = computed(() => {
+  let notes = orgNotes();
+
+  // Apply active filter
+  notes = applyFilter(notes, activeFilter());
+
+  // Apply active sort
+  notes = applySort(notes, activeSort());
+
+  return notes;
+});
+
+// Grouped content
+const groupedTasks = computed(() => {
+  const tasks = filteredTasks();
+
+  if (!activeGroup().enabled || activeGroup().fields.length === 0) {
+    return { ungrouped: tasks };
+  }
+
+  return groupItems(tasks, activeGroup().fields);
+});
+
+const groupedNotes = computed(() => {
+  const notes = filteredNotes();
+
+  if (!activeGroup().enabled || activeGroup().fields.length === 0) {
+    return { ungrouped: notes };
+  }
+
+  return groupItems(notes, activeGroup().fields);
 });
 
 // Helper function to get document for a headline
@@ -925,61 +1410,138 @@ function getEffectiveCategory(headline: OrgHeadline): string {
   return doc.category;
 }
 
-// Filter state
-const todoFilter = signal<TodoStatus | null>(null);
-const tagFilter = signal<string[]>([]);
-const categoryFilter = signal<string[]>([]);
-
-// Filtered tasks and notes
-const filteredTasks = computed(() => {
-  let tasks = orgTasks();
-
-  // Apply TODO status filter
-  if (todoFilter()) {
-    tasks = tasks.filter(task => task.status.keyword === todoFilter()?.keyword);
+// Apply filter to items
+function applyFilter<T extends { headline: OrgHeadline }>(items: T[], filter: FilterConfig): T[] {
+  if (filter.conditions.length === 0) {
+    return items;
   }
 
-  // Apply tag filter
-  if (tagFilter().length > 0) {
-    tasks = tasks.filter(task =>
-      tagFilter().some(tag => task.headline.tags.includes(tag))
-    );
-  }
-
-  // Apply category filter
-  if (categoryFilter().length > 0) {
-    tasks = tasks.filter(task => {
-      const category = getEffectiveCategory(task.headline);
-      return category && categoryFilter().includes(category);
+  return items.filter(item => {
+    const matches = filter.conditions.map(condition => {
+      return matchesCondition(item.headline, condition);
     });
+
+    if (filter.operator === FilterOperator.And) {
+      return matches.every(match => match);
+    } else {
+      return matches.some(match => match);
+    }
+  });
+}
+
+// Apply sort to items
+function applySort<T extends { headline: OrgHeadline }>(items: T[], sort: SortConfig): T[] {
+  if (sort.criteria.length === 0) {
+    return items;
   }
 
-  return tasks;
-});
+  return [...items].sort((a, b) => {
+    for (const criterion of sort.criteria) {
+      const comparison = compareByCriterion(a.headline, b.headline, criterion);
+      if (comparison !== 0) {
+        return comparison;
+      }
+    }
+    return 0;
+  });
+}
 
-const filteredNotes = computed(() => {
-  let notes = orgNotes();
-
-  // Apply tag filter
-  if (tagFilter().length > 0) {
-    notes = notes.filter(note =>
-      tagFilter().some(tag => note.headline.tags.includes(tag))
-    );
+// Group items by specified fields
+function groupItems<T extends { headline: OrgHeadline }>(items: T[], groupFields: GroupField[]): Record<string, T[]> {
+  if (groupFields.length === 0) {
+    return { ungrouped: items };
   }
 
-  // Apply category filter
-  if (categoryFilter().length > 0) {
-    notes = notes.filter(note => {
-      const category = getEffectiveCategory(note.headline);
-      return category && categoryFilter().includes(category);
-    });
+  const result: Record<string, T[]> = {};
+
+  // Handle first-level grouping
+  const primaryField = groupFields[0];
+
+  for (const item of items) {
+    const groupKey = getGroupKey(item.headline, primaryField);
+    if (!result[groupKey]) {
+      result[groupKey] = [];
+    }
+    result[groupKey].push(item);
   }
 
-  return notes;
-});
+  // Handle nested grouping if needed
+  if (groupFields.length > 1) {
+    const nestedResult: Record<string, T[]> = {};
+    const secondaryField = groupFields[1];
 
-// View state
-const viewMode = signal<'list' | 'kanban' | 'timeline'>('list');
+    for (const [primaryKey, primaryGroup] of Object.entries(result)) {
+      for (const item of primaryGroup) {
+        const secondaryKey = getGroupKey(item.headline, secondaryField);
+        const combinedKey = `${primaryKey}/${secondaryKey}`;
+
+        if (!nestedResult[combinedKey]) {
+          nestedResult[combinedKey] = [];
+        }
+        nestedResult[combinedKey].push(item);
+      }
+    }
+
+    return nestedResult;
+  }
+
+  return result;
+}
+
+// Get group key for a headline based on the group field
+function getGroupKey(headline: OrgHeadline, field: GroupField): string {
+  switch (field.type) {
+    case "todoStatus":
+      return headline.todo_keyword || "No Status";
+    case "priority":
+      return headline.priority || "No Priority";
+    case "tag":
+      return headline.tags.includes(field.tag) ? field.tag : "Other";
+    case "category":
+      return getEffectiveCategory(headline) || "No Category";
+    case "property":
+      return headline.properties[field.property] || `No ${field.property}`;
+    case "dueDate":
+      const dueDate = headline.due_date();
+      if (!dueDate) return "No Due Date";
+      return formatDateForGrouping(dueDate, field.grouping);
+    case "scheduledDate":
+      const scheduledDate = headline.scheduled_date();
+      if (!scheduledDate) return "No Scheduled Date";
+      return formatDateForGrouping(scheduledDate, field.grouping);
+    default:
+      return "Other";
+  }
+}
+
+// Format date for grouping based on grouping level
+function formatDateForGrouping(dateStr: string, grouping: DateGrouping): string {
+  const date = new Date(dateStr);
+  switch (grouping) {
+    case DateGrouping.Day:
+      return date.toISOString().split('T')[0]; // YYYY-MM-DD
+    case DateGrouping.Week:
+      return `Week ${getWeekNumber(date)}, ${date.getFullYear()}`;
+    case DateGrouping.Month:
+      return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    case DateGrouping.Quarter:
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      return `Q${quarter} ${date.getFullYear()}`;
+    case DateGrouping.Year:
+      return date.getFullYear().toString();
+    default:
+      return dateStr;
+  }
+}
+
+// Get ISO week number
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
 ```
 
 ### Data Flow Between Backend and Frontend
@@ -987,13 +1549,19 @@ const viewMode = signal<'list' | 'kanban' | 'timeline'>('list');
 The data flow between the Rust backend and Svelte frontend follows these patterns:
 
 1. **Initial Load**:
-   - Frontend requests documents from backend
+   - Frontend requests documents and settings from backend
    - Backend loads and parses org files
    - Backend registers metadata (tags, categories) in the global MetadataManager
-   - Backend sends document data and metadata to frontend
+   - Backend sends document data, metadata, and settings to frontend
    - Frontend updates its state signals
 
-2. **File Changes**:
+2. **View Management**:
+   - User creates, updates, or deletes views in the frontend
+   - Frontend sends view changes to backend for persistence
+   - Backend stores updated views in user settings
+   - Views are reloaded on application restart
+
+3. **File Changes**:
    - Backend file watcher detects changes
    - Backend re-parses modified files
    - Backend updates the MetadataManager
@@ -1001,17 +1569,18 @@ The data flow between the Rust backend and Svelte frontend follows these pattern
    - Backend sends only the changes to frontend
    - Frontend updates affected components
 
-3. **User Interactions**:
+4. **User Interactions**:
    - User applies filters or changes views
    - Frontend computes derived state using Svelte's computed values
    - No backend communication needed for UI-only changes
 
-4. **Metadata Operations**:
-   - User selects tags or categories for filtering
-   - Frontend applies filters using the computed values
-   - Backend provides metadata statistics when requested
+5. **Settings Management**:
+   - User updates settings in the settings dialog
+   - Frontend sends settings changes to backend
+   - Backend persists settings to disk
+   - Backend applies new settings (e.g., monitoring interval)
 
-5. **External Editor Integration**:
+6. **External Editor Integration**:
    - User requests to open a file in external editor
    - Frontend sends request to backend
    - Backend launches external editor with file
@@ -1044,6 +1613,18 @@ The data flow between the Rust backend and Svelte frontend follows these pattern
 - This enables easy access to document-level properties and settings
 - Inheritance of properties (like category) from parent document when not specified at headline level
 
+### View-Tab Pattern
+- Top-level tabs for different saved views
+- Second-level tabs for display modes within a view
+- Each view maintains its own filter, sort, and group configuration
+- Views are persisted in user settings
+
+### Filter-Sort-Group Pattern
+- Composable filter conditions that can be combined with AND/OR operators
+- Multi-criteria sorting with precedence
+- Flexible grouping with support for nested groups
+- Filter, sort, and group configurations are saved with views
+
 ## Critical Path
 
 1. Parsing org-mode files (Rust)
@@ -1051,7 +1632,8 @@ The data flow between the Rust backend and Svelte frontend follows these pattern
 3. Transfer of structured data to the frontend (Tauri IPC)
 4. Integration of data into state management (Svelte Runes)
 5. UI rendering (Svelte Components)
-6. Handling keyboard events
+6. View, filter, sort, and group management
+7. Settings persistence and application
 
 ## Parse Configuration
 
@@ -1064,16 +1646,16 @@ The orgize library provides a `ParseConfig` struct that allows customization of 
 pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
     // Extract TODO keywords from content
     let todo_keywords = extract_todo_keywords_from_content(content);
-    
+
     // Create ParseConfig with extracted TODO keywords
     let config = orgize::ParseConfig {
         todo_keywords,
         ..Default::default()
     };
-    
+
     // Parse with custom configuration
     let org = orgize::Org::parse_custom(content, &config);
-    
+
     // Process the parsed content...
 }
 
@@ -1093,7 +1675,7 @@ The extracted TODO keywords from the org file are integrated with our TodoConfig
 fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option<TodoConfiguration> {
     // First check for TODO keywords in the org file content
     let mut todo_lines = Vec::new();
-    
+
     for event in org.iter() {
         if let orgize::Event::Start(Element::Keyword(keyword)) = event {
             if keyword.key.eq_ignore_ascii_case("TODO") {
@@ -1106,10 +1688,10 @@ fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option
     if !todo_lines.is_empty() {
         return Some(TodoConfiguration::from_org_config(&todo_lines));
     }
-    
+
     // Otherwise, use the TODO keywords from ParseConfig
     let (active_keywords, closed_keywords) = &config.todo_keywords;
-    
+
     // Create TodoConfiguration from the ParseConfig keywords
 }
 ```
@@ -1152,8 +1734,8 @@ pub struct TodoConfiguration {
 }
 ```
 
-This allows:
 
+This allows:
 1. **Multiple Sequences**: Support for different TODO sequences in different contexts
 2. **Default Fallback**: A default sequence for files without specific configurations
 3. **Extensibility**: Easy addition of new sequences through the UI

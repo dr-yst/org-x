@@ -2,7 +2,7 @@
 
 ## Current Work Focus
 
-The current project priority is implementing the backend org-mode parsing functionality. We've completed the basic headline hierarchy processing and content extraction, further enhanced the data model implementation, and improved the organization and maintainability of the code. Most recently, we've implemented a new OrgTitle structure to better represent headline titles and their associated metadata, enhanced property handling to properly extract properties from headlines, and implemented orgize::ParseConfig to better handle custom TODO keywords from org files.
+The current project priority is implementing the frontend UI design with the new multi-view/tab/filter/sort/group capabilities. We've completed the basic headline hierarchy processing and content extraction in the backend, and now we're focusing on creating a flexible and powerful UI that allows users to customize their views, filters, sorting criteria, and grouping options.
 
 ### Tasks in Progress
 - ✅ Basic implementation of org-mode parsing using the Orgize library
@@ -17,85 +17,107 @@ The current project priority is implementing the backend org-mode parsing functi
 - ✅ Implemented headline property extraction from Orgize parser
 - ✅ Improved property handling with inheritance and access mechanisms
 - ✅ Enhanced TODO keyword handling with orgize::ParseConfig
-- 🔄 Construction of basic frontend UI
+- 🔄 Designing frontend UI with multi-view/tab/filter/sort/group capabilities
+- 🔄 Designing settings screen for user-defined TODO keywords, properties, and monitoring
 - ⬜ Implementation of file monitoring functionality
 
-### Recent Work and Fixes
-- Implemented custom TODO keyword extraction from org files using orgize::ParseConfig
-- Created helper functions for assigning colors to different TODO states
-- Enhanced todo_configuration creation to utilize org-mode's native TODO keyword definitions
-- Implemented proper headline property extraction from Orgize parser
-- Created a new OrgTitle structure to better represent headline titles and their metadata
-- Refactored headline structure to use OrgTitle instead of raw fields
-- Implemented navigation methods to traverse the headline hierarchy (parent, previous, next)
-- Enhanced property handling with better access and inheritance mechanisms
-- Improved change detection with content_changed and structure_changed methods
-- Added comprehensive tests for all new functionality
-- Fixed all parser module test failures with a more robust implementation
+### Recent Work and Decisions
+- Designed a new UI structure with multiple view tabs and display mode tabs
+- Created a comprehensive filter and sort system design that allows combining multiple conditions
+- Added flexible grouping functionality to organize content by properties, tags, categories, and TODO status
+- Designed a settings screen for customizing TODO keywords, monitoring settings, and user-defined properties
+- Expanded the data model to include ViewConfig, FilterConfig, SortConfig, GroupConfig, and UserSettings structures
+- Designed a state management approach for persisting and switching between views
+- Adopted a Notion-like UI pattern with tabs for views and display modes
+
+### Technical Considerations
+- The new UI design needs to maintain keyboard operability while adding rich visual features
+- The filter, sort, and group system must be flexible enough to handle complex conditions while remaining intuitive
+- The settings screen should provide comprehensive customization while keeping a clean, organized interface
+- State management for multiple views requires careful design to maintain performance with large files
+- View persistence requires efficient serialization and storage in the backend
+- Grouping functionality needs to handle nested groups efficiently
 
 ## Recent Changes
 
 ### Technical Changes
-1. Added: OrgTitle structure
-   - Created a dedicated structure for headline titles
-   - Encapsulated title metadata (priority, tags, TODO keyword, properties)
-   - Implemented useful traits like PartialEq and Hash for better comparison and hashing
+1. Added: Multi-view tab system design
+   - Created a two-level tab system (view tabs and display mode tabs)
+   - Designed state management for persisting view configurations
+   - Implemented view switching and display mode switching
 
-2. Added: Enhanced navigation functionality
-   - Implemented parent() method to find a headline's parent
-   - Added previous() and next() methods for sibling headline navigation
-   - Created a more intuitive way to traverse the headline hierarchy
+2. Added: Advanced filtering system design
+   - Designed a flexible filter condition model that supports multiple condition types
+   - Created a compound filter system that allows combining conditions with AND/OR operators
+   - Implemented filter persistence within view configurations
 
-3. Improved: Property handling
-   - Enhanced property extraction from Orgize parser
-   - Created a unified property access API
-   - Better organized property inheritance from documents to headlines
+3. Added: Multi-criteria sorting system design
+   - Designed a sort criterion model that supports multiple fields and directions
+   - Created a precedence-based sorting system for applying multiple criteria
+   - Implemented sort persistence within view configurations
 
-4. Added: Enhanced change detection
-   - Implemented content_changed() method to detect content modifications
-   - Added structure_changed() method to identify structural changes
-   - Improved etag generation for more accurate change detection
+4. Added: Flexible grouping system design
+   - Designed a group field model that supports various grouping criteria
+   - Created support for nested grouping (up to 2 levels)
+   - Implemented group persistence within view configurations
 
-5. Bug Fixes:
-   - Fixed property extraction in parser module
-   - Implemented proper comparison between OrgTitle and strings
-   - Fixed all test failures related to the parser module
-   - Eliminated compiler warnings for a cleaner code base
+5. Added: Settings screen design
+   - Created a comprehensive settings dialog for customizing the application
+   - Designed interfaces for managing TODO keywords, monitoring settings, and custom properties
+   - Implemented settings persistence in the backend
+
+6. Added: User settings model
+   - Created a UserSettings structure to store all user preferences
+   - Designed a SettingsManager singleton for managing settings
+   - Implemented persistence of settings to disk
 
 ### Design Decisions and Considerations
-- Creation of a dedicated OrgTitle structure to better represent headline titles and properties
-- Implementation of navigation methods for improved headline hierarchy traversal
-- Unification of property access with a consistent API
-- Enhancement of comparison and hashing capabilities for better title handling
-- Direct usage of Orgize parser's property extraction capabilities
+- Decision to use a two-level tab system (view tabs and display mode tabs) for better organization
+- Choice to implement a flexible filter/sort/group system that can handle complex conditions
+- Decision to centralize all customization in a comprehensive settings screen
+- Implementation of view persistence to allow users to save and switch between custom views
+- Adoption of a Notion-like UI pattern for consistency and familiarity
+- Support for nested grouping to provide powerful organization capabilities
 
 ## Learnings and Discoveries
 
 ### Technical Discoveries
-- Orgize library provides property extraction functionality that can be leveraged directly
-- Implementing PartialEq traits can greatly improve API usability for custom types
-- Proper separation of concerns in data structures leads to more intuitive APIs
-- Consistent navigation methods significantly improve hierarchical data structure usability
-- Hash trait implementation is necessary for efficient change detection and etag generation
+- Svelte 5 runes provide an elegant way to manage complex state relationships for views, filters, and groups
+- The computed values in Svelte 5 are particularly useful for derived state like filtered, sorted, and grouped content
+- Tauri's IPC system works well for persisting view and settings data between sessions
+- The flexibility of Rust's enums and structs is valuable for modeling complex filter, sort, and group conditions
+- Proper separation of view configuration from content data leads to more maintainable code
+- Grouping functionality requires careful design to handle nested groups efficiently
 
 ### Difficulties and Solutions
-- Property extraction from Orgize parser was challenging - solved by leveraging Title properties
-- Type comparison issues in tests - resolved by implementing appropriate PartialEq traits
-- Navigation in headline hierarchy - implemented with recursive search methods
-- Maintaining backward compatibility with existing code - used fields and methods to bridge old and new APIs
+- Challenge: Managing complex filter conditions in a user-friendly way
+  - Solution: Designed a hierarchical filter builder UI with intuitive controls
+- Challenge: Persisting view configurations efficiently
+  - Solution: Implemented serialization of view configs to JSON for storage
+- Challenge: Maintaining performance with complex filters on large datasets
+  - Solution: Designed an efficient filter evaluation system with short-circuit evaluation
+- Challenge: Implementing nested grouping without excessive complexity
+  - Solution: Limited nesting to 2 levels and designed a clear visual hierarchy
+- Challenge: Synchronizing view state between frontend and backend
+  - Solution: Used tauri-specta for type-safe communication
 
 ## Next Steps
 
 ### Priority Tasks
-1. ✅ Implementation of enhanced data model
-2. ✅ Refactoring for better code organization
-3. ✅ Fix test failures in the parser module
-4. Improve the frontend UI components and styling
-5. Implementation of file monitoring and re-parsing when files change
-6. Enhance content extraction functionality to handle complex org-mode elements
+1. ✅ Design of multi-view tab system
+2. ✅ Design of advanced filtering system
+3. ✅ Design of multi-criteria sorting system
+4. ✅ Design of flexible grouping system
+5. ✅ Design of settings screen
+6. 🔄 Implementation of frontend UI components based on the new design
+7. ⬜ Implementation of view state management
+8. ⬜ Implementation of filter, sort, and group functionality
+9. ⬜ Implementation of settings screen and persistence
+10. ⬜ Implementation of file monitoring functionality
 
 ### Areas Requiring Exploration
-- Further optimization of Orgize library usage for property extraction
-- Efficient implementation of file monitoring across platforms
-- Optimization of parsing performance for large org-mode files
-- Integration with frontend components using the enhanced data model
+- Efficient implementation of complex filters and groups on large datasets
+- Best practices for persisting user settings across application restarts
+- Optimization of view switching performance
+- Strategies for testing complex filter, sort, and group logic
+- Visual design for nested groups that maintains clarity and usability

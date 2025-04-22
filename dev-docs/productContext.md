@@ -9,7 +9,7 @@
 - When reviewing notes in org-mode, other headlines and content are visible, which can be distracting and reduce focus
 - Filtering and sorting TODO items in flexible, visually appealing ways is limited in traditional org-mode
 - There are few convenient org-mode viewers for desktop environments that maintain org-mode's power while enhancing visualization
-
+- Organizing related content across multiple files requires manual effort
 
 ### Solutions Provided
 - Display org-mode files with a visually superior interface similar to Notion
@@ -19,6 +19,10 @@
 - Separate handling of notes and tasks based on headline structure
 - Page-based view for first-level headlines, with different treatment for TODO and non-TODO items
 - Categorization and filtering based on PROPERTIES, tags, and FILETAGS
+- Multiple customizable views that users can save and switch between
+- Each view can have its own display mode, filter settings, and sort criteria
+- Flexible grouping of content by properties, tags, categories, and TODO status
+- Comprehensive settings screen for customizing TODO keywords, properties, and monitoring targets
 
 ## User Experience
 
@@ -36,6 +40,11 @@
 6. **Content Organization**: View first-level headlines as separate pages, with TODO headlines treated as tasks and non-TODO headlines as notes
 7. **Nested Content Handling**: Extract nested TODO items from notes and recognize nested TODO items in tasks as subtasks
 8. **Content Filtering**: Filter notes and tasks by categories, tags, and FILETAGS defined in PROPERTIES
+9. **View Management**: Save and switch between multiple custom views, each with specific display modes and filters
+10. **Advanced Filtering**: Combine multiple conditions (tags, categories, properties) to create precise filters
+11. **Custom Sorting**: Apply multiple sort criteria to organize content in the most useful way
+12. **Content Grouping**: Group related items by properties, tags, categories, or TODO status for better organization
+13. **Customization**: Configure custom TODO keywords, monitoring settings, and user-defined properties
 
 ## Visual Design Principles
 
@@ -44,6 +53,9 @@
 - Indentation display that makes hierarchical structures easy to understand visually
 - Color coding according to TODO item status
 - Tags visually distinguished as labels
+- Tab-based navigation for multiple views
+- Consistent UI patterns for filter, sort, and group controls
+- Visual separation between groups for better readability
 
 ## Feature Priorities
 
@@ -53,6 +65,9 @@
 4. **Keyboard Shortcuts**: Keyboard access to all major functions
 5. **Multiple Display Modes**: Multiple display formats such as list, kanban, timeline
 6. **File Monitoring**: Directory monitoring and change detection
+7. **Multiple Views**: Saved views with custom filters and display modes
+8. **Content Organization**: Filtering, sorting, and grouping capabilities
+9. **Settings Screen**: Configuration for TODO keywords, properties, and monitoring
 
 ## User Feedback and Iteration Plan
 

@@ -88,6 +88,19 @@ pnpm tauri build
 - Active maintenance
 - Customizable event-based API
 
+## State Management
+
+### Frontend State Management
+- Using Svelte 5 runes (signals, computed, effects) for reactive state
+- Separate state stores for each view/tab
+- Persistent state for saved views and settings
+- Type-safe state updates between Rust and Svelte
+
+### Backend State Management
+- Rust-based state management for document parsing and metadata
+- File monitoring and change detection
+- Settings persistence
+
 ## Dependency Management
 
 ### Frontend Dependencies
@@ -129,6 +142,8 @@ Key dependencies:
 - Building a keyboard shortcut system
 - Efficient data transfer between frontend and backend
 - Efficient display of large org-mode files
+- Implementation of multiple view tabs with state persistence
+- Design of complex filter/sort UI that remains intuitive
 
 ### Future Technical Challenges
 - Implementation of offline editing functionality
