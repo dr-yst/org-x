@@ -29,7 +29,7 @@
 ## Items in Progress
 
 ### Backend Development
-- 🔄 Implementation of file monitoring functionality
+- ⬜ Implementation of file monitoring functionality
 - 🔄 Enhancement of content extraction for complex org-mode elements
 
 ### Frontend Development
@@ -37,6 +37,7 @@
 - ✅ State management design using Svelte 5 runes
 - ✅ Implementation of headline list view component
 - ✅ Implementation of filtering and organization features
+- 🔄 Construction of basic frontend UI components
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
@@ -73,10 +74,11 @@
 The project continues to make good progress in its initial development stage. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing. These improvements provide a solid foundation for the application's core functionality, enabling flexible TODO state management, tag and category tracking, and efficient change detection.
 
 ### Immediate Challenges
-- Implement file monitoring functionality
-- Enhance content extraction to handle complex org-mode elements
 - Improve frontend UI components with interactive features
 - Implement keyboard shortcuts for navigation and operations
+- Implement file monitoring functionality
+- Enhance content extraction to handle complex org-mode elements
+
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):

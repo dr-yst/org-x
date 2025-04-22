@@ -17,8 +17,8 @@ The current project priority is implementing the backend org-mode parsing functi
 - ✅ Implemented headline property extraction from Orgize parser
 - ✅ Improved property handling with inheritance and access mechanisms
 - ✅ Enhanced TODO keyword handling with orgize::ParseConfig
-- 🔄 Implementation of file monitoring functionality
-- ⬜ Construction of basic frontend UI
+- 🔄 Construction of basic frontend UI
+- ⬜ Implementation of file monitoring functionality
 
 ### Recent Work and Fixes
 - Implemented custom TODO keyword extraction from org files using orgize::ParseConfig
@@ -90,9 +90,9 @@ The current project priority is implementing the backend org-mode parsing functi
 1. ✅ Implementation of enhanced data model
 2. ✅ Refactoring for better code organization
 3. ✅ Fix test failures in the parser module
-4. Implementation of file monitoring and re-parsing when files change
-5. Enhance content extraction functionality to handle complex org-mode elements
-6. Improve the frontend UI components and styling
+4. Improve the frontend UI components and styling
+5. Implementation of file monitoring and re-parsing when files change
+6. Enhance content extraction functionality to handle complex org-mode elements
 
 ### Areas Requiring Exploration
 - Further optimization of Orgize library usage for property extraction
