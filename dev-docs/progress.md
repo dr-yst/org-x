@@ -30,10 +30,12 @@
 - ✅ Design of basic UI structure
 - ✅ State management design using Svelte 5 runes
 - ✅ Design of multi-view tab system
-- ✅ Design of advanced filtering system with multiple conditions
+- ✅ Design of sidebar-based filtering system with checkboxes
 - ✅ Design of multi-criteria sorting system
 - ✅ Design of flexible grouping system
 - ✅ Design of settings screen for customization
+- ✅ Design of task list with date information display
+- ✅ Design of user-defined property filtering in sidebar
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
@@ -50,10 +52,11 @@
 - 🔄 Implementation of filtering and organization features
 - 🔄 Construction of basic frontend UI components
 - 🔄 Implementation of multi-view tab system
-- 🔄 Implementation of advanced filtering UI
+- 🔄 Implementation of sidebar-based filtering system
 - 🔄 Implementation of multi-criteria sorting UI
 - 🔄 Implementation of flexible grouping UI
 - 🔄 Implementation of settings screen
+- 🔄 Implementation of custom variable definitions for display modes
 
 ## Unstarted Items
 
@@ -91,16 +94,18 @@
 ### Current Progress Status
 The project continues to make good progress in its development. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing.
 
-On the frontend side, we've designed a comprehensive UI structure with multiple view tabs, display mode tabs, advanced filtering, multi-criteria sorting, and flexible grouping. We've also designed a settings screen for customizing TODO keywords, monitoring settings, and user-defined properties. These designs provide a solid foundation for implementing a flexible and powerful user interface.
+On the frontend side, we've designed a comprehensive UI structure with multiple view tabs, display mode tabs, sidebar-based filtering, multi-criteria sorting, and flexible grouping. We've updated the UI design to use a more intuitive sidebar-based filtering approach with checkboxes for different attributes, and redesigned the task list to show scheduled dates and deadlines. We've also added support for user-defined properties in the filter sidebar. These designs provide a solid foundation for implementing a flexible and powerful user interface.
 
 ### Immediate Challenges
 - Implement the designed UI components with interactive features
 - Implement view state management and persistence
-- Implement the advanced filtering, sorting, and grouping functionality
+- Implement the sidebar-based filtering functionality
+- Implement the sorting and grouping functionality
 - Implement the settings screen and persistence
 - Implement file monitoring functionality
 - Enhance content extraction to handle complex org-mode elements
 - Design clear visual representation for grouped content
+- Implement custom variable definitions for different display modes
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
@@ -130,9 +135,11 @@ On the frontend side, we've designed a comprehensive UI structure with multiple 
 - Designed a global metadata management system for efficient tag and category tracking
 - Prioritized code quality and safety by fixing unsafe code patterns
 - Designed a multi-view tab system for better organization and customization
-- Created a comprehensive filtering and sorting system for powerful content organization
+- Created a sidebar-based filtering system for intuitive and accessible filtering
 - Added flexible grouping functionality to organize related content
 - Designed a settings screen for centralizing all customization options
+- Updated task list design to focus on dates rather than descriptions
+- Added support for user-defined properties in the filtering system
 
 ## Risks and Challenges
 
@@ -143,6 +150,7 @@ On the frontend side, we've designed a comprehensive UI structure with multiple 
 - Efficient persistence of view configurations and settings
 - Maintaining performance with multiple views and complex filters/groups
 - Visual clarity with nested groups
+- Managing potentially large numbers of filter options in the sidebar
 
 ### Solutions and Mitigation Strategies
 - Improved debugging techniques to identify and fix test failures
@@ -154,3 +162,4 @@ On the frontend side, we've designed a comprehensive UI structure with multiple 
 - Optimization of filter and group evaluation with short-circuit logic
 - Efficient serialization and storage of view configurations
 - Clear visual design for grouped content with collapsible sections
+- Implementation of virtualized lists for sidebar filter options with large datasets

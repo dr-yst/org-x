@@ -23,89 +23,83 @@ The current project priority is implementing the frontend UI design with the new
 
 ### Recent Work and Decisions
 - Designed a new UI structure with multiple view tabs and display mode tabs
-- Created a comprehensive filter and sort system design that allows combining multiple conditions
+- Created a comprehensive filter system design using sidebar with checkboxes for different attributes
 - Added flexible grouping functionality to organize content by properties, tags, categories, and TODO status
 - Designed a settings screen for customizing TODO keywords, monitoring settings, and user-defined properties
 - Expanded the data model to include ViewConfig, FilterConfig, SortConfig, GroupConfig, and UserSettings structures
 - Designed a state management approach for persisting and switching between views
-- Adopted a Notion-like UI pattern with tabs for views and display modes
+- Adopted a streamlined UI pattern with tabs for views and display modes
+- Decided to implement filtering directly in the sidebar instead of using a separate dialog
+- Added support for user-defined properties in the filter sidebar (e.g., "agenda-group")
+- Designed task list to show scheduled dates and deadlines instead of descriptions
 
 ### Technical Considerations
 - The new UI design needs to maintain keyboard operability while adding rich visual features
-- The filter, sort, and group system must be flexible enough to handle complex conditions while remaining intuitive
+- The filter system in the sidebar must be flexible enough to handle multiple attribute types while remaining intuitive
 - The settings screen should provide comprehensive customization while keeping a clean, organized interface
 - State management for multiple views requires careful design to maintain performance with large files
 - View persistence requires efficient serialization and storage in the backend
 - Grouping functionality needs to handle nested groups efficiently
+- Each display mode (List, Kanban, Timeline) should support custom variable definitions by users
 
 ## Recent Changes
 
-### Technical Changes
-1. Added: Multi-view tab system design
-   - Created a two-level tab system (view tabs and display mode tabs)
-   - Designed state management for persisting view configurations
-   - Implemented view switching and display mode switching
+### UI Design Changes
+1. Added: Sidebar-based filtering system
+   - Replaced separate filter dialog with direct sidebar filtering
+   - Added checkboxes to each filter item for intuitive selection
+   - Implemented "All | None" quick selection for each filter category
+   - Added collapsible sections for different filter types (FILES, TAGS, CATEGORIES, TODO KEYWORDS, agenda-group)
 
-2. Added: Advanced filtering system design
-   - Designed a flexible filter condition model that supports multiple condition types
-   - Created a compound filter system that allows combining conditions with AND/OR operators
-   - Implemented filter persistence within view configurations
+2. Updated: Task list display format
+   - Added scheduled dates and deadlines to task items
+   - Removed description text in favor of date information
+   - Added priority indicators to tasks
+   - Implemented cleaner tag display
 
-3. Added: Multi-criteria sorting system design
-   - Designed a sort criterion model that supports multiple fields and directions
-   - Created a precedence-based sorting system for applying multiple criteria
-   - Implemented sort persistence within view configurations
+3. Enhanced: View and display mode tabs
+   - Positioned view tabs more prominently on the left
+   - Added "+" button for adding custom display modes
+   - Designed tabs to clearly indicate they include filter settings
 
-4. Added: Flexible grouping system design
-   - Designed a group field model that supports various grouping criteria
-   - Created support for nested grouping (up to 2 levels)
-   - Implemented group persistence within view configurations
+4. Added: User-defined property filtering
+   - Implemented "agenda-group" as an example of user-defined property filtering
+   - Created consistent format for property-based filtering
 
-5. Added: Settings screen design
-   - Created a comprehensive settings dialog for customizing the application
-   - Designed interfaces for managing TODO keywords, monitoring settings, and custom properties
-   - Implemented settings persistence in the backend
-
-6. Added: User settings model
-   - Created a UserSettings structure to store all user preferences
-   - Designed a SettingsManager singleton for managing settings
-   - Implemented persistence of settings to disk
-
-### Design Decisions and Considerations
-- Decision to use a two-level tab system (view tabs and display mode tabs) for better organization
-- Choice to implement a flexible filter/sort/group system that can handle complex conditions
-- Decision to centralize all customization in a comprehensive settings screen
-- Implementation of view persistence to allow users to save and switch between custom views
-- Adoption of a Notion-like UI pattern for consistency and familiarity
-- Support for nested grouping to provide powerful organization capabilities
+### Technical Decisions and Considerations
+- Decision to use sidebar for filtering to provide a more direct and always-visible filtering interface
+- Choice to implement checkbox-based filtering for intuitive multi-selection
+- Decision to show dates rather than descriptions in the task list for better task management
+- Implementation of collapsible filter sections to manage screen real estate effectively
+- Support for custom display modes with user-defined variables for maximum flexibility
+- Consistent visual design for different filter categories to improve usability
 
 ## Learnings and Discoveries
 
 ### Technical Discoveries
-- Svelte 5 runes provide an elegant way to manage complex state relationships for views, filters, and groups
-- The computed values in Svelte 5 are particularly useful for derived state like filtered, sorted, and grouped content
-- Tauri's IPC system works well for persisting view and settings data between sessions
-- The flexibility of Rust's enums and structs is valuable for modeling complex filter, sort, and group conditions
-- Proper separation of view configuration from content data leads to more maintainable code
-- Grouping functionality requires careful design to handle nested groups efficiently
+- Sidebar-based filtering provides a more immediate and accessible interface than modal dialogs
+- Checkbox-based filtering is more intuitive for users than complex filter builders
+- Showing dates directly in the task list improves task management capabilities
+- Collapsible sections in the sidebar help manage complex filtering options without overwhelming the user
+- User-defined properties need consistent visual representation to maintain usability
 
 ### Difficulties and Solutions
-- Challenge: Managing complex filter conditions in a user-friendly way
-  - Solution: Designed a hierarchical filter builder UI with intuitive controls
-- Challenge: Persisting view configurations efficiently
-  - Solution: Implemented serialization of view configs to JSON for storage
-- Challenge: Maintaining performance with complex filters on large datasets
-  - Solution: Designed an efficient filter evaluation system with short-circuit evaluation
-- Challenge: Implementing nested grouping without excessive complexity
-  - Solution: Limited nesting to 2 levels and designed a clear visual hierarchy
-- Challenge: Synchronizing view state between frontend and backend
-  - Solution: Used tauri-specta for type-safe communication
+- Challenge: Managing multiple filter categories in limited sidebar space
+  - Solution: Implemented collapsible sections with "All | None" quick toggles
+- Challenge: Displaying sufficient task information without cluttering the UI
+  - Solution: Focused on key task attributes (status, title, dates, tags) and removed descriptions
+- Challenge: Making filter state visible across different views
+  - Solution: Designed view tabs to maintain their own filter state
+- Challenge: Supporting user-defined properties in a consistent way
+  - Solution: Created a standard pattern for property sections in the sidebar
+- Challenge: Balancing power and simplicity in the filtering interface
+  - Solution: Used familiar checkbox patterns with hierarchical organization
 
 ## Next Steps
 
 ### Priority Tasks
 1. ✅ Design of multi-view tab system
-2. ✅ Design of advanced filtering system
+2. ✅ Design of sidebar-based filtering system
 3. ✅ Design of multi-criteria sorting system
 4. ✅ Design of flexible grouping system
 5. ✅ Design of settings screen
@@ -114,10 +108,13 @@ The current project priority is implementing the frontend UI design with the new
 8. ⬜ Implementation of filter, sort, and group functionality
 9. ⬜ Implementation of settings screen and persistence
 10. ⬜ Implementation of file monitoring functionality
+11. ⬜ Implementation of custom variable definitions for different display modes
 
 ### Areas Requiring Exploration
-- Efficient implementation of complex filters and groups on large datasets
+- Efficient implementation of sidebar filtering with potentially large numbers of filter options
 - Best practices for persisting user settings across application restarts
 - Optimization of view switching performance
 - Strategies for testing complex filter, sort, and group logic
 - Visual design for nested groups that maintains clarity and usability
+- Implementation of custom variable definitions for different display modes
+- Keyboard navigation patterns for the sidebar filtering interface

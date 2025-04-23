@@ -54,7 +54,7 @@ export type OrgHeadline = {
   id: string;
   document_id: string;
   level: number;
-  title: string;
+  title: OrgTitle;
   tags: string[];
   todo_keyword: string | null;
   priority: string | null;
@@ -62,6 +62,16 @@ export type OrgHeadline = {
   children: OrgHeadline[];
   properties: Partial<{ [key in string]: string }>;
   etag: string;
+};
+/**
+ * Represents a headline title in org-mode
+ */
+export type OrgTitle = {
+  raw: string;
+  priority: string | null;
+  tags: string[];
+  todo_keyword: string | null;
+  properties: Partial<{ [key in string]: string }>;
 };
 export type StateType = "Active" | "Closed";
 export type TodoConfiguration = {

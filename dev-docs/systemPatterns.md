@@ -136,23 +136,28 @@ The application uses a two-level tab system:
      - List view
      - Kanban board
      - Timeline (Gantt chart)
-   - Each display mode maintains its own layout settings
+     - Custom display modes (user-defined)
+   - Each display mode maintains its own layout settings and custom variables
 
-### Advanced Filtering
-The filtering system allows combining multiple conditions:
+### Sidebar-Based Filtering
+The filtering system uses a sidebar with checkboxes for intuitive selection:
 
-1. **Filter Types**
-   - Tags (multiple selection with AND/OR)
-   - Categories (multiple selection with AND/OR)
-   - TODO status
-   - Priority
-   - Date ranges (due, scheduled, created)
-   - Custom properties
+1. **Filter Categories**
+   - Files (org-mode files in the system)
+   - Tags (from headlines and file tags)
+   - Categories (from headlines and documents)
+   - TODO Keywords (including None for non-task headlines)
+   - User-defined properties (e.g., agenda-group)
 
-2. **Compound Filters**
-   - Ability to create complex filters with nested conditions
-   - Support for AND/OR/NOT operators
-   - Save and reuse filter presets
+2. **Filter Operations**
+   - Checkbox selection for inclusion/exclusion
+   - Collapsible sections for each filter category
+   - "All | None" quick toggles for each section
+   - Hierarchical organization (e.g., files can contain sub-folders)
+
+3. **Filter Persistence**
+   - Filter state is saved with each view
+   - Filters apply across all display modes within a view
 
 ### Multi-Criteria Sorting
 The sorting system supports:
@@ -190,22 +195,30 @@ The grouping system allows organizing content by:
    - Focus on specific group
    - Sort groups by name, count, or custom criteria
 
-### Settings Dialog
-The settings dialog provides centralized configuration:
+### Custom Display Mode Variables
+Each display mode supports custom variable definitions:
 
-1. **TODO Keywords**
-   - Define custom TODO keywords
-   - Set colors and states (active/closed)
-   - Create custom sequences
+1. **List View Variables**
+   - Column visibility and order
+   - Row height and density
+   - Grouping visualization style
+   - Date format preferences
 
-2. **File Monitoring**
-   - Add/remove monitored folders and files
-   - Set monitoring interval
-   - Configure auto-reload behavior
+2. **Kanban View Variables**
+   - Column definition (by TODO status or custom property)
+   - Card content and format
+   - WIP limits
+   - Swimlanes configuration
 
-3. **Custom Properties**
-   - Define user properties for filtering, sorting, and grouping
-   - Configure property inheritance rules
+3. **Timeline View Variables**
+   - Time scale (day, week, month)
+   - Row grouping
+   - Display of dependencies
+   - Milestone visualization
+
+4. **Variable Persistence**
+   - Variables are saved per display mode within each view
+   - Default templates available for quick setup
 
 ## Data Model
 
