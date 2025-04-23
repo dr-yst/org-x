@@ -123,6 +123,10 @@ During updates:
 
 ## UI Patterns
 
+### A UI Mock Design
+Here is a mock design of the application interface:
+![UI Mock Design](ui-mock.png)
+
 ### Multi-View Tab System
 The application uses a two-level tab system:
 
