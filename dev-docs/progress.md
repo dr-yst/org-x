@@ -140,6 +140,8 @@ On the frontend side, we've designed a comprehensive UI structure with multiple 
 - Designed a settings screen for centralizing all customization options
 - Updated task list design to focus on dates rather than descriptions
 - Added support for user-defined properties in the filtering system
+- Identified important consideration regarding tauri-specta: while it provides type sharing, actual data instances exist separately in backend and frontend, which has memory implications for large datasets
+- Need to consider strategies for efficient data transfer between backend and frontend, especially for large org-mode files
 
 ## Risks and Challenges
 

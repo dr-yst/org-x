@@ -186,13 +186,13 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 - `OrgDocument`: Represents an org-mode file with its metadata and content
   - Contains headlines, properties, filetags, and document-level metadata
   - Each document has a unique ID and an etag for change detection
-  
+
 - `OrgHeadline`: Represents a headline in an org-mode document
   - Contains hierarchical information (level, parent-child relationships)
   - Has title, content, tags, TODO keyword, priority
   - Contains references to child headlines
   - Includes properties and an etag for change detection
-  
+
 - `OrgTitle`: Structured representation of headline titles
   - Contains raw text, priority, tags, TODO keyword
   - Provides methods to access and modify title components
@@ -200,11 +200,11 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 #### TODO Status Representation
 - `TodoStatus`: Represents a TODO keyword with its state type and metadata
   - Includes keyword string, state type (active/closed), order, and color
-  
+
 - `TodoConfiguration`: Manages TODO sequences and keywords
   - Contains multiple sequences of TODO states
   - Provides methods to find status by keyword
-  
+
 - `TodoSequence`: A named sequence of TODO states
   - Contains an ordered list of TodoStatus items
   - Used for handling different workflows (e.g., simple vs. complex)
@@ -213,14 +213,14 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 - `ViewConfig`: Represents a saved view with its display settings
   - Contains filter, sort, and group configurations
   - Specifies the display mode (list, kanban, timeline)
-  
+
 - `FilterConfig`: Defines how content is filtered
   - Contains multiple filter conditions
   - Supports AND/OR logic between conditions
-  
+
 - `SortConfig`: Defines how content is sorted
   - Contains multiple sort criteria in priority order
-  
+
 - `GroupConfig`: Defines how content is grouped
   - Specifies which fields to group by
   - Controls default collapse state
@@ -228,10 +228,10 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 #### Metadata Management
 - `GlobalMetadata`: Tracks tags and categories across all documents
   - Maintains counts and mappings of tags/categories to documents and headlines
-  
+
 - `TagInfo` and `CategoryInfo`: Track usage of tags and categories
   - Contain references to documents and headlines where they appear
-  
+
 - `MetadataManager`: Singleton for accessing the GlobalMetadata
   - Provides registration and lookup methods
   - Ensures consistency of metadata across the application
@@ -240,10 +240,10 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 - `UserSettings`: Stores user preferences and configuration
   - Contains TODO configurations, monitored paths, and view settings
   - Persists between application sessions
-  
+
 - `MonitoredPath`: Represents a file or directory to monitor
   - Specifies path, inclusion of subdirectories, and file patterns
-  
+
 - `CustomProperty`: User-defined property configuration
   - Used for extending the data model with user-specific fields
 
@@ -285,7 +285,7 @@ const orgNotes = computed(() => {
 ### Data Flow Between Backend and Frontend
 
 ```
-[Backend: OrgDocument/OrgHeadline] 
+[Backend: OrgDocument/OrgHeadline]
        |
        | (serialized via tauri-specta)
        v
@@ -295,6 +295,24 @@ const orgNotes = computed(() => {
        v
 [Frontend: Reactive UI components]
 ```
+
+1. **Instance Separation**:
+   - Backend (Rust) maintains its own instances of data structures (e.g., `OrgDocument`)
+   - When data is transferred to the frontend, it's serialized (typically to JSON)
+   - Frontend receives this data and deserializes it into new, separate JavaScript/TypeScript objects
+   - These objects are structurally identical but exist in different memory spaces
+
+2. **Memory Implications**:
+   - The same data exists in two places (backend and frontend), increasing memory usage
+   - For large org-mode files, this duplication should be considered in the application design
+   - Strategies like partial updates or pagination may be necessary for very large datasets
+
+3. **Synchronization Requirements**:
+   - Changes made in one environment don't automatically reflect in the other
+   - Updates require explicit communication through Tauri commands
+   - When backend data changes, the frontend needs to be notified and updated
+   - For read-only applications like Org-X, this is primarily a one-way flow (backend → frontend)
+
 
 ## Design Patterns
 

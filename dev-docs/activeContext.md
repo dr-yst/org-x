@@ -47,6 +47,11 @@ The current project priority is implementing the frontend UI design with the new
   - A hybrid approach could balance responsiveness and efficiency based on data size
   - Decision will depend on expected dataset sizes, performance requirements, and memory constraints
   - This architectural decision should be revisited once we have more concrete performance metrics
+- Data sharing between backend and frontend via tauri-specta requires consideration of memory usage:
+  - While type definitions are shared, actual data instances exist separately in both environments
+  - For large org-mode files, this means data exists in memory twice (once in Rust, once in JavaScript)
+  - This reinforces the importance of efficient data structures and potential pagination/virtualization
+  - For view state management, we need to consider whether certain filtering operations should happen on the backend to reduce data transfer
 
 ## Recent Changes
 

@@ -88,6 +88,16 @@ pnpm tauri build
 - Active maintenance
 - Customizable event-based API
 
+### Reasons for Adopting tauri-specta
+- Provides automatic type definition synchronization between Rust and TypeScript
+- Generates TypeScript interfaces from Rust structs, ensuring type safety across the stack
+- Simplifies API development by maintaining consistent type definitions
+- Important note: While type definitions are shared, actual data instances exist separately in both environments
+  - Backend (Rust) maintains its own instances of data structures
+  - Frontend (TypeScript/Svelte) receives serialized copies that are deserialized into separate instances
+  - Changes in one environment require explicit synchronization to reflect in the other
+
+
 ## State Management
 
 ### Frontend State Management
