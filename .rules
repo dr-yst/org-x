@@ -73,6 +73,14 @@ flowchart TD
    - Known issues
    - Evolution of project decisions
 
+7. **`adr/`**
+   - Directory containing Architectural Decision Records (ADRs)
+   - Each ADR documents a significant architectural decision and its rationale made during development
+   - ADRs collectively serve as a historical record of key technical choices and their context
+   - Includes context, considered alternatives, and consequences
+   - Provides historical record of key technical choices
+   - Follows a consistent format with title, status, context, decision, and consequences
+
 #### Additional Context
 Create additional files/folders within dev-docs/ when they help organize:
 - Complex feature documentation
