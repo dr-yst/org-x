@@ -41,6 +41,12 @@ The current project priority is implementing the frontend UI design with the new
 - View persistence requires efficient serialization and storage in the backend
 - Grouping functionality needs to handle nested groups efficiently
 - Each display mode (List, Kanban, Timeline) should support custom variable definitions by users
+- Need to determine optimal location for filtering logic (frontend vs. backend vs. hybrid approach)
+  - Frontend filtering provides immediate feedback but may have memory limitations with large datasets
+  - Backend filtering is more memory-efficient and performant for large datasets but introduces latency
+  - A hybrid approach could balance responsiveness and efficiency based on data size
+  - Decision will depend on expected dataset sizes, performance requirements, and memory constraints
+  - This architectural decision should be revisited once we have more concrete performance metrics
 
 ## Recent Changes
 
@@ -73,6 +79,7 @@ The current project priority is implementing the frontend UI design with the new
 - Implementation of collapsible filter sections to manage screen real estate effectively
 - Support for custom display modes with user-defined variables for maximum flexibility
 - Consistent visual design for different filter categories to improve usability
+- Considering options for filtering logic implementation location (frontend/backend/hybrid)
 
 ## Learnings and Discoveries
 
@@ -94,6 +101,8 @@ The current project priority is implementing the frontend UI design with the new
   - Solution: Created a standard pattern for property sections in the sidebar
 - Challenge: Balancing power and simplicity in the filtering interface
   - Solution: Used familiar checkbox patterns with hierarchical organization
+- Challenge: Determining optimal location for filtering logic
+  - Solution: Documenting trade-offs and considerations for later decision with more data
 
 ## Next Steps
 
@@ -109,6 +118,7 @@ The current project priority is implementing the frontend UI design with the new
 9. ⬜ Implementation of settings screen and persistence
 10. ⬜ Implementation of file monitoring functionality
 11. ⬜ Implementation of custom variable definitions for different display modes
+12. ⬜ Evaluation of filtering logic implementation options (frontend/backend/hybrid)
 
 ### Areas Requiring Exploration
 - Efficient implementation of sidebar filtering with potentially large numbers of filter options
@@ -118,3 +128,5 @@ The current project priority is implementing the frontend UI design with the new
 - Visual design for nested groups that maintains clarity and usability
 - Implementation of custom variable definitions for different display modes
 - Keyboard navigation patterns for the sidebar filtering interface
+- Performance testing with various dataset sizes to determine optimal filtering approach
+- Memory profiling to understand constraints and optimize data structures
