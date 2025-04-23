@@ -41,17 +41,12 @@ The current project priority is implementing the frontend UI design with the new
 - View persistence requires efficient serialization and storage in the backend
 - Grouping functionality needs to handle nested groups efficiently
 - Each display mode (List, Kanban, Timeline) should support custom variable definitions by users
-- Need to determine optimal location for filtering logic (frontend vs. backend vs. hybrid approach)
-  - Frontend filtering provides immediate feedback but may have memory limitations with large datasets
-  - Backend filtering is more memory-efficient and performant for large datasets but introduces latency
-  - A hybrid approach could balance responsiveness and efficiency based on data size
-  - Decision will depend on expected dataset sizes, performance requirements, and memory constraints
-  - This architectural decision should be revisited once we have more concrete performance metrics
-- Data sharing between backend and frontend via tauri-specta requires consideration of memory usage:
-  - While type definitions are shared, actual data instances exist separately in both environments
-  - For large org-mode files, this means data exists in memory twice (once in Rust, once in JavaScript)
-  - This reinforces the importance of efficient data structures and potential pagination/virtualization
-  - For view state management, we need to consider whether certain filtering operations should happen on the backend to reduce data transfer
+- **Data Processing Strategy Decision**: We've decided to implement server-side filtering as our initial approach:
+  - Filtering, sorting, and grouping logic will be implemented in Rust
+  - Frontend will send filter configurations to the backend
+  - Backend will process the data and return only the filtered results
+  - This approach balances simplicity with performance for handling large org-mode files
+  - We'll revisit this approach if performance issues arise with very large files
 
 ## Recent Changes
 
@@ -84,7 +79,9 @@ The current project priority is implementing the frontend UI design with the new
 - Implementation of collapsible filter sections to manage screen real estate effectively
 - Support for custom display modes with user-defined variables for maximum flexibility
 - Consistent visual design for different filter categories to improve usability
-- Considering options for filtering logic implementation location (frontend/backend/hybrid)
+- Decision to implement server-side filtering for data processing to improve performance and reduce memory usage
+- Frontend will send filter/sort/group configurations to the backend, which will return only the filtered results
+- This approach was chosen for its balance of simplicity and performance, avoiding more complex solutions like partial loading or virtualization for now
 
 ## Learnings and Discoveries
 
@@ -119,11 +116,12 @@ The current project priority is implementing the frontend UI design with the new
 5. ✅ Design of settings screen
 6. 🔄 Implementation of frontend UI components based on the new design
 7. ⬜ Implementation of view state management
-8. ⬜ Implementation of filter, sort, and group functionality
-9. ⬜ Implementation of settings screen and persistence
-10. ⬜ Implementation of file monitoring functionality
-11. ⬜ Implementation of custom variable definitions for different display modes
-12. ⬜ Evaluation of filtering logic implementation options (frontend/backend/hybrid)
+8. ⬜ Implementation of server-side filtering, sorting, and grouping functionality in Rust
+9. ⬜ Implementation of frontend components to send filter configurations to backend
+10. ⬜ Implementation of settings screen and persistence
+11. ⬜ Implementation of file monitoring functionality
+12. ⬜ Implementation of custom variable definitions for different display modes
+
 
 ### Areas Requiring Exploration
 - Efficient implementation of sidebar filtering with potentially large numbers of filter options

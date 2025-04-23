@@ -46,6 +46,7 @@
 - ⬜ Implementation of file monitoring functionality
 - 🔄 Enhancement of content extraction for complex org-mode elements
 - 🔄 Implementation of settings management and persistence
+- 🔄 Implementation of server-side filtering, sorting, and grouping functionality
 
 ### Frontend Development
 - 🔄 Implementation of headline list view component
@@ -140,8 +141,8 @@ On the frontend side, we've designed a comprehensive UI structure with multiple 
 - Designed a settings screen for centralizing all customization options
 - Updated task list design to focus on dates rather than descriptions
 - Added support for user-defined properties in the filtering system
-- Identified important consideration regarding tauri-specta: while it provides type sharing, actual data instances exist separately in backend and frontend, which has memory implications for large datasets
-- Need to consider strategies for efficient data transfer between backend and frontend, especially for large org-mode files
+- Decided to implement filtering, sorting, and grouping logic on the server-side (Rust) to improve performance and reduce memory usage
+- Chose a simpler approach focusing on server-side filtering first, before considering more complex strategies like partial loading or virtualization
 
 ## Risks and Challenges
 

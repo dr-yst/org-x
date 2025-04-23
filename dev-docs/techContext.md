@@ -97,6 +97,11 @@ pnpm tauri build
   - Frontend (TypeScript/Svelte) receives serialized copies that are deserialized into separate instances
   - Changes in one environment require explicit synchronization to reflect in the other
 
+### Data Processing Strategy
+- Server-side filtering implemented in Rust for better performance with large datasets
+- Frontend sends filter configurations to backend, which returns filtered results
+- This approach reduces data transfer volume and memory usage in the browser
+- Prioritizes simplicity while addressing performance concerns for large org-mode files
 
 ## State Management
 

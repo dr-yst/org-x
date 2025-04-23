@@ -390,29 +390,42 @@ const orgNotes = computed(() => {
 
 ## Data Processing Considerations
 
-### Filtering Logic Implementation Options
+### Filtering Logic Implementation Decision
 
-#### Frontend Filtering (Svelte + TypeScript)
-- Pros: Immediate feedback, no network latency
-- Cons: Limited by browser memory, may struggle with large datasets
+After considering various approaches for handling data between the backend and frontend, we've decided to implement server-side filtering as our initial approach:
 
-#### Backend Filtering (Rust)
-- Pros: More efficient with large datasets, better memory management
-- Cons: Introduces latency, more complex communication pattern
+#### Server-Side Filtering (Rust)
+- **Implementation**: Filtering, sorting, and grouping logic will be implemented in Rust
+- **Data Flow**:
+  1. Frontend sends filter/sort/group configuration to backend
+  2. Backend processes the data and returns only the filtered results
+  3. Frontend renders the pre-filtered data
+- **Benefits**:
+  - Significantly reduces data transfer volume between backend and frontend
+  - Leverages Rust's performance for complex filtering operations
+  - Reduces memory usage in the browser
+  - Better handles large org-mode files
+- **Implementation Pattern**:
+```rust
+#[tauri::command]
+#[specta::specta]
+pub fn get_filtered_headlines(
+    filter_config: FilterConfig,
+    sort_config: SortConfig,
+    group_config: Option<GroupConfig>
+) -> Result<FilteredHeadlinesResult, String> {
+    // Backend performs filtering, sorting, and grouping
+    let result = apply_filters_and_sort(filter_config, sort_config, group_config)?;
+    Ok(result)
+}
+```
 
-#### Hybrid Approach
-- Use frontend filtering for small datasets
-- Switch to backend filtering for datasets above a threshold
-- Cache results to improve performance
+#### Future Considerations
+While starting with server-side filtering, we acknowledge that more advanced approaches may be needed as the project evolves:
+- Partial data loading for very large files
+- Virtualization for efficient rendering of large datasets
+- Pagination for breaking large results into manageable chunks
+- Caching frequently used query results
 
-#### Decision Factors
-- Expected dataset size (number of files, headlines)
-- Performance requirements (response time)
-- Memory constraints (browser limitations)
-- User experience priorities (immediacy vs. handling large data)
-
-### Memory Optimization Strategies
-- Virtual lists and pagination for large datasets
-- Incremental loading of document content
-- Memory-efficient data structures in Rust
-- Careful management of retained references
+The current approach prioritizes simplicity while addressing the performance concerns. 
+We'll revisit this decision if performance issues arise with large files or complex filtering operations.
