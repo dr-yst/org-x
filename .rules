@@ -181,6 +181,14 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
     *   Use TypeScript types effectively throughout the project.
     *   Follow pnpm workspace conventions if the project uses workspaces.
 
+## 📝 Reference Documentation
+
+1. **Svelte 5 Documentation:**
+   * The file `dev-docs/llms-small.txt` contains the abridged developer documentation for Svelte and SvelteKit.
+   * This file **MUST** be referenced when implementing Svelte 5 code to ensure correct usage of runes and other Svelte 5 features.
+   * This file **MUST NOT** be edited or modified under any circumstances.
+   * Always refer to this documentation when working with Svelte 5 components to maintain consistency and follow best practices.
+
 ## 📦 Module Organization
 
 1. **Logical Separation:** Organize code into logically separated modules with clear responsibilities.
@@ -215,13 +223,13 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
 
 1.  **Clarity is Key:** Provide clear, specific, and unambiguous instructions to the AI. Define the desired outcome, constraints, and context.
 2.  **Context Referencing:** If a task spans multiple interactions, explicitly remind the AI of relevant previous context, decisions, or code snippets.
-3.  **Suggest vs. Apply:** Clearly state whether the AI should *suggest* a change for human review or *apply* a change directly (use only when high confidence and task is well-defined). Use prefixes like "Suggestion:" or "Applying fix:".
+3.  **Suggest vs. Apply:** Clearly state whether the AI should *suggest* a change for human review or *apply* a change directly (use only when high confidence and task is well-defined). Use prefixes like \"Suggestion:\" or \"Applying fix:\".
 4.  **Question AI Output:** Human developers should critically review AI-generated code. Question assumptions, verify logic, and don't blindly trust confident-sounding but potentially incorrect suggestions (hallucinations).
 5.  **Focus the AI:** Guide the AI to work on specific, focused parts of the task. Avoid overly broad requests that might lead to architectural or logical errors.
 6.  **Leverage Strengths:** Use the AI for tasks it excels at (boilerplate generation, refactoring specific patterns, finding syntax errors, generating test cases) but maintain human oversight for complex logic, architecture, and security.
 7.  **Incremental Interaction:** Break down complex tasks into smaller steps for the AI. Review and confirm each step before proceeding.
 8.  **Standard Check-in (for AI on large tasks):** Before providing significant code suggestions:
-    *   "Confirming understanding: I've reviewed [specific memory files]. The goal is [task goal], adhering to [key pattern/constraint]. Proceeding with [planned step]."
+    *   \"Confirming understanding: I've reviewed [specific memory files]. The goal is [task goal], adhering to [key pattern/constraint]. Proceeding with [planned step].\"\n
 
 ## ✨ Code Quality & Style
 
@@ -246,7 +254,7 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
     *   Follow Svelte 5 runes patterns consistently throughout the codebase.
     *   Maintain consistency in Rust code for Tauri commands and API.
 8.  **File Naming:**
-    *   Use clear, descriptive names. Avoid "temp", "refactored", "improved", etc., in permanent file names.
+    *   Use clear, descriptive names. Avoid \"temp\", \"refactored\", \"improved\", etc., in permanent file names.
     *   Follow Svelte conventions for component naming (PascalCase for component files).
 9.  **No One-Time Scripts:** Do not commit one-time utility scripts into the main codebase.
 
@@ -265,8 +273,8 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
     *   **Bug Fixes:** Write a test reproducing the bug *before* fixing it.
 2.  **Comprehensive Tests:**
     *   Write thorough unit, integration, and/or end-to-end tests covering critical paths, edge cases, and major functionality.
-    *   Use Svelte's testing utilities for component testing.
-    *   Test Tauri commands and IPC communication thoroughly.
+    *   Test both frontend (Svelte) and backend (Rust) components thoroughly.
+    *   Test the integration between frontend and backend via Tauri commands and IPC.
 3.  **Tests Must Pass:** All tests **must** pass before committing or considering a task complete. Notify the human developer immediately if tests fail and cannot be easily fixed.
 4.  **No Mock Data (Except Tests):** Use mock data *only* within test environments. Development and production should use real or realistic data sources.
 5.  **Manual Verification:** Supplement automated tests with manual checks where appropriate, especially for UI changes and cross-platform functionality.
@@ -279,10 +287,22 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
    * Aim for comprehensive test coverage of core functionality
    * Test edge cases and error conditions explicitly
 4. **Circular Dependencies:** Be vigilant about avoiding circular references in data structures.
-5. **Debug Tools for Rust codes:**
+5. **Debug Tools for Rust Code:**
    * Use `cargo check` to verify syntax and types
    * Use `cargo clippy` to identify common issues
-   * Add `println!` or proper logging for complex debugging scenarios
+   * Use `cargo fmt` to maintain consistent code style
+   * Use `RUST_BACKTRACE=1` to get detailed backtraces
+   * Use `dbg!` macro for quick debug output
+   * Use `println!` or proper logging for complex debugging scenarios
+   * Use `cargo expand` to inspect macro expansions
+   * Use `cargo flamegraph` for performance profiling
+6. **Debug Tools for Frontend:**
+   * Use browser developer tools for debugging frontend issues
+   * Use Svelte DevTools extension for inspecting component state
+   * Add temporary debug output using `console.log` or Svelte's `{@debug}` directive
+   * Use Vitest's watch mode for iterative debugging of test failures
+   * Use browser performance tools to identify rendering bottlenecks
+   * Use network monitoring tools to debug API and IPC communication
 
 ## 🐛 Debugging & Troubleshooting
 
