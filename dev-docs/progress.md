@@ -49,15 +49,15 @@
 - 🔄 Implementation of server-side filtering, sorting, and grouping functionality
 
 ### Frontend Development
-- 🔄 Implementation of headline list view component
-- 🔄 Implementation of filtering and organization features
+- 🔄 Implementation of basic task list view component
+- 🔄 Implementation of simple filtering functionality
 - 🔄 Construction of basic frontend UI components
-- 🔄 Implementation of multi-view tab system
-- 🔄 Implementation of sidebar-based filtering system
-- 🔄 Implementation of multi-criteria sorting UI
-- 🔄 Implementation of flexible grouping UI
-- 🔄 Implementation of settings screen
-- 🔄 Implementation of custom variable definitions for display modes
+- ⬜ Implementation of multi-view tab system (deferred to post-MVP)
+- ⬜ Implementation of sidebar-based filtering system (deferred to post-MVP)
+- ⬜ Implementation of multi-criteria sorting UI (deferred to post-MVP)
+- ⬜ Implementation of flexible grouping UI (deferred to post-MVP)
+- ⬜ Implementation of settings screen (deferred to post-MVP)
+- ⬜ Implementation of custom variable definitions for display modes (deferred to post-MVP)
 
 ## Unstarted Items
 
@@ -93,36 +93,38 @@
 ## Progress Overview and Next Steps
 
 ### Current Progress Status
-The project continues to make good progress in its development. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing.
+The project has undergone a strategic pivot to focus on delivering an MVP centered around the task list view functionality. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing.
 
-On the frontend side, we've designed a comprehensive UI structure with multiple view tabs, display mode tabs, sidebar-based filtering, multi-criteria sorting, and flexible grouping. We've updated the UI design to use a more intuitive sidebar-based filtering approach with checkboxes for different attributes, and redesigned the task list to show scheduled dates and deadlines. We've also added support for user-defined properties in the filter sidebar. These designs provide a solid foundation for implementing a flexible and powerful user interface.
+While we've designed a comprehensive UI structure with multiple view tabs, display modes, sidebar-based filtering, multi-criteria sorting, and flexible grouping, we've decided to defer these more complex features to post-MVP development. Our immediate focus is now on implementing a clean, functional task list view with basic filtering capabilities. This approach allows us to deliver value more quickly with a simpler initial implementation, while still leveraging the robust backend architecture we've established.
 
 ### Immediate Challenges
-- Implement the designed UI components with interactive features
-- Implement view state management and persistence
-- Implement the sidebar-based filtering functionality
-- Implement the sorting and grouping functionality
-- Implement the settings screen and persistence
-- Implement file monitoring functionality
-- Enhance content extraction to handle complex org-mode elements
-- Design clear visual representation for grouped content
-- Implement custom variable definitions for different display modes
+- Implement the basic task list view component
+- Implement simple filtering by TODO status, tags, and dates
+- Implement basic server-side filtering in Rust
+- Design and implement a clean, minimal UI that focuses on task list functionality
+- Ensure good performance with moderate-sized org-mode files
+- Implement basic keyboard navigation for the task list
+- Create a smooth loading experience for initial file parsing
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
-   - Basic org-mode file display functionality
+   - Basic task list view functionality 
    - Loading and displaying a single file
-   - Hierarchical display of headings with collapsing functionality
-   - Basic view management with filtering, sorting, and grouping
-   - Settings screen for customization
+   - Basic filtering by TODO status, tags, and dates
+   - Simple keyboard navigation
 
 2. **MVP Phase 2** (Goal within 8 weeks):
    - Management of multiple files
-   - TODO item filtering and views
+   - Enhanced TODO item filtering
    - Integration with external editors
+   - File monitoring and automatic updates
+
+3. **Future Development** (Post-MVP):
    - Multiple view tabs with different display modes
    - Advanced filtering, sorting, and grouping
-   - File monitoring and automatic updates
+   - Kanban view implementation
+   - Timeline (Gantt chart) view implementation
+   - Settings screen for customization
 
 ### Project Direction and Evolution of Decisions
 - Implemented modular architecture for better separation of concerns
