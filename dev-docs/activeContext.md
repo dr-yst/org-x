@@ -30,6 +30,8 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Maintained the robustness of the underlying data model for future feature expansion
 - Committed to delivering a simpler but valuable initial release more quickly
 - Developed a phased approach with clear milestones for incrementally adding features
+- Adopted flowbite-svelte-next as UI component library to accelerate development
+- Removed Tiptap as it was determined to be overspec for current project needs
 
 ### Technical Considerations
 - The task list view needs to maintain keyboard operability while providing task information
@@ -67,6 +69,8 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Kept the robust data model to support future feature expansion
 - Emphasized clean, focused UI components that can be extended later
 - Prioritized usability and directness in the task list view
+- Adopted flowbite-svelte-next UI library to leverage pre-built accessible components
+- Replaced Tiptap with simpler rendering approach for content display
 
 ## Learnings and Discoveries
 

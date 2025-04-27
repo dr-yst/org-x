@@ -124,8 +124,17 @@ Key dependencies:
 - @sveltejs/kit
 - tailwindcss
 - @tauri-apps/api
+- flowbite-svelte-next (for UI components)
 - date-fns (for date processing)
 - marked (for markdown processing, for markdown blocks in org-mode)
+
+### Reasons for Adopting flowbite-svelte-next
+- Pre-built Svelte components based on Flowbite design system
+- Seamless integration with TailwindCSS
+- Comprehensive set of accessible UI components
+- Active maintenance and community support
+- Reduces development time for common UI patterns
+- Fully compatible with Svelte 5 and dark mode support
 
 ### Backend Dependencies
 Key dependencies:
