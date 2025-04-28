@@ -7,7 +7,7 @@ A cross-platform application using Tauri 2.0 and Svelte to display Org-mode file
 - **Frontend**: Svelte 5 + TypeScript
 - **Backend**: Rust + Tauri 2.0
 - **Styling**: TailwindCSS
-- **UI Components**: flowbite-svelte-next
+- **UI Components**: shadcn-svelte
 
 ## Key Features
 - Parsing and displaying org-mode files
