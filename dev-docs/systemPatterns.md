@@ -195,7 +195,56 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 
 - `OrgTitle`: Structured representation of headline titles
   - Contains raw text, priority, tags, TODO keyword
+  - Contains planning information (deadline, scheduled dates)
   - Provides methods to access and modify title components
+
+- `OrgDatetime`: Structured representation of dates in org-mode
+  - Contains year, month, day, dayname for date information
+  - Contains optional hour and minute for time information
+  - Provides methods for date parsing, formatting, and comparison
+  - Inspired by Orgize's Datetime structure for compatibility
+
+- `OrgTimestamp`: Represents different types of timestamps in org-mode
+  - Variants for Active, Inactive, ActiveRange, InactiveRange, and Diary timestamps
+  - Contains OrgDatetime for date information
+  - Supports repeater and delay information
+  - Provides methods for formatting and date-based filtering (today, this week, overdue)
+  
+- `OrgPlanning`: Container for planning information in org-mode
+  - Contains optional deadline, scheduled, and closed timestamps
+  - Stored within OrgTitle for direct access from headlines
+  - Provides methods for formatting and accessing planning information
+
+#### Timestamp System Implementation
+The timestamp implementation significantly enhances Org-X's ability to work with date and time information:
+
+- **Type Safety**: 
+  - Strongly-typed representation reduces string manipulation errors
+  - Type definitions are shared between Rust and TypeScript via specta
+  - Better semantic representation of org-mode concepts
+
+- **Enhanced Functionality**:
+  - Direct methods for date filtering: `is_today()`, `is_this_week()`, `is_overdue()`
+  - Headline convenience methods: `due_today()`, `due_this_week()`, `scheduled_today()`
+  - Support for all org-mode timestamp formats and properties
+
+- **Integration Pattern**:
+  ```rust
+  // Creating timestamps
+  let deadline = OrgTimestamp::active_from_date(2023, 6, 15, "Thu");
+  
+  // Adding to headlines via planning
+  let title = OrgTitle::simple("TODO Task", 1)
+      .with_deadline(deadline);
+      
+  // Using in headlines
+  headline.due_today(); // Check if due today
+  ```
+
+- **Performance Benefits**:
+  - Reduced string parsing with structured data
+  - More efficient date comparisons
+  - Improved serialization with proper types
 
 #### TODO Status Representation
 - `TodoStatus`: Represents a TODO keyword with its state type and metadata

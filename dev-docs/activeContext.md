@@ -25,6 +25,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - ✅ Fixed title and property handling in HeadlinesList component
 - 🔄 Implementation of basic task list view (MVP)
 - 🔄 Implementation of simple filtering functionality
+- ✅ Enhanced representation of DEADLINE and SCHEDULED timestamps
 - ⬜ Implementation of file monitoring functionality
 
 ### Recent Work and Decisions
@@ -42,6 +43,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Resolved compatibility issues between Svelte 5 and testing libraries with updated configuration
 - Fixed HeadlinesList component to properly handle hierarchical headline structure
 - Implemented effective date filtering for today, this week, and overdue tasks
+- Created OrgDatetime type inspired by Orgize's Datetime implementation for better date handling
+- Enhanced OrgTimestamp to use the new OrgDatetime structure for improved type safety
+- Added convenience methods for date-based filtering directly in the OrgHeadline structure
+- Implemented comprehensive test program to validate the new timestamp functionality
 - Identified potential improvements for the Rust type definitions to eliminate duplication
 
 ### Technical Considerations
@@ -55,6 +60,11 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - Backend will process the data and return filtered results
   - This approach maintains the performance benefits while simplifying initial implementation
   - This lays groundwork for more advanced filtering in future releases
+- Our new OrgDatetime structure improves type safety and provides direct methods for date operations
+- Date-related filtering can now be handled directly in the Rust backend with specialized methods
+- We've enhanced the timestamp handling with proper semantic types, reducing string parsing overhead
+- OrgTimestamp now supports all org-mode timestamp formats (active, inactive, ranges, repeaters)
+- We've improved the frontend-backend type-sharing by adding specta compatibility to all new types
 - Svelte 5's runes system requires special consideration when testing components
 - TDD approach requires adaptation to work with Svelte 5's new reactivity system
 - OrgHeadline and OrgTitle structures have overlapping fields that should be consolidated

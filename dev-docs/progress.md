@@ -51,6 +51,9 @@
 
 ### Backend Development
 - ⬜ Implementation of file monitoring functionality
+- ✅ Implementation of OrgDatetime and enhanced OrgTimestamp structures for better date handling
+- ✅ Enhanced headline model with date-based filtering methods (due_today, due_this_week, etc.)
+- ✅ Implementation of comprehensive test program for timestamp functionality
 - 🔄 Enhancement of content extraction for complex org-mode elements
 - 🔄 Implementation of settings management and persistence
 - 🔄 Implementation of server-side filtering, sorting, and grouping functionality
@@ -144,6 +147,9 @@ While we've designed a comprehensive UI structure with multiple view tabs, displ
 ### Project Direction and Evolution of Decisions
 - Implemented modular architecture for better separation of concerns
 - Created dedicated structures like OrgTitle to improve data representation and organization
+- Implemented OrgDatetime and enhanced OrgTimestamp for better date handling
+- Added planning information to OrgTitle for more complete representation of org-mode features
+- Added convenience methods to OrgHeadline for direct date-based filtering (due_today, due_this_week, etc.)
 - Enhanced property extraction to better leverage Orgize parser capabilities
 - Added intuitive navigation methods for traversing headline hierarchies
 - Decided to focus on integration with external editors rather than implementing editing functionality for org-mode files
