@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { cleanup, render } from '@testing-library/svelte';
+import { cleanup, render, screen } from '@testing-library/svelte';
 import OrgDocument from '../OrgDocument.svelte';
 import type { OrgDocument as OrgDocumentType } from '../../bindings';
 
@@ -32,6 +32,8 @@ describe('OrgDocument Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
+    // Reset DOM before each test
+    document.body.innerHTML = '';
   });
 
   it('displays document title when loaded', async () => {
@@ -48,18 +50,20 @@ describe('OrgDocument Component', () => {
       todo_config: null
     };
 
-    const { container } = render(OrgDocument, {
-      props: { document: mockDocument, loading: false }
+    render(OrgDocument, {
+      document: mockDocument,
+      loading: false
     });
 
-    expect(container.textContent).toContain('My Test Document');
+    expect(screen.getByText('My Test Document')).toBeTruthy();
   });
 
-  it('displays error message when there is an error', () => {
-    const { container } = render(OrgDocument, {
-      props: { error: 'Failed to load document', loading: false }
+  it('displays error message when there is an error', async () => {
+    render(OrgDocument, {
+      error: 'Failed to load document',
+      loading: false
     });
 
-    expect(container.textContent).toContain('Error: Failed to load document');
+    expect(screen.getByText('Error: Failed to load document')).toBeTruthy();
   });
 });

@@ -24,10 +24,17 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json', 'html'],
     },
+    environmentOptions: {
+      jsdom: {
+        // Ensure svelte+testing-library works with runes
+        customExportConditions: ['svelte']
+      }
+    }
   },
   resolve: {
     alias: {
       '$lib': path.resolve(__dirname, './src/lib')
     },
+    conditions: ['browser', 'svelte', 'import', 'module', 'node', 'default']
   }
 });

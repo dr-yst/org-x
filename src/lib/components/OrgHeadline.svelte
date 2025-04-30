@@ -1,10 +1,13 @@
 <script lang="ts">
-  import type { OrgHeadline } from '../bindings';
+  import type { OrgHeadline } from "../bindings";
 
-  export let headline: OrgHeadline;
-  export let level: number = 1;
+  // runesスタイルのprops定義
+  const { headline, level = 1 } = $props<{
+    headline: OrgHeadline;
+    level?: number;
+  }>();
 
-  let isExpanded = true;
+  let isExpanded = $state(true);
 
   function toggleExpand() {
     isExpanded = !isExpanded;
@@ -12,12 +15,17 @@
 
   // レベルに応じたボーダーカラーを取得する関数
   function getBorderColor(level: number): string {
-    switch(level) {
-      case 1: return 'border-blue-600'; // #4361ee
-      case 2: return 'border-indigo-800'; // #3a0ca3
-      case 3: return 'border-purple-700'; // #7209b7
-      case 4: return 'border-pink-600'; // #f72585
-      default: return 'border-blue-400'; // #4cc9f0
+    switch (level) {
+      case 1:
+        return "border-blue-600"; // #4361ee
+      case 2:
+        return "border-indigo-800"; // #3a0ca3
+      case 3:
+        return "border-purple-700"; // #7209b7
+      case 4:
+        return "border-pink-600"; // #f72585
+      default:
+        return "border-blue-400"; // #4cc9f0
     }
   }
 </script>
@@ -27,10 +35,10 @@
     {#if headline.children.length > 0}
       <button
         class="w-5 h-5 flex items-center justify-center mr-2 border border-gray-300 rounded text-base leading-none hover:bg-gray-100"
-        on:click={toggleExpand}
+        onclick={toggleExpand}
         aria-label="Toggle expand"
       >
-        {isExpanded ? '−' : '+'}
+        {isExpanded ? "−" : "+"}
       </button>
     {/if}
 
@@ -41,7 +49,7 @@
         </span>
       {/if}
 
-      <span>{headline.title}</span>
+      <span>{headline.title.raw}</span>
 
       {#if headline.tags.length > 0}
         <span class="flex gap-1">
