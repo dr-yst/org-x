@@ -1,6 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod orgmode;
 pub mod api;
+#[cfg(debug_assertions)]
+pub mod test_datetime;
 
 // Generate TypeScript bindings using the Builder pattern from tauri-specta
 #[cfg(debug_assertions)]
@@ -12,6 +14,7 @@ fn generate_ts_bindings() {
         .commands(collect_commands![
             api::get_sample_org,
             api::parse_org_content,
+            api::run_datetime_test,
         ]);
     
     builder
@@ -40,6 +43,7 @@ pub fn run() {
         .commands(collect_commands![
             api::get_sample_org,
             api::parse_org_content,
+            api::run_datetime_test,
         ]);
     
     tauri::Builder::default()
