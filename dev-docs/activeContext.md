@@ -20,8 +20,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - ✅ Updated Svelte components to use Svelte 5 runes syntax
 - ✅ Added date information display to HeadlinesList component
 - ✅ Implemented date filtering functionality (today, this week, overdue)
+- ✅ Fixed HeadlinesList component test compatibility with Svelte 5 runes
+- ✅ Implemented robust test environment for Svelte 5 components
+- ✅ Fixed title and property handling in HeadlinesList component
 - 🔄 Implementation of basic task list view (MVP)
-- 🔄 Implementation of test environment with Vitest and Testing Library
 - 🔄 Implementation of simple filtering functionality
 - ⬜ Implementation of file monitoring functionality
 
@@ -37,8 +39,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Adopted shadcn-svelte as UI component library to accelerate development
 - Updated all Svelte components to use Svelte 5 runes system for improved state management
 - Implemented date information display and filtering in the HeadlinesList component
-- Encountered compatibility issues between Svelte 5 and testing libraries, requiring additional configuration
-- Resolved Tailwind CSS build issues by adjusting custom CSS variable usage
+- Resolved compatibility issues between Svelte 5 and testing libraries with updated configuration
+- Fixed HeadlinesList component to properly handle hierarchical headline structure
+- Implemented effective date filtering for today, this week, and overdue tasks
+- Identified potential improvements for the Rust type definitions to eliminate duplication
 
 ### Technical Considerations
 - The task list view needs to maintain keyboard operability while providing task information
@@ -53,6 +57,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - This lays groundwork for more advanced filtering in future releases
 - Svelte 5's runes system requires special consideration when testing components
 - TDD approach requires adaptation to work with Svelte 5's new reactivity system
+- OrgHeadline and OrgTitle structures have overlapping fields that should be consolidated
 
 ## Recent Changes
 
@@ -83,6 +88,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Full adoption of Svelte 5 runes for state management across all components
 - Implementation of date-related filtering functionality directly in the task list
 - Adaptation of testing approach to work with Svelte 5 runes
+- Planning to consolidate overlapping fields between OrgHeadline and OrgTitle structures
 
 ## Learnings and Discoveries
 
@@ -95,6 +101,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Svelte 5's runes system offers better state management but requires adjustments to testing strategies
 - Date formatting and filtering logic can be implemented efficiently in the frontend
 - Tailwind CSS configuration needs careful management with custom theme variables
+- Testing Svelte 5 components requires specific JSDOM configuration and updated selectors
+- The HeadlinesList component needs to handle different title formats (string or object) from the Rust backend
+- Some overlapping fields in the Rust type definitions could be consolidated for better maintainability
 
 ### Difficulties and Solutions
 - Challenge: Determining the appropriate MVP scope
@@ -113,6 +122,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - Solution: Update Vitest configuration and adapt testing approach for runes
 - Challenge: CSS build issues with Tailwind custom variables
   - Solution: Directly use CSS properties instead of applying utility classes for theme variables
+- Challenge: Handling multiple elements with the same text in tests
+  - Solution: Use more specific selectors or DOM querying techniques
+- Challenge: Managing overlapping fields in type definitions
+  - Solution: Plan to consolidate OrgHeadline and OrgTitle structures to reduce duplication
 
 ## Next Steps
 
@@ -122,7 +135,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
    - Display of title, scheduled dates, and deadlines
    - Basic tag display
    - Priority indicators
-2. 🔄 Complete implementation of the testing environment
+2. ✅ Complete implementation of the testing environment
    - Resolve compatibility issues with Svelte 5
    - Implement proper component tests
    - Set up proper test mocking for Tauri commands
@@ -130,6 +143,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
 4. ⬜ Implementation of frontend components to send filter configurations to backend
 5. ⬜ Basic keyboard navigation for the task list
 6. ⬜ Implementation of file monitoring functionality
+7. ⬜ Consider consolidating OrgHeadline and OrgTitle structures to reduce duplication
 
 ### Deferred Tasks (Post-MVP)
 1. ✅ Design of multi-view tab system
@@ -154,3 +168,4 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Architectural patterns that support the MVP while enabling future expansion
 - Effective testing strategies for Svelte 5 components
 - Best practices for implementing Svelte 5 runes in a maintainable way
+- Best approach to consolidate overlapping fields in OrgHeadline and OrgTitle structures
