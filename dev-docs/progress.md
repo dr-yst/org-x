@@ -25,6 +25,8 @@
 ### Development Environment
 - ✅ Set up basic Tauri + Svelte project
 - ✅ Build memory bank system
+- ✅ Set up Vitest testing framework
+- ✅ Configure Svelte 5 runes in Vitest environment
 
 ### Frontend Design
 - ✅ Design of basic UI structure
@@ -36,6 +38,11 @@
 - ✅ Design of settings screen for customization
 - ✅ Design of task list with date information display
 - ✅ Design of user-defined property filtering in sidebar
+
+### Frontend Implementation
+- ✅ Migrate Svelte components to use Svelte 5 runes syntax
+- ✅ Implement date information display in HeadlinesList component
+- ✅ Implement date-based filtering functionality
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
@@ -52,6 +59,7 @@
 - 🔄 Implementation of basic task list view component
 - 🔄 Implementation of simple filtering functionality
 - 🔄 Construction of basic frontend UI components
+- 🔄 Implementation of proper testing for Svelte 5 components
 - ⬜ Implementation of multi-view tab system (deferred to post-MVP)
 - ⬜ Implementation of sidebar-based filtering system (deferred to post-MVP)
 - ⬜ Implementation of multi-criteria sorting UI (deferred to post-MVP)
@@ -86,7 +94,7 @@
 
 ### Testing
 - ✅ Backend unit tests (parser tests fixed)
-- ⬜ Frontend component tests
+- 🔄 Frontend component tests with Svelte 5 compatibility
 - ⬜ E2E tests
 - ⬜ Filter, sort, and group logic tests
 
@@ -95,10 +103,17 @@
 ### Current Progress Status
 The project has undergone a strategic pivot to focus on delivering an MVP centered around the task list view functionality. We've successfully implemented the enhanced data model as specified in the system patterns documentation, including TodoStatus, GlobalMetadata, OrgTitle, and other structures. We have successfully refactored the headline representation to use the new OrgTitle structure, implemented proper property extraction from the Orgize parser, and added navigation methods to traverse the headline hierarchy. All parser module tests have been fixed and are now passing.
 
+Recent progress includes:
+1. **Migrating to Svelte 5 Runes**: All Svelte components have been updated to use Svelte 5's runes system for state management, replacing traditional props with `$props()`, state with `$state()`, and computed values with `$derived` or `$effect`.
+2. **Enhanced TaskList View**: The HeadlinesList component has been expanded with date information display and date-based filtering functionality.
+3. **Testing Environment Setup**: Vitest testing framework has been set up for frontend component testing, though there are ongoing challenges with Svelte 5 compatibility.
+4. **CSS Improvements**: Resolved Tailwind CSS build issues related to custom theme variables.
+
 While we've designed a comprehensive UI structure with multiple view tabs, display modes, sidebar-based filtering, multi-criteria sorting, and flexible grouping, we've decided to defer these more complex features to post-MVP development. Our immediate focus is now on implementing a clean, functional task list view with basic filtering capabilities. This approach allows us to deliver value more quickly with a simpler initial implementation, while still leveraging the robust backend architecture we've established.
 
 ### Immediate Challenges
 - Implement the basic task list view component
+- Complete the testing setup for Svelte 5 components
 - Implement simple filtering by TODO status, tags, and dates
 - Implement basic server-side filtering in Rust
 - Design and implement a clean, minimal UI that focuses on task list functionality
@@ -145,6 +160,8 @@ While we've designed a comprehensive UI structure with multiple view tabs, displ
 - Added support for user-defined properties in the filtering system
 - Decided to implement filtering, sorting, and grouping logic on the server-side (Rust) to improve performance and reduce memory usage
 - Chose a simpler approach focusing on server-side filtering first, before considering more complex strategies like partial loading or virtualization
+- Embraced Svelte 5 runes for reactive state management throughout the frontend
+- Enhanced date filtering capabilities directly in the frontend for improved user experience
 
 ## Risks and Challenges
 
@@ -156,6 +173,8 @@ While we've designed a comprehensive UI structure with multiple view tabs, displ
 - Maintaining performance with multiple views and complex filters/groups
 - Visual clarity with nested groups
 - Managing potentially large numbers of filter options in the sidebar
+- Compatibility challenges between Svelte 5 runes and testing frameworks
+- Ensuring proper Svelte 5 patterns are followed consistently throughout the codebase
 
 ### Solutions and Mitigation Strategies
 - Improved debugging techniques to identify and fix test failures
@@ -168,3 +187,7 @@ While we've designed a comprehensive UI structure with multiple view tabs, displ
 - Efficient serialization and storage of view configurations
 - Clear visual design for grouped content with collapsible sections
 - Implementation of virtualized lists for sidebar filter options with large datasets
+- Updated Vitest configuration specifically for Svelte 5 compatibility
+- Developed alternative testing strategies to work around Svelte 5 limitations
+- Created simplified test mocks for Tauri commands and IPC
+- Direct CSS property usage instead of applying utility classes for theme variables

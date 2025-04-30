@@ -17,7 +17,11 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - ✅ Implemented headline property extraction from Orgize parser
 - ✅ Improved property handling with inheritance and access mechanisms
 - ✅ Enhanced TODO keyword handling with orgize::ParseConfig
+- ✅ Updated Svelte components to use Svelte 5 runes syntax
+- ✅ Added date information display to HeadlinesList component
+- ✅ Implemented date filtering functionality (today, this week, overdue)
 - 🔄 Implementation of basic task list view (MVP)
+- 🔄 Implementation of test environment with Vitest and Testing Library
 - 🔄 Implementation of simple filtering functionality
 - ⬜ Implementation of file monitoring functionality
 
@@ -31,7 +35,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Committed to delivering a simpler but valuable initial release more quickly
 - Developed a phased approach with clear milestones for incrementally adding features
 - Adopted shadcn-svelte as UI component library to accelerate development
-- Removed Tiptap as it was determined to be overspec for current project needs
+- Updated all Svelte components to use Svelte 5 runes system for improved state management
+- Implemented date information display and filtering in the HeadlinesList component
+- Encountered compatibility issues between Svelte 5 and testing libraries, requiring additional configuration
+- Resolved Tailwind CSS build issues by adjusting custom CSS variable usage
 
 ### Technical Considerations
 - The task list view needs to maintain keyboard operability while providing task information
@@ -44,6 +51,8 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - Backend will process the data and return filtered results
   - This approach maintains the performance benefits while simplifying initial implementation
   - This lays groundwork for more advanced filtering in future releases
+- Svelte 5's runes system requires special consideration when testing components
+- TDD approach requires adaptation to work with Svelte 5's new reactivity system
 
 ## Recent Changes
 
@@ -71,6 +80,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Prioritized usability and directness in the task list view
 - Adopted shadcn-svelte UI library to leverage high-quality accessible components
 - Replaced Tiptap with simpler rendering approach for content display
+- Full adoption of Svelte 5 runes for state management across all components
+- Implementation of date-related filtering functionality directly in the task list
+- Adaptation of testing approach to work with Svelte 5 runes
 
 ## Learnings and Discoveries
 
@@ -80,6 +92,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Deferring complex features reduces initial implementation risk
 - The robust backend data model we've established can support both the MVP and future enhancements
 - Starting with focused task list functionality provides a solid foundation for expansion
+- Svelte 5's runes system offers better state management but requires adjustments to testing strategies
+- Date formatting and filtering logic can be implemented efficiently in the frontend
+- Tailwind CSS configuration needs careful management with custom theme variables
 
 ### Difficulties and Solutions
 - Challenge: Determining the appropriate MVP scope
@@ -94,19 +109,23 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - Solution: Focus on the most commonly used filters (TODO status, tags, dates)
 - Challenge: Communicating the change in project direction
   - Solution: Clear documentation of the MVP approach and future roadmap
+- Challenge: Testing Svelte 5 components with existing testing libraries
+  - Solution: Update Vitest configuration and adapt testing approach for runes
+- Challenge: CSS build issues with Tailwind custom variables
+  - Solution: Directly use CSS properties instead of applying utility classes for theme variables
 
 ## Next Steps
 
 ### Priority Tasks
-1. 🔄 Implementation of basic task list view (MVP)
+1. 🔄 Complete implementation of basic task list view (MVP)
    - Basic headline rendering with TODO status
    - Display of title, scheduled dates, and deadlines
    - Basic tag display
    - Priority indicators
-2. ⬜ Implementation of simple filtering functionality for the task list
-   - TODO status filtering
-   - Tag filtering
-   - Basic date filtering (today, this week, etc.)
+2. 🔄 Complete implementation of the testing environment
+   - Resolve compatibility issues with Svelte 5
+   - Implement proper component tests
+   - Set up proper test mocking for Tauri commands
 3. ⬜ Implementation of basic server-side filtering in Rust
 4. ⬜ Implementation of frontend components to send filter configurations to backend
 5. ⬜ Basic keyboard navigation for the task list
@@ -124,7 +143,6 @@ The current project priority has been adjusted to focus on developing an MVP tha
 9. ⬜ Implementation of Timeline (Gantt chart) view
 10. ⬜ Implementation of custom variable definitions for different display modes
 
-
 ### Areas Requiring Exploration
 - Most effective way to implement basic filtering for the task list
 - Best approach for displaying task information (dates, priority, tags) clearly in a compact format
@@ -134,3 +152,5 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Performance testing with moderate-sized files
 - User experience considerations for a simplified but powerful task list
 - Architectural patterns that support the MVP while enabling future expansion
+- Effective testing strategies for Svelte 5 components
+- Best practices for implementing Svelte 5 runes in a maintainable way
