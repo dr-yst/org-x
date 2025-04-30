@@ -1,18 +1,30 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { commands } from '../bindings';
-  import type { OrgDocument as OrgDocumentType } from '../bindings';
-  import OrgHeadline from './OrgHeadline.svelte';
+  import { onMount } from "svelte";
+  import { commands } from "../bindings";
+  import type { OrgDocument as OrgDocumentType } from "../bindings";
+  import OrgHeadline from "./OrgHeadline.svelte";
 
-  export let document: OrgDocumentType | null = null;
-  export let loading = true;
-  export let error: string | null = null;
+  // runesスタイルのprops定義
+  const {
+    document = null,
+    loading: initialLoading = true,
+    error: initialError = null,
+  } = $props<{
+    document?: OrgDocumentType | null;
+    loading?: boolean;
+    error?: string | null;
+  }>();
+
+  // ステート管理
+  let documentState = $state(document);
+  let loading = $state(initialLoading);
+  let error = $state(initialError);
 
   onMount(async () => {
-    if (!document) {
+    if (!documentState) {
       try {
         // Load sample document
-        document = await commands.getSampleOrg();
+        documentState = await commands.getSampleOrg();
         loading = false;
       } catch (err) {
         error = String(err);
@@ -29,11 +41,13 @@
     <div class="text-red-600 border border-red-500 p-4 rounded bg-red-50">
       <p>Error: {error}</p>
     </div>
-  {:else if document}
-    <h1 class="text-2xl mb-6 pb-2 border-b border-gray-200">{document.title}</h1>
-    
+  {:else if documentState}
+    <h1 class="text-2xl mb-6 pb-2 border-b border-gray-200">
+      {documentState.title}
+    </h1>
+
     <div class="mt-4">
-      {#each document.headlines as headline}
+      {#each documentState.headlines as headline}
         <OrgHeadline {headline} level={1} />
       {/each}
     </div>
