@@ -188,8 +188,8 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
   - Each document has a unique ID and an etag for change detection
 
 - `OrgHeadline`: Represents a headline in an org-mode document
-  - Contains hierarchical information (level, parent-child relationships)
-  - Has title, content, tags, TODO keyword, priority
+  - Contains hierarchical information (parent-child relationships)
+  - Has title and content
   - Contains references to child headlines
   - Includes properties and an etag for change detection
 
@@ -209,7 +209,7 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
   - Contains OrgDatetime for date information
   - Supports repeater and delay information
   - Provides methods for formatting and date-based filtering (today, this week, overdue)
-  
+
 - `OrgPlanning`: Container for planning information in org-mode
   - Contains optional deadline, scheduled, and closed timestamps
   - Stored within OrgTitle for direct access from headlines
@@ -218,7 +218,7 @@ See `ui-mock.png` for a visual representation of the UI design, which includes:
 #### Timestamp System Implementation
 The timestamp implementation significantly enhances Org-X's ability to work with date and time information:
 
-- **Type Safety**: 
+- **Type Safety**:
   - Strongly-typed representation reduces string manipulation errors
   - Type definitions are shared between Rust and TypeScript via specta
   - Better semantic representation of org-mode concepts
@@ -232,11 +232,11 @@ The timestamp implementation significantly enhances Org-X's ability to work with
   ```rust
   // Creating timestamps
   let deadline = OrgTimestamp::active_from_date(2023, 6, 15, "Thu");
-  
+
   // Adding to headlines via planning
   let title = OrgTitle::simple("TODO Task", 1)
       .with_deadline(deadline);
-      
+
   // Using in headlines
   headline.due_today(); // Check if due today
   ```
@@ -476,5 +476,5 @@ While starting with server-side filtering, we acknowledge that more advanced app
 - Pagination for breaking large results into manageable chunks
 - Caching frequently used query results
 
-The current approach prioritizes simplicity while addressing the performance concerns. 
+The current approach prioritizes simplicity while addressing the performance concerns.
 We'll revisit this decision if performance issues arise with large files or complex filtering operations.

@@ -21,6 +21,9 @@
 - ✅ Refactor monolithic code into modular components
 - ✅ Fix test failures in parser module
 - ✅ Improve code quality and fix unsafe code patterns
+- ✅ Fix test failures related to refactoring of OrgHeadline and OrgTitle structures
+- ✅ Address compiler warnings and clean up unused imports/variables
+- ✅ Add missing convenience methods to maintain code usability
 
 ### Development Environment
 - ✅ Set up basic Tauri + Svelte project
@@ -46,6 +49,7 @@
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
+- ✅ Implement OrgDatetime and enhanced OrgTimestamp structures for better date handling
 
 ## Items in Progress
 
@@ -97,6 +101,7 @@
 
 ### Testing
 - ✅ Backend unit tests (parser tests fixed)
+- ✅ Backend unit tests for all modules
 - 🔄 Frontend component tests with Svelte 5 compatibility
 - ⬜ E2E tests
 - ⬜ Filter, sort, and group logic tests
@@ -109,8 +114,10 @@ The project has undergone a strategic pivot to focus on delivering an MVP center
 Recent progress includes:
 1. **Migrating to Svelte 5 Runes**: All Svelte components have been updated to use Svelte 5's runes system for state management, replacing traditional props with `$props()`, state with `$state()`, and computed values with `$derived` or `$effect`.
 2. **Enhanced TaskList View**: The HeadlinesList component has been expanded with date information display and date-based filtering functionality.
-3. **Testing Environment Setup**: Vitest testing framework has been set up for frontend component testing, though there are ongoing challenges with Svelte 5 compatibility.
+3. **Testing Environment Setup**: Vitest testing framework has been set up for frontend component testing, with all compatibility issues with Svelte 5 resolved.
 4. **CSS Improvements**: Resolved Tailwind CSS build issues related to custom theme variables.
+5. **Fixed Rust Test Failures**: All test failures related to the refactoring of OrgHeadline and OrgTitle structures have been fixed. We added missing convenience methods where needed and updated test code to work with the new structure.
+6. **Code Quality Improvements**: Addressed compiler warnings by removing unused imports and marking intentionally unused variables with underscores.
 
 While we've designed a comprehensive UI structure with multiple view tabs, display modes, sidebar-based filtering, multi-criteria sorting, and flexible grouping, we've decided to defer these more complex features to post-MVP development. Our immediate focus is now on implementing a clean, functional task list view with basic filtering capabilities. This approach allows us to deliver value more quickly with a simpler initial implementation, while still leveraging the robust backend architecture we've established.
 
