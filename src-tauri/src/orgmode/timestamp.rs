@@ -1,5 +1,4 @@
 use crate::orgmode::datetime::OrgDatetime;
-use chrono::{NaiveDateTime, NaiveDate};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::hash::{Hash, Hasher};

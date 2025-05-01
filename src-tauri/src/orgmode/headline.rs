@@ -5,7 +5,6 @@ use crate::orgmode::todo::TodoConfiguration;
 use crate::orgmode::todo::TodoStatus;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use std::collections::HashMap;
 
 /// Basic headline structure
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]

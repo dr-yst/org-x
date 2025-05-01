@@ -168,7 +168,7 @@ mod tests {
             None,
         );
         
-        let mut headline2 = OrgHeadline::new(
+        let headline2 = OrgHeadline::new(
             "h2".to_string(),
             "doc1".to_string(),
             title2,

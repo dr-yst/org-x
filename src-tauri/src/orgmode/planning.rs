@@ -1,7 +1,6 @@
 use crate::orgmode::timestamp::OrgTimestamp;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]

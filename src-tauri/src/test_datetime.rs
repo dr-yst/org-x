@@ -1,7 +1,6 @@
 // Test program for demonstrating OrgDatetime and OrgTimestamp functionality
 use crate::orgmode::{OrgDatetime, OrgTimestamp, OrgPlanning, OrgTitle, OrgHeadline};
 use chrono::Datelike; // Import the Datelike trait for date methods
-use std::collections::HashMap;
 use uuid::Uuid;
 
 pub fn main() {

@@ -488,7 +488,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     let todo_keyword = title_element.keyword.clone().map(|kw| kw.to_string());
 
     // Extract priority and convert to string
-    let priority = title_element.priority.map(|p| p.to_string());
+    let _priority = title_element.priority.map(|p| p.to_string());
 
     // Create OrgTitle
     let org_title = OrgTitle {
@@ -505,7 +505,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     let content = extract_headline_content(org, &headline);
 
     // Extract properties from the headline
-    let properties = extract_headline_properties(org, &headline);
+    let _properties = extract_headline_properties(org, &headline);
 
     // Child headings (built separately in the hierarchy function)
     let children = Vec::new();

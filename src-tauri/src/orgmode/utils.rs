@@ -29,7 +29,6 @@ pub fn generate_headline_etag(headline: &OrgHeadline) -> String {
 mod tests {
     use super::*;
     use crate::orgmode::OrgTitle;
-    use std::collections::HashMap;
 
     #[test]
     fn test_document_etag_generation() {
