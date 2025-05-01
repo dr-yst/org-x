@@ -1,8 +1,8 @@
 use crate::orgmode::document::OrgDocument;
+use crate::orgmode::timestamp::OrgTimestamp;
 use crate::orgmode::title::OrgTitle;
 use crate::orgmode::todo::TodoConfiguration;
 use crate::orgmode::todo::TodoStatus;
-use crate::orgmode::timestamp::OrgTimestamp;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::collections::HashMap;
@@ -21,37 +21,25 @@ pub struct OrgHeadline {
 // Helper functions for working with headlines
 impl OrgHeadline {
     /// Create a new OrgHeadline with the given parameters
-    pub fn new(
-        id: String,
-        document_id: String,
-        level: u32,
-        title: OrgTitle,
-        content: String,
-    ) -> Self {
+    pub fn new(id: String, document_id: String, title: OrgTitle, content: String) -> Self {
         Self {
             id,
             document_id,
-            level,
-            // Keep original title fields in sync with OrgTitle for backward compatibility
-            tags: title.tags.clone(),
-            todo_keyword: title.todo_keyword.clone(),
-            priority: title.priority.map(|p| p.to_string()),
             title,
             content,
             children: Vec::new(),
-            properties: HashMap::new(),
             etag: String::new(),
         }
     }
 
     // Check if this headline is a task (has a TODO keyword)
     pub fn is_task(&self) -> bool {
-        self.todo_keyword.is_some()
+        self.title.todo_keyword.is_some()
     }
 
     // Check if this headline is a note (no TODO keyword)
     pub fn is_note(&self) -> bool {
-        self.todo_keyword.is_none()
+        self.title.todo_keyword.is_none()
     }
 
     // Get due date (from planning or fallback to PROPERTIES)
@@ -63,7 +51,7 @@ impl OrgHeadline {
                 return Some(deadline.format());
             }
         }
-        
+
         // Fallback to properties
         self.get_property("DEADLINE").map(|s| s.to_string())
     }
@@ -77,11 +65,11 @@ impl OrgHeadline {
                 return Some(scheduled.format());
             }
         }
-        
+
         // Fallback to properties
         self.get_property("SCHEDULED").map(|s| s.to_string())
     }
-    
+
     // Get the deadline timestamp directly
     pub fn deadline_timestamp(&self) -> Option<&OrgTimestamp> {
         self.title
@@ -89,7 +77,7 @@ impl OrgHeadline {
             .as_ref()
             .and_then(|planning| planning.deadline.as_ref())
     }
-    
+
     // Get the scheduled timestamp directly
     pub fn scheduled_timestamp(&self) -> Option<&OrgTimestamp> {
         self.title
@@ -97,31 +85,29 @@ impl OrgHeadline {
             .as_ref()
             .and_then(|planning| planning.scheduled.as_ref())
     }
-    
+
     // Check if the headline has a deadline due today
     pub fn due_today(&self) -> bool {
-        self.deadline_timestamp()
-            .map_or(false, |ts| ts.is_today())
+        self.deadline_timestamp().map_or(false, |ts| ts.is_today())
     }
-    
+
     // Check if the headline has a deadline due this week
     pub fn due_this_week(&self) -> bool {
         self.deadline_timestamp()
             .map_or(false, |ts| ts.is_this_week())
     }
-    
+
     // Check if the headline has an overdue deadline
     pub fn is_overdue(&self) -> bool {
         self.deadline_timestamp()
             .map_or(false, |ts| ts.is_overdue())
     }
-    
+
     // Check if the headline is scheduled for today
     pub fn scheduled_today(&self) -> bool {
-        self.scheduled_timestamp()
-            .map_or(false, |ts| ts.is_today())
+        self.scheduled_timestamp().map_or(false, |ts| ts.is_today())
     }
-    
+
     // Check if the headline is scheduled for this week
     pub fn scheduled_this_week(&self) -> bool {
         self.scheduled_timestamp()
@@ -131,9 +117,7 @@ impl OrgHeadline {
     // Generic property accessor
     pub fn get_property(&self, key: &str) -> Option<&str> {
         // First check headline properties
-        if let Some(value) = self.properties.get(key) {
-            return Some(value);
-        }
+        // Title already contains properties
 
         // Then check title properties
         self.title.get_property(key)
@@ -152,7 +136,7 @@ impl OrgHeadline {
 
     // Get resolved TODO status with color and state information
     pub fn get_todo_status(&self, config: &TodoConfiguration) -> Option<TodoStatus> {
-        if let Some(keyword) = &self.todo_keyword {
+        if let Some(keyword) = &self.title.todo_keyword {
             config.find_status(keyword).cloned()
         } else {
             None
@@ -198,7 +182,7 @@ impl OrgHeadline {
             if self_index > 0 {
                 return Some(&parent.children[self_index - 1]);
             }
-        } else if self.level == 1 {
+        } else if self.title.level == 1 {
             // Top-level headline, search in document.headlines
             let self_index = document.headlines.iter().position(|h| h.id == self.id)?;
             if self_index > 0 {
@@ -219,7 +203,7 @@ impl OrgHeadline {
             if self_index < parent.children.len() - 1 {
                 return Some(&parent.children[self_index + 1]);
             }
-        } else if self.level == 1 {
+        } else if self.title.level == 1 {
             // Top-level headline, search in document.headlines
             let self_index = document.headlines.iter().position(|h| h.id == self.id)?;
             if self_index < document.headlines.len() - 1 {
@@ -298,7 +282,8 @@ mod tests {
         // Create test headlines with OrgTitle
         let task_title = OrgTitle::new(
             "Task".to_string(),
-            None,
+            1,    // level
+            None, // priority
             vec!["tag1".to_string()],
             Some("TODO".to_string()),
         );
@@ -306,17 +291,21 @@ mod tests {
         let task = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             task_title,
             "Task content".to_string(),
         );
 
-        let note_title = OrgTitle::new("Note".to_string(), None, vec!["tag2".to_string()], None);
+        let note_title = OrgTitle::new(
+            "Note".to_string(),
+            1,    // level
+            None, // priority
+            vec!["tag2".to_string()],
+            None,
+        );
 
         let note = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            1,
             note_title,
             "Note content".to_string(),
         );
@@ -347,23 +336,21 @@ mod tests {
         };
 
         // Create headline with no category property
-        let headline1_title = OrgTitle::simple("Headline 1");
+        let headline1_title = OrgTitle::simple("Headline 1", 1);
         let headline1 = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             headline1_title,
             "Content".to_string(),
         );
 
         // Create headline with category property
-        let mut headline2_title = OrgTitle::simple("Headline 2");
+        let mut headline2_title = OrgTitle::simple("Headline 2", 1);
         headline2_title.set_property("CATEGORY".to_string(), "HeadlineCategory".to_string());
 
         let headline2 = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            1,
             headline2_title,
             "Content".to_string(),
         );
@@ -376,34 +363,32 @@ mod tests {
     #[test]
     fn test_find_tasks_and_notes() {
         // Create a headline hierarchy with both tasks and notes
-        let parent_title = OrgTitle::simple("Parent");
+        let parent_title = OrgTitle::simple("Parent", 1);
         let mut parent = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             parent_title,
             "Parent content".to_string(),
         );
 
         let child1_title = OrgTitle::new(
             "Child 1".to_string(),
-            None,
+            2,    // level
+            None, // priority
             Vec::new(),
             Some("TODO".to_string()),
         );
         let child1 = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            2,
             child1_title,
             "Child 1 content".to_string(),
         );
 
-        let child2_title = OrgTitle::simple("Child 2");
+        let child2_title = OrgTitle::simple("Child 2", 2);
         let child2 = OrgHeadline::new(
             "3".to_string(),
             "doc1".to_string(),
-            2,
             child2_title,
             "Child 2 content".to_string(),
         );
@@ -441,40 +426,36 @@ mod tests {
         };
 
         // Create parent headline
-        let parent_title = OrgTitle::simple("Parent");
+        let parent_title = OrgTitle::simple("Parent", 1);
         let mut parent = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             parent_title,
             "Parent content".to_string(),
         );
 
         // Create child headlines
-        let child1_title = OrgTitle::simple("Child 1");
+        let child1_title = OrgTitle::simple("Child 1", 2);
         let child1 = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            2,
             child1_title,
             "Child 1 content".to_string(),
         );
 
-        let child2_title = OrgTitle::simple("Child 2");
+        let child2_title = OrgTitle::simple("Child 2", 2);
         let mut child2 = OrgHeadline::new(
             "3".to_string(),
             "doc1".to_string(),
-            2,
             child2_title,
             "Child 2 content".to_string(),
         );
 
         // Create grandchild headline
-        let grandchild_title = OrgTitle::simple("Grandchild");
+        let grandchild_title = OrgTitle::simple("Grandchild", 3);
         let grandchild = OrgHeadline::new(
             "4".to_string(),
             "doc1".to_string(),
-            3,
             grandchild_title,
             "Grandchild content".to_string(),
         );
@@ -517,48 +498,43 @@ mod tests {
         };
 
         // Create top-level headlines
-        let h1_title = OrgTitle::simple("Headline 1");
+        let h1_title = OrgTitle::simple("Headline 1", 1);
         let h1 = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             h1_title,
             "Content 1".to_string(),
         );
 
-        let h2_title = OrgTitle::simple("Headline 2");
+        let h2_title = OrgTitle::simple("Headline 2", 1);
         let mut h2 = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            1,
             h2_title,
             "Content 2".to_string(),
         );
 
-        let h3_title = OrgTitle::simple("Headline 3");
+        let h3_title = OrgTitle::simple("Headline 3", 1);
         let h3 = OrgHeadline::new(
             "3".to_string(),
             "doc1".to_string(),
-            1,
             h3_title,
             "Content 3".to_string(),
         );
 
         // Create children for h2
-        let h2_1_title = OrgTitle::simple("Headline 2.1");
+        let h2_1_title = OrgTitle::simple("Headline 2.1", 2);
         let h2_1 = OrgHeadline::new(
             "4".to_string(),
             "doc1".to_string(),
-            2,
             h2_1_title,
             "Content 2.1".to_string(),
         );
 
-        let h2_2_title = OrgTitle::simple("Headline 2.2");
+        let h2_2_title = OrgTitle::simple("Headline 2.2", 2);
         let h2_2 = OrgHeadline::new(
             "5".to_string(),
             "doc1".to_string(),
-            2,
             h2_2_title,
             "Content 2.2".to_string(),
         );
@@ -603,21 +579,19 @@ mod tests {
     #[test]
     fn test_content_and_structure_changed() {
         // Create headlines for comparison
-        let title1 = OrgTitle::simple("Test");
+        let title1 = OrgTitle::simple("Test", 1);
         let mut h1 = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             title1,
             "Content".to_string(),
         );
 
         // Same ID and level, but different content
-        let title2 = OrgTitle::simple("Test Modified");
+        let title2 = OrgTitle::simple("Test Modified", 1);
         let h2 = OrgHeadline::new(
             "1".to_string(),
             "doc1".to_string(),
-            1,
             title2,
             "Modified content".to_string(),
         );
@@ -626,11 +600,10 @@ mod tests {
         assert!(h1.content_changed(&h2));
 
         // Create child headlines
-        let child_title = OrgTitle::simple("Child");
+        let child_title = OrgTitle::simple("Child", 2);
         let child = OrgHeadline::new(
             "2".to_string(),
             "doc1".to_string(),
-            2,
             child_title,
             "Child content".to_string(),
         );

@@ -212,13 +212,13 @@ mod tests {
         // Verify deadline exists in title1
         if let Some(planning) = &title1.planning {
             assert!(planning.deadline.is_some());
-            assert_eq!(planning.deadline.as_ref().unwrap().start_date(), Some("2023-01-01"));
+            assert_eq!(planning.deadline.as_ref().unwrap().to_date_string(), Some("2023-01-01".to_string()));
         }
         
         // Verify scheduled exists in title2
         if let Some(planning) = &title2.planning {
             assert!(planning.scheduled.is_some());
-            assert_eq!(planning.scheduled.as_ref().unwrap().start_date(), Some("2023-02-01"));
+            assert_eq!(planning.scheduled.as_ref().unwrap().to_date_string(), Some("2023-02-01".to_string()));
         }
     }
 
@@ -244,9 +244,9 @@ mod tests {
 
     #[test]
     fn test_title_equality() {
-        let title1 = OrgTitle::simple("Test");
-        let title2 = OrgTitle::simple("Test");
-        let title3 = OrgTitle::simple("Different");
+        let title1 = OrgTitle::simple("Test", 1);
+        let title2 = OrgTitle::simple("Test", 1);
+        let title3 = OrgTitle::simple("Different", 1);
 
         // Test OrgTitle == OrgTitle
         assert_eq!(title1, title2);

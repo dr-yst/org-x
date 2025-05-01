@@ -80,6 +80,12 @@ impl OrgTimestamp {
         })
     }
     
+    /// Convenience method for creating active timestamps from date strings
+    pub fn active(date_str: &str) -> Self {
+        Self::active_from_string(date_str)
+            .unwrap_or_else(|| panic!("Invalid date string: {}", date_str))
+    }
+    
     /// Create a new active range timestamp from date strings
     pub fn active_range_from_strings(start_str: &str, end_str: &str) -> Option<Self> {
         let start = OrgDatetime::from_date_string(start_str)?;

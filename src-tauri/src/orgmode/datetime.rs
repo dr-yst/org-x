@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Datelike, Timelike};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::hash::{Hash, Hasher};

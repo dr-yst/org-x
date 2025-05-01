@@ -176,12 +176,12 @@ impl MetadataManager {
     ) {
         for headline in headlines {
             // Register tags
-            for tag in &headline.tags {
+            for tag in &headline.title.tags {
                 metadata.register_tag(tag, document_id, &headline.id);
             }
 
             // Register category if present in properties
-            if let Some(category) = headline.properties.get("CATEGORY") {
+            if let Some(category) = headline.title.properties.get("CATEGORY") {
                 metadata.register_category(category, document_id, Some(&headline.id));
             }
 

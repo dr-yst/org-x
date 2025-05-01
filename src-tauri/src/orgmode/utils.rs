@@ -14,15 +14,6 @@ pub fn generate_headline_etag(headline: &OrgHeadline) -> String {
     let mut hasher = DefaultHasher::new();
     headline.title.hash(&mut hasher);
     headline.content.hash(&mut hasher);
-    headline.tags.hash(&mut hasher);
-    headline.todo_keyword.hash(&mut hasher);
-    headline.priority.hash(&mut hasher);
-
-    // We can't directly hash the HashMap, so we'll hash each key-value pair
-    for (key, value) in &headline.properties {
-        key.hash(&mut hasher);
-        value.hash(&mut hasher);
-    }
 
     // Note: We don't hash child etags to avoid recursion issues
     // Instead, hash child titles and IDs to still detect changes
@@ -62,48 +53,43 @@ mod tests {
     #[test]
     fn test_headline_etag_generation() {
         // Create two identical headlines
-        let headline1 = OrgHeadline {
-            id: "1".to_string(),
-            document_id: "doc1".to_string(),
-            level: 1,
-            title: OrgTitle::simple("Test Headline"),
-            tags: vec!["tag1".to_string()],
-            todo_keyword: Some("TODO".to_string()),
-            priority: None,
-            content: "Content".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "".to_string(),
-        };
+        let title1 = OrgTitle::new(
+            "Test Headline".to_string(),
+            1,
+            None,
+            vec!["tag1".to_string()],
+            Some("TODO".to_string()),
+        );
+        
+        let headline1 = OrgHeadline::new(
+            "1".to_string(),
+            "doc1".to_string(),
+            title1.clone(),
+            "Content".to_string(),
+        );
 
-        let headline2 = OrgHeadline {
-            id: "2".to_string(), // Different ID
-            document_id: "doc1".to_string(),
-            level: 1,
-            title: OrgTitle::simple("Test Headline"),
-            tags: vec!["tag1".to_string()],
-            todo_keyword: Some("TODO".to_string()),
-            priority: None,
-            content: "Content".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "".to_string(),
-        };
+        let headline2 = OrgHeadline::new(
+            "2".to_string(), // Different ID
+            "doc1".to_string(),
+            title1,
+            "Content".to_string(),
+        );
 
         // Create a headline with different content
-        let headline3 = OrgHeadline {
-            id: "3".to_string(),
-            document_id: "doc1".to_string(),
-            level: 1,
-            title: OrgTitle::simple("Different Headline"),
-            tags: vec!["tag1".to_string()],
-            todo_keyword: Some("TODO".to_string()),
-            priority: None,
-            content: "Content".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "".to_string(),
-        };
+        let title3 = OrgTitle::new(
+            "Different Headline".to_string(),
+            1,
+            None,
+            vec!["tag1".to_string()],
+            Some("TODO".to_string()),
+        );
+        
+        let headline3 = OrgHeadline::new(
+            "3".to_string(),
+            "doc1".to_string(),
+            title3,
+            "Content".to_string(),
+        );
 
         // Same content should generate same etag (ID is not included in etag)
         assert_eq!(

@@ -145,55 +145,68 @@ mod tests {
         let mut repo = OrgDocumentRepository::new();
 
         // Create a document with headlines
-        let headline1 = OrgHeadline {
-            id: "h1".to_string(),
-            document_id: "doc1".to_string(),
-            level: 1,
-            title: OrgTitle::simple("Headline 1"),
-            tags: Vec::new(),
-            todo_keyword: None,
-            priority: None,
-            content: "Content 1".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "etag1".to_string(),
-        };
+        let title1 = OrgTitle::new(
+            "Headline 1".to_string(),
+            1,
+            None,
+            Vec::new(),
+            None,
+        );
+        
+        let headline1 = OrgHeadline::new(
+            "h1".to_string(),
+            "doc1".to_string(),
+            title1,
+            "Content 1".to_string(),
+        );
 
-        let mut headline2 = OrgHeadline {
-            id: "h2".to_string(),
-            document_id: "doc1".to_string(),
-            level: 1,
-            title: OrgTitle::simple("Headline 2"),
-            tags: Vec::new(),
-            todo_keyword: None,
-            priority: None,
-            content: "Content 2".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "etag2".to_string(),
-        };
+        let title2 = OrgTitle::new(
+            "Headline 2".to_string(),
+            1,
+            None,
+            Vec::new(),
+            None,
+        );
+        
+        let mut headline2 = OrgHeadline::new(
+            "h2".to_string(),
+            "doc1".to_string(),
+            title2,
+            "Content 2".to_string(),
+        );
 
-        let headline3 = OrgHeadline {
-            id: "h3".to_string(),
-            document_id: "doc1".to_string(),
-            level: 2,
-            title: OrgTitle::simple("Headline 3"),
-            tags: Vec::new(),
-            todo_keyword: None,
-            priority: None,
-            content: "Content 3".to_string(),
-            children: Vec::new(),
-            properties: HashMap::new(),
-            etag: "etag3".to_string(),
-        };
-
-        headline2.children.push(headline3);
+        let title3 = OrgTitle::new(
+            "Headline 3".to_string(),
+            2,
+            None,
+            Vec::new(),
+            None,
+        );
+        
+        let headline3 = OrgHeadline::new(
+            "h3".to_string(),
+            "doc1".to_string(),
+            title3,
+            "Content 3".to_string(),
+        );
+        
+        // Set etags for the headlines
+        let mut headline1_copy = headline1.clone();
+        headline1_copy.etag = "etag1".to_string();
+        
+        let mut headline2_copy = headline2.clone();
+        headline2_copy.etag = "etag2".to_string();
+        
+        let mut headline3_copy = headline3.clone();
+        headline3_copy.etag = "etag3".to_string();
+        
+        headline2_copy.children = vec![headline3_copy];
 
         let doc = OrgDocument {
             id: "doc1".to_string(),
             title: "Test Document".to_string(),
             content: "Content".to_string(),
-            headlines: vec![headline1, headline2],
+            headlines: vec![headline1_copy, headline2_copy],
             filetags: Vec::new(),
             parsed_at: Utc::now(),
             file_path: "test.org".to_string(),

@@ -1,10 +1,10 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
 use crate::orgmode::title::OrgTitle;
+use crate::orgmode::todo::StateType;
 use crate::orgmode::todo::TodoConfiguration;
 use crate::orgmode::todo::TodoSequence;
 use crate::orgmode::todo::TodoStatus;
-use crate::orgmode::todo::StateType;
 use crate::orgmode::utils::{generate_document_etag, generate_headline_etag};
 use chrono::Utc;
 use orgize::{Element, Org};
@@ -32,14 +32,17 @@ fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String
     let mut active_keywords = vec!["TODO".to_string()];
     let mut closed_keywords = vec!["DONE".to_string()];
     let mut custom_keywords_found = false;
-    
+
     // Look for TODO keyword definitions in the content
     for line in content.lines() {
         let line = line.trim();
-        
+
         if line.starts_with("#+TODO:") || line.starts_with("#+SEQ_TODO:") {
-            let definition = line.split_once(':').map(|(_, rest)| rest.trim()).unwrap_or("");
-            
+            let definition = line
+                .split_once(':')
+                .map(|(_, rest)| rest.trim())
+                .unwrap_or("");
+
             // Split by pipe to separate active and closed states
             if let Some((active, closed)) = definition.split_once('|') {
                 // Process active keywords
@@ -55,7 +58,7 @@ fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String
                         None
                     })
                     .collect();
-                
+
                 // Process closed keywords
                 let closed_words: Vec<String> = closed
                     .split_whitespace()
@@ -69,30 +72,33 @@ fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String
                         None
                     })
                     .collect();
-                
+
                 if !active_words.is_empty() {
                     active_keywords = active_words;
                     custom_keywords_found = true;
                 }
-                
+
                 if !closed_words.is_empty() {
                     closed_keywords = closed_words;
                     custom_keywords_found = true;
                 }
-                
+
                 // We found a definition, no need to process more lines
                 break;
             }
         }
     }
-    
+
     // If no custom keywords were found, use the defaults
     if custom_keywords_found {
-        println!("Found custom TODO keywords: {:?} | {:?}", active_keywords, closed_keywords);
+        println!(
+            "Found custom TODO keywords: {:?} | {:?}",
+            active_keywords, closed_keywords
+        );
     } else {
         println!("Using default TODO keywords: TODO | DONE");
     }
-    
+
     (active_keywords, closed_keywords)
 }
 
@@ -100,13 +106,13 @@ fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String
 pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
     // Extract TODO keywords from content
     let todo_keywords = extract_todo_keywords_from_content(content);
-    
+
     // Create ParseConfig with extracted TODO keywords
     let config = orgize::ParseConfig {
         todo_keywords,
         ..Default::default()
     };
-    
+
     // Parse with Orgize using custom configuration
     println!("Starting to parse document with custom config");
     let org = orgize::Org::parse_custom(content, &config);
@@ -243,7 +249,7 @@ fn get_color_for_active_status(index: usize) -> String {
         "#0099ff", // Blue for other active statuses
         "#9966cc", // Purple
     ];
-    
+
     if index < colors.len() {
         colors[index].to_string()
     } else {
@@ -260,7 +266,7 @@ fn get_color_for_closed_status(index: usize) -> String {
         "#999999", // Gray for CANCELLED
         "#666666", // Dark Gray for other closed statuses
     ];
-    
+
     if index < colors.len() {
         colors[index].to_string()
     } else {
@@ -270,7 +276,10 @@ fn get_color_for_closed_status(index: usize) -> String {
 }
 
 /// Extract TODO configuration from an Org document
-fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option<TodoConfiguration> {
+fn extract_todo_configuration(
+    org: &Org,
+    config: &orgize::ParseConfig,
+) -> Option<TodoConfiguration> {
     let mut todo_lines = Vec::new();
 
     // First check for TODO keywords in the org file content
@@ -286,17 +295,17 @@ fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option
     if !todo_lines.is_empty() {
         return Some(TodoConfiguration::from_org_config(&todo_lines));
     }
-    
+
     // Otherwise, use the TODO keywords from ParseConfig
     let (active_keywords, closed_keywords) = &config.todo_keywords;
-    
+
     if active_keywords.is_empty() && closed_keywords.is_empty() {
         return None;
     }
-    
+
     // Create statuses from the keywords
     let mut statuses = Vec::new();
-    
+
     // Add active keywords
     for (i, keyword) in active_keywords.iter().enumerate() {
         statuses.push(TodoStatus {
@@ -306,7 +315,7 @@ fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option
             color: Some(get_color_for_active_status(i)), // Assign color based on index
         });
     }
-    
+
     // Add closed keywords
     for (i, keyword) in closed_keywords.iter().enumerate() {
         statuses.push(TodoStatus {
@@ -316,13 +325,13 @@ fn extract_todo_configuration(org: &Org, config: &orgize::ParseConfig) -> Option
             color: Some(get_color_for_closed_status(i)), // Assign color based on index
         });
     }
-    
+
     // Create a sequence with the statuses
     let sequence = TodoSequence {
         name: "default".to_string(),
         statuses,
     };
-    
+
     Some(TodoConfiguration {
         sequences: vec![sequence],
         default_sequence: "default".to_string(),
@@ -369,12 +378,12 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
     let mut stack: Vec<StackItem> = Vec::new();
 
     for headline in all_headlines.drain(..) {
-        let level = headline.level;
+        let level = headline.title.level;
 
         // We'll generate etags after building the full hierarchy
 
         // Pop from stack until we find the appropriate parent or reach the top level
-        while !stack.is_empty() && stack.last().unwrap().level >= level {
+        while !stack.is_empty() && stack.last().unwrap().level >= (level as u32) {
             stack.pop();
         }
 
@@ -385,7 +394,7 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
                 index: root_headlines.len() - 1,
                 is_root: true,
                 parent_index: None,
-                level,
+                level: level as u32,
             });
         } else {
             // This is a child headline
@@ -401,7 +410,7 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
                     index: root_headlines[parent_index].children.len() - 1,
                     is_root: false,
                     parent_index: Some(parent_stack_index),
-                    level,
+                    level: level as u32,
                 });
             } else {
                 // Recursively find the actual parent
@@ -434,7 +443,7 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
                     index: current.children.len() - 1,
                     is_root: false,
                     parent_index: Some(parent_stack_index),
-                    level,
+                    level: level as u32,
                 });
             }
         }
@@ -484,10 +493,12 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     // Create OrgTitle
     let org_title = OrgTitle {
         raw: raw_title,
+        level: level as usize,
         priority: title_element.priority,
-        tags: tags.clone(), // Clone for backward compatibility
+        tags: tags.clone(),                 // Clone for backward compatibility
         todo_keyword: todo_keyword.clone(), // Clone for backward compatibility
         properties: extract_properties_from_title(&title_element),
+        planning: None, // Add planning field
     };
 
     // Extract content from the headline
@@ -502,14 +513,9 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     OrgHeadline {
         id: Uuid::new_v4().to_string(),
         document_id: String::new(), // Will be filled in later
-        level,
         title: org_title,
-        tags,
-        todo_keyword,
-        priority,
         content,
         children,
-        properties,
         etag: String::new(), // Will be generated later
     }
 }
@@ -517,42 +523,39 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
 /// Extract properties from a title element
 fn extract_properties_from_title(title: &orgize::elements::Title) -> HashMap<String, String> {
     let mut properties = HashMap::new();
-    
+
     if !title.properties.is_empty() {
         for (key, value) in title.properties.iter() {
             properties.insert(key.to_string(), value.to_string());
         }
     }
-    
+
     properties
 }
 
 /// Extract properties from a headline
-fn extract_headline_properties(
-    org: &Org,
-    headline: &orgize::Headline,
-) -> HashMap<String, String> {
+fn extract_headline_properties(org: &Org, headline: &orgize::Headline) -> HashMap<String, String> {
     let mut properties = HashMap::new();
-    
+
     // ヘッドラインのタイトル要素を取得
     let title = headline.title(org);
-    
+
     // タイトルからプロパティを取得
     if !title.properties.is_empty() {
         println!("Found properties in title for headline: {}", title.raw);
-        
+
         // PropertiesMapからHashMapに変換
         for (key, value) in title.properties.iter() {
             properties.insert(key.to_string(), value.to_string());
             println!("  Property from title: {}={}", key, value);
         }
     }
-    
+
     // 作成タイムスタンプを追加（テスト用）
     if !properties.contains_key("CREATED") {
         properties.insert("CREATED".to_string(), Utc::now().to_rfc3339());
     }
-    
+
     println!("Extracted {} properties", properties.len());
     properties
 }
@@ -645,15 +648,15 @@ Content 2
 
         let h1 = &doc.headlines[0];
         assert_eq!(h1.title, "Heading 1");
-        assert_eq!(h1.level, 1);
-        assert!(h1.todo_keyword.is_none());
+        assert_eq!(h1.title.level, 1);
+        assert!(h1.title.todo_keyword.is_none());
         assert!(h1.is_note());
 
         let h2 = &doc.headlines[1];
         assert_eq!(h2.title, "Heading 2");
-        assert_eq!(h2.level, 1);
-        assert_eq!(h2.todo_keyword, Some("TODO".to_string()));
-        assert_eq!(h2.tags, vec!["tag1".to_string()]);
+        assert_eq!(h2.title.level, 1);
+        assert_eq!(h2.title.todo_keyword, Some("TODO".to_string()));
+        assert_eq!(h2.title.tags, vec!["tag1".to_string()]);
         assert!(h2.is_task());
     }
 
@@ -670,10 +673,10 @@ Content 2
         // Check first headline
         let h1 = &doc.headlines[0];
         assert_eq!(h1.title, "Shopping List [0/3]");
-        assert_eq!(h1.todo_keyword, Some("TODO".to_string()));
-        assert_eq!(h1.tags.len(), 2);
-        assert!(h1.tags.contains(&"shopping".to_string()));
-        assert!(h1.tags.contains(&"chores".to_string()));
+        assert_eq!(h1.title.todo_keyword, Some("TODO".to_string()));
+        assert_eq!(h1.title.tags.len(), 2);
+        assert!(h1.title.tags.contains(&"shopping".to_string()));
+        assert!(h1.title.tags.contains(&"chores".to_string()));
         assert!(h1.is_task());
 
         // Check that h1 has the correct category from properties
@@ -682,7 +685,7 @@ Content 2
         // Check second headline
         let h2 = &doc.headlines[1];
         assert_eq!(h2.title, "Meeting Notes");
-        assert_eq!(h2.tags, vec!["work".to_string()]);
+        assert_eq!(h2.title.tags, vec!["work".to_string()]);
         assert!(h2.is_note());
 
         // Check that h2 inherits the document category
@@ -694,17 +697,17 @@ Content 2
         // Check first child of Meeting Notes
         let h2_1 = &h2.children[0];
         assert_eq!(h2_1.title, "Progress Report");
-        assert_eq!(h2_1.level, 2);
-        assert_eq!(h2_1.todo_keyword, Some("DONE".to_string()));
-        assert_eq!(h2_1.tags, vec!["important".to_string()]);
+        assert_eq!(h2_1.title.level, 2);
+        assert_eq!(h2_1.title.todo_keyword, Some("DONE".to_string()));
+        assert_eq!(h2_1.title.tags, vec!["important".to_string()]);
         assert!(h2_1.is_task());
 
         // Check second child of Meeting Notes
         let h2_2 = &h2.children[1];
         assert_eq!(h2_2.title, "Next Steps Planning");
-        assert_eq!(h2_2.level, 2);
-        assert_eq!(h2_2.todo_keyword, Some("TODO".to_string()));
-        assert!(h2_2.tags.is_empty());
+        assert_eq!(h2_2.title.level, 2);
+        assert_eq!(h2_2.title.todo_keyword, Some("TODO".to_string()));
+        assert!(h2_2.title.tags.is_empty());
         assert!(h2_2.is_task());
     }
 
@@ -731,32 +734,32 @@ Second level 1 content
 
         // Check first top-level headline and its children
         let h1 = &doc.headlines[0];
-        assert_eq!(h1.title, "Level 1 Headline");
-        assert_eq!(h1.level, 1);
+        assert_eq!(h1.title.raw, "Level 1 Headline");
+        assert_eq!(h1.title.level, 1);
         assert_eq!(h1.children.len(), 2); // Should have 2 level-2 children
 
         // Check first child of first headline
         let h1_1 = &h1.children[0];
-        assert_eq!(h1_1.title, "Level 2 Headline");
-        assert_eq!(h1_1.level, 2);
+        assert_eq!(h1_1.title.raw, "Level 2 Headline");
+        assert_eq!(h1_1.title.level, 2);
         assert_eq!(h1_1.children.len(), 1); // Should have 1 level-3 child
 
         // Check level-3 headline
         let h1_1_1 = &h1_1.children[0];
-        assert_eq!(h1_1_1.title, "Level 3 Headline");
-        assert_eq!(h1_1_1.level, 3);
+        assert_eq!(h1_1_1.title.raw, "Level 3 Headline");
+        assert_eq!(h1_1_1.title.level, 3);
         assert_eq!(h1_1_1.children.len(), 0); // No children
 
         // Check second child of first headline
         let h1_2 = &h1.children[1];
-        assert_eq!(h1_2.title, "Another Level 2");
-        assert_eq!(h1_2.level, 2);
+        assert_eq!(h1_2.title.raw, "Another Level 2");
+        assert_eq!(h1_2.title.level, 2);
         assert_eq!(h1_2.children.len(), 0); // No children
 
         // Check second top-level headline
         let h2 = &doc.headlines[1];
-        assert_eq!(h2.title, "Another Level 1");
-        assert_eq!(h2.level, 1);
+        assert_eq!(h2.title.raw, "Another Level 1");
+        assert_eq!(h2.title.level, 1);
         assert_eq!(h2.children.len(), 0); // No children
     }
 
@@ -815,7 +818,7 @@ This is a quote.
         assert_eq!(h4.title, "Headline with special elements");
         assert!(!h4.content.is_empty());
     }
-    
+
     #[test]
     fn test_property_extraction() {
         let content = r#"#+TITLE: Property Test
@@ -840,17 +843,17 @@ No properties here
 
         // 既存の関数を直接使って正しいプロパティが抽出されるかテスト
         let doc = parse_org_document(content, Some("test.org")).unwrap();
-        
+
         // Shopping List ヘッドラインがCATEGORYプロパティを持っていることを確認
         let h3 = &doc.headlines[2];
         assert_eq!(h3.title, "Shopping List [0/3]");
         assert_eq!(h3.get_category(&doc), "Shopping");
-        
+
         // CATEGORYプロパティが正しくヘッドラインから抽出されていることを確認
         let h1 = &doc.headlines[0];
         assert_eq!(h1.title, "Headline with Properties");
         assert_eq!(h1.get_category(&doc), "TestCategory");
-        
+
         // プロパティのないヘッドラインでは、ドキュメントのカテゴリが使用されること
         let h2 = &doc.headlines[1];
         assert_eq!(h2.title, "Regular Headline");
