@@ -43,17 +43,17 @@
     {/if}
 
     <div class="flex items-center gap-2">
-      {#if headline.todo_keyword}
+      {#if headline.title.todo_keyword}
         <span class="font-bold text-red-600 text-sm px-1 py-0.5 rounded">
-          {headline.todo_keyword}
+          {headline.title.todo_keyword}
         </span>
       {/if}
 
       <span>{headline.title.raw}</span>
 
-      {#if headline.tags.length > 0}
+      {#if headline.title.tags.length > 0}
         <span class="flex gap-1">
-          {#each headline.tags as tag}
+          {#each headline.title.tags as tag}
             <span class="text-xs text-white bg-blue-600 px-1 py-0.5 rounded">
               {tag}
             </span>

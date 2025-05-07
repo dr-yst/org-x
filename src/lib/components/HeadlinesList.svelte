@@ -1,6 +1,6 @@
 <script lang="ts">
     import { commands } from "../bindings";
-    import type { OrgDocument, OrgHeadline } from "../bindings";
+    import type { OrgDocument, OrgHeadline, OrgTimestamp } from "../bindings";
 
     // runesスタイルのprops定義
     const { document = null, loading: initialLoading = false } = $props<{
@@ -35,6 +35,38 @@
     let todoFilter = $state("");
     let dateFilter = $state("");
 
+    // Helper function to extract date string from OrgTimestamp
+    function getDateStringFromTimestamp(timestamp: OrgTimestamp | null): string | null {
+        if (!timestamp) return null;
+        
+        // Extract date from the appropriate variant
+        if ("Active" in timestamp) {
+            return formatDateFromOrgDatetime(timestamp.Active.start);
+        } else if ("Inactive" in timestamp) {
+            return formatDateFromOrgDatetime(timestamp.Inactive.start);
+        } else if ("ActiveRange" in timestamp) {
+            return formatDateFromOrgDatetime(timestamp.ActiveRange.start);
+        } else if ("InactiveRange" in timestamp) {
+            return formatDateFromOrgDatetime(timestamp.InactiveRange.start);
+        }
+        
+        return null;
+    }
+    
+    // Helper to format OrgDatetime to ISO string
+    function formatDateFromOrgDatetime(datetime: any): string {
+        const { year, month, day, hour, minute } = datetime;
+        // Create ISO date string (YYYY-MM-DD)
+        const dateStr = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+        
+        // Add time if present
+        if (hour !== null && minute !== null) {
+            return `${dateStr}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
+        }
+        
+        return dateStr;
+    }
+
     // Update flattened items when document changes
     $effect(() => {
         if (document) {
@@ -54,19 +86,24 @@
             // Clone path array to avoid modifying parent path
             const currentPath = [...parentPath];
 
-            // Extract date properties from the headline
-            const scheduledDate = headline.properties?.SCHEDULED || null;
-            const deadlineDate = headline.properties?.DEADLINE || null;
+            // Extract date properties from the headline's planning information
+            const scheduledDate = headline.title.planning?.scheduled 
+                ? getDateStringFromTimestamp(headline.title.planning.scheduled)
+                : null;
+                
+            const deadlineDate = headline.title.planning?.deadline
+                ? getDateStringFromTimestamp(headline.title.planning.deadline)
+                : null;
 
             // Create the list item
             const item: FlattenedItem = {
                 id: headline.id,
                 title: headline.title.raw, // Handle both string and object formats
-                level: headline.level,
+                level: headline.title.level,
                 path: currentPath,
-                todoKeyword: headline.todo_keyword,
-                tags: headline.tags,
-                priority: headline.priority,
+                todoKeyword: headline.title.todo_keyword,
+                tags: headline.title.tags,
+                priority: headline.title.priority,
                 hasContent: headline.content.length > 0,
                 hasChildren: headline.children.length > 0,
                 indentLevel,
