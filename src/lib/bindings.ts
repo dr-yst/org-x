@@ -24,6 +24,12 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Run the datetime test program
+   */
+  async runDatetimeTest(): Promise<string> {
+    return await TAURI_INVOKE("run_datetime_test");
+  },
 };
 
 /** user-defined events **/
@@ -32,6 +38,18 @@ export const commands = {
 
 /** user-defined types **/
 
+/**
+ * OrgDatetime represents a date/time in an org-mode file
+ * This is similar to Orgize's Datetime but designed to be owned and serializable
+ */
+export type OrgDatetime = {
+  year: number;
+  month: number;
+  day: number;
+  dayname: string;
+  hour: number | null;
+  minute: number | null;
+};
 /**
  * Basic org-mode document structure
  */
@@ -53,25 +71,62 @@ export type OrgDocument = {
 export type OrgHeadline = {
   id: string;
   document_id: string;
-  level: number;
   title: OrgTitle;
-  tags: string[];
-  todo_keyword: string | null;
-  priority: string | null;
   content: string;
   children: OrgHeadline[];
-  properties: Partial<{ [key in string]: string }>;
   etag: string;
 };
+export type OrgPlanning = {
+  deadline: OrgTimestamp | null;
+  scheduled: OrgTimestamp | null;
+  closed: OrgTimestamp | null;
+};
+/**
+ * OrgTimestamp represents an org-mode timestamp
+ */
+export type OrgTimestamp =
+  | {
+      Active: {
+        start: OrgDatetime;
+        repeater: string | null;
+        delay: string | null;
+      };
+    }
+  | {
+      Inactive: {
+        start: OrgDatetime;
+        repeater: string | null;
+        delay: string | null;
+      };
+    }
+  | {
+      ActiveRange: {
+        start: OrgDatetime;
+        end: OrgDatetime;
+        repeater: string | null;
+        delay: string | null;
+      };
+    }
+  | {
+      InactiveRange: {
+        start: OrgDatetime;
+        end: OrgDatetime;
+        repeater: string | null;
+        delay: string | null;
+      };
+    }
+  | { Diary: { value: string } };
 /**
  * Represents a headline title in org-mode
  */
 export type OrgTitle = {
   raw: string;
+  level: number;
   priority: string | null;
   tags: string[];
   todo_keyword: string | null;
   properties: Partial<{ [key in string]: string }>;
+  planning: OrgPlanning | null;
 };
 export type StateType = "Active" | "Closed";
 export type TodoConfiguration = {

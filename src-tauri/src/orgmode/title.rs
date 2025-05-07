@@ -9,7 +9,7 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct OrgTitle {
     pub raw: String,                         // Raw title text
-    pub level: usize,                        // Level of the headline (1, 2, 3, etc)
+    pub level: u8,                        // Level of the headline (1, 2, 3, etc)
     pub priority: Option<char>,              // Priority cookie (A, B, C, etc)
     pub tags: Vec<String>,                   // Tags associated with the title
     pub todo_keyword: Option<String>,        // TODO keyword if present
@@ -21,7 +21,7 @@ impl OrgTitle {
     /// Create a new OrgTitle from basic components
     pub fn new(
         raw: String,
-        level: usize,
+        level: u8,
         priority: Option<char>,
         tags: Vec<String>,
         todo_keyword: Option<String>,
@@ -38,7 +38,7 @@ impl OrgTitle {
     }
 
     /// Create a simple OrgTitle with just the raw title text and level
-    pub fn simple(raw: &str, level: usize) -> Self {
+    pub fn simple(raw: &str, level: u8) -> Self {
         Self {
             raw: raw.to_string(),
             level,

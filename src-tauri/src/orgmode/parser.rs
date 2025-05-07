@@ -493,7 +493,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     // Create OrgTitle
     let org_title = OrgTitle {
         raw: raw_title,
-        level: level as usize,
+        level: level as u8,
         priority: title_element.priority,
         tags: tags.clone(),                 // Clone for backward compatibility
         todo_keyword: todo_keyword.clone(), // Clone for backward compatibility
