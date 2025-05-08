@@ -19,6 +19,30 @@
 - **Frontend Testing**: Vitest, Testing Library
 - **Backend Testing**: Rust standard testing framework
 
+## Repository Information
+
+### GitHub Repository
+- **Repository URL**: [https://github.com/dr-yst/org-x](https://github.com/dr-yst/org-x)
+- **Owner**: dr-yst (Yoshito Watanabe)
+- **License**: MIT (or appropriate license)
+
+### Issue and Project Management
+- GitHub Issues for bug tracking and feature requests
+- GitHub Projects for milestone and roadmap planning
+- Pull Requests for code review and contribution
+
+### Branch Management
+- `main` branch as the primary development branch
+- Feature branches for new functionality (`feature/task-list-view`, etc.)
+- Bug fix branches for addressing issues (`fix/headline-parsing`, etc.)
+
+### Contribution Workflow
+1. Create a new branch from `main`
+2. Implement changes and add tests
+3. Create a pull request for review
+4. Address review feedback
+5. Merge to `main` after approval
+
 ## Development Environment
 
 ### Required Tools
@@ -30,7 +54,7 @@
 ### Development Environment Setup
 ```bash
 # Clone repository
-git clone https://github.com/username/org-x.git
+git clone https://github.com/dr-yst/org-x.git
 cd org-x
 
 # Install frontend dependencies
