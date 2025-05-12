@@ -1,425 +1,387 @@
 <script lang="ts">
-    import { commands } from "../bindings";
-    import type { OrgDocument, OrgHeadline, OrgTimestamp } from "../bindings";
+  import { createEventDispatcher } from 'svelte';
+  import { 
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+  } from "$lib/components/ui/table";
+  
+  import type { OrgHeadline, OrgTimestamp, OrgDocument } from "$lib/bindings";
 
-    // runesスタイルのprops定義
-    const { document = null, loading: initialLoading = false } = $props<{
-        document?: OrgDocument | null;
-        loading?: boolean;
-    }>();
-
-    // State for expanded/collapsed items
-    let expandedItems = $state(new Set<string>());
-    let loadingState = $state(initialLoading);
-
-    // Flattened headlines for table display
-    type FlattenedItem = {
-        id: string;
-        title: string;
-        level: number;
-        path: string[];
-        todoKeyword: string | null;
-        tags: string[];
-        priority: string | null;
-        hasContent: boolean;
-        hasChildren: boolean;
-        indentLevel: number;
-        scheduledDate: string | null;
-        deadlineDate: string | null;
-    };
-
-    let flattenedItems = $state<FlattenedItem[]>([]);
-
-    // Filter state
-    let tagFilter = $state("");
-    let todoFilter = $state("");
-    let dateFilter = $state("");
-
-    // Helper function to extract date string from OrgTimestamp
-    function getDateStringFromTimestamp(timestamp: OrgTimestamp | null): string | null {
-        if (!timestamp) return null;
-        
-        // Extract date from the appropriate variant
-        if ("Active" in timestamp) {
-            return formatDateFromOrgDatetime(timestamp.Active.start);
-        } else if ("Inactive" in timestamp) {
-            return formatDateFromOrgDatetime(timestamp.Inactive.start);
-        } else if ("ActiveRange" in timestamp) {
-            return formatDateFromOrgDatetime(timestamp.ActiveRange.start);
-        } else if ("InactiveRange" in timestamp) {
-            return formatDateFromOrgDatetime(timestamp.InactiveRange.start);
-        }
-        
-        return null;
+  // Props definition using Svelte 5 runes
+  const { 
+    headlines = [], 
+    loading = false,
+    focusedIndex = -1
+  } = $props<{ 
+    headlines: OrgHeadline[], 
+    loading?: boolean,
+    document?: OrgDocument | null,
+    focusedIndex?: number
+  }>();
+  
+  let filteredHeadlines = $state<OrgHeadline[]>([]);
+  
+  // Event dispatcher
+  const dispatch = createEventDispatcher<{
+    rowClick: OrgHeadline;
+    update: OrgHeadline[];
+  }>();
+  
+  // State for filtering
+  let activeFilter = $state('all'); // 'all', 'today', 'week', 'overdue'
+  
+  // Update filteredHeadlines whenever headlines or activeFilter changes
+  $effect(() => {
+    const filtered = getFilteredHeadlines(headlines, activeFilter);
+    filteredHeadlines = filtered;
+    dispatch('update', filtered);
+  });
+  
+  // Filter headlines based on the active filter
+  function getFilteredHeadlines(headlines: OrgHeadline[], filter: string): OrgHeadline[] {
+    if (filter === 'all') return headlines;
+    
+    return headlines.filter(headline => {
+      // Only include items with todo_keyword
+      if (!headline.title.todo_keyword) return false;
+      
+      // If todo status is 'DONE', exclude from all active filters
+      if (headline.title.todo_keyword === 'DONE') return false;
+      
+      // Get deadline timestamp if it exists
+      const deadline = headline.title.planning?.deadline;
+      
+      switch (filter) {
+        case 'today':
+          return isToday(getDateStringFromTimestamp(deadline));
+        case 'week':
+          return isThisWeek(getDateStringFromTimestamp(deadline));
+        case 'overdue':
+          return isOverdue(getDateStringFromTimestamp(deadline));
+        default:
+          return true;
+      }
+    });
+  }
+  
+  // Helper function to extract date string from OrgTimestamp
+  function getDateStringFromTimestamp(timestamp: OrgTimestamp | null): string | null {
+    if (!timestamp) return null;
+    
+    // Extract date from the appropriate variant
+    if ("Active" in timestamp) {
+      return formatDateFromOrgDatetime(timestamp.Active.start);
+    } else if ("Inactive" in timestamp) {
+      return formatDateFromOrgDatetime(timestamp.Inactive.start);
+    } else if ("ActiveRange" in timestamp) {
+      return formatDateFromOrgDatetime(timestamp.ActiveRange.start);
+    } else if ("InactiveRange" in timestamp) {
+      return formatDateFromOrgDatetime(timestamp.InactiveRange.start);
     }
     
-    // Helper to format OrgDatetime to ISO string
-    function formatDateFromOrgDatetime(datetime: any): string {
-        const { year, month, day, hour, minute } = datetime;
-        // Create ISO date string (YYYY-MM-DD)
-        const dateStr = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-        
-        // Add time if present
-        if (hour !== null && minute !== null) {
-            return `${dateStr}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
-        }
-        
-        return dateStr;
+    return null;
+  }
+  
+  // Helper to format OrgDatetime to ISO string
+  function formatDateFromOrgDatetime(datetime: any): string {
+    if (!datetime) return "";
+    const { year, month, day, hour, minute } = datetime;
+    // Create ISO date string (YYYY-MM-DD)
+    const dateStr = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+    
+    // Add time if present
+    if (hour !== null && minute !== null) {
+      return `${dateStr}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`;
     }
+    
+    return dateStr;
+  }
 
-    // Update flattened items when document changes
-    $effect(() => {
-        if (document) {
-            flattenedItems = flattenHeadlines(document.headlines);
-        }
-    });
+  // Format date string into more readable format
+  function formatDate(dateStr: string | null): string {
+    if (!dateStr) return "";
 
-    // Flatten nested headlines into a flat array for rendering
-    function flattenHeadlines(
-        headlines: OrgHeadline[] = [],
-        parentPath: string[] = [],
-        indentLevel: number = 0,
-    ): FlattenedItem[] {
-        let result: FlattenedItem[] = [];
+    try {
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-        for (const headline of headlines) {
-            // Clone path array to avoid modifying parent path
-            const currentPath = [...parentPath];
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
-            // Extract date properties from the headline's planning information
-            const scheduledDate = headline.title.planning?.scheduled 
-                ? getDateStringFromTimestamp(headline.title.planning.scheduled)
-                : null;
-                
-            const deadlineDate = headline.title.planning?.deadline
-                ? getDateStringFromTimestamp(headline.title.planning.deadline)
-                : null;
+      // Format for today, tomorrow, or within a week
+      if (date.toDateString() === today.toDateString()) {
+        return "Today";
+      } else if (date.toDateString() === tomorrow.toDateString()) {
+        return "Tomorrow";
+      } else {
+        // Format as Mmm dd or Mmm dd, yyyy
+        const options: Intl.DateTimeFormatOptions = {
+          month: "short",
+          day: "numeric"
+        };
 
-            // Create the list item
-            const item: FlattenedItem = {
-                id: headline.id,
-                title: headline.title.raw, // Handle both string and object formats
-                level: headline.title.level,
-                path: currentPath,
-                todoKeyword: headline.title.todo_keyword,
-                tags: headline.title.tags,
-                priority: headline.title.priority,
-                hasContent: headline.content.length > 0,
-                hasChildren: headline.children.length > 0,
-                indentLevel,
-                scheduledDate,
-                deadlineDate,
-            };
-
-            result.push(item);
-
-            // Add this headline to the path for its children
-            const titleRaw =
-                typeof headline.title === "object" && headline.title.raw
-                    ? headline.title.raw
-                    : String(headline.title);
-            currentPath.push(titleRaw);
-
-            // Process children recursively if expanded
-            if (
-                headline.children.length > 0 &&
-                expandedItems.has(headline.id)
-            ) {
-                const children = flattenHeadlines(
-                    headline.children,
-                    currentPath,
-                    indentLevel + 1,
-                );
-                result = [...result, ...children];
-            }
+        // Add year if it's not current year
+        if (date.getFullYear() !== today.getFullYear()) {
+          options.year = "numeric";
         }
 
-        return result;
+        return date.toLocaleDateString("en-US", options);
+      }
+    } catch (e) {
+      return dateStr; // Fallback to raw string
     }
-
-    // Format date string into more readable format
-    function formatDate(dateStr: string | null): string {
-        if (!dateStr) return "";
-
-        try {
-            const date = new Date(dateStr);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            const dayAfterTomorrow = new Date(today);
-            dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-
-            // Format for today, tomorrow, or within a week
-            if (date.toDateString() === today.toDateString()) {
-                return "Today";
-            } else if (date.toDateString() === tomorrow.toDateString()) {
-                return "Tomorrow";
-            } else {
-                // Format as Mmm dd or Mmm dd, yyyy
-                const options: Intl.DateTimeFormatOptions = {
-                    month: "short",
-                    day: "numeric",
-                };
-
-                // Add year if it's not current year
-                if (date.getFullYear() !== today.getFullYear()) {
-                    options.year = "numeric";
-                }
-
-                return date.toLocaleDateString("en-US", options);
-            }
-        } catch (e) {
-            return dateStr; // Fallback to raw string
-        }
+  }
+  
+  // Function to check if date is today
+  function isToday(dateStr: string | null): boolean {
+    if (!dateStr) return false;
+    
+    try {
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      return date >= today && date < tomorrow;
+    } catch (e) {
+      return false;
     }
-
-    // Check if date is within a specific range
-    function isDateInRange(dateStr: string | null, rangeType: string): boolean {
-        if (!dateStr) return false;
-
-        try {
-            const date = new Date(dateStr);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            // Calculate end of current week (Sunday)
-            const endOfWeek = new Date(today);
-            const dayOfWeek = today.getDay();
-            const daysUntilEndOfWeek = 6 - dayOfWeek; // 0 is Sunday, 6 is Saturday
-            endOfWeek.setDate(today.getDate() + daysUntilEndOfWeek);
-
-            if (rangeType === "today") {
-                return date.toDateString() === today.toDateString();
-            } else if (rangeType === "week") {
-                return date >= today && date <= endOfWeek;
-            } else if (rangeType === "overdue") {
-                return date < today;
-            }
-
-            return false;
-        } catch (e) {
-            return false;
-        }
+  }
+  
+  // Function to check if date is this week
+  function isThisWeek(dateStr: string | null): boolean {
+    if (!dateStr) return false;
+    
+    try {
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7); // End of current week
+      
+      return date >= startOfWeek && date < endOfWeek;
+    } catch (e) {
+      return false;
     }
-
-    // Toggle expanded state for an item
-    function toggleExpand(id: string): void {
-        if (expandedItems.has(id)) {
-            expandedItems.delete(id);
-        } else {
-            expandedItems.add(id);
-        }
-        // Force recomputation of flattened items
-        flattenedItems = flattenHeadlines(document?.headlines || []);
+  }
+  
+  // Function to check if date is overdue
+  function isOverdue(dateStr: string | null): boolean {
+    if (!dateStr) return false;
+    
+    try {
+      const date = new Date(dateStr);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      return date < today;
+    } catch (e) {
+      return false;
     }
-
-    // Filter the flattened list
-    let filteredItems = $derived(
-        flattenedItems.filter((item) => {
-            // Tag filter
-            if (
-                tagFilter &&
-                !item.tags.some((tag) =>
-                    tag.toLowerCase().includes(tagFilter.toLowerCase()),
-                )
-            ) {
-                return false;
-            }
-
-            // TODO state filter
-            if (todoFilter) {
-                if (todoFilter === "task" && !item.todoKeyword) {
-                    return false;
-                }
-                if (todoFilter === "note" && item.todoKeyword) {
-                    return false;
-                }
-                if (
-                    todoFilter !== "task" &&
-                    todoFilter !== "note" &&
-                    item.todoKeyword?.toLowerCase() !== todoFilter.toLowerCase()
-                ) {
-                    return false;
-                }
-            }
-
-            // Date filter
-            if (dateFilter) {
-                if (
-                    dateFilter === "today" &&
-                    !isDateInRange(item.scheduledDate, "today") &&
-                    !isDateInRange(item.deadlineDate, "today")
-                ) {
-                    return false;
-                }
-                if (
-                    dateFilter === "week" &&
-                    !isDateInRange(item.scheduledDate, "week") &&
-                    !isDateInRange(item.deadlineDate, "week")
-                ) {
-                    return false;
-                }
-                if (
-                    dateFilter === "overdue" &&
-                    !isDateInRange(item.deadlineDate, "overdue")
-                ) {
-                    return false;
-                }
-            }
-
-            return true;
-        }),
-    );
+  }
+  
+  // Get color class based on todo_keyword
+  function getTodoColorClass(todoKeyword: string | null): string {
+    if (!todoKeyword) return '';
+    
+    switch (todoKeyword) {
+      case 'TODO':
+        return 'text-blue-600';
+      case 'DONE':
+        return 'text-green-600';
+      case 'WAITING':
+        return 'text-orange-500';
+      case 'CANCELLED':
+        return 'text-gray-500 line-through';
+      default:
+        return 'text-blue-600';
+    }
+  }
+  
+  // Get priority indicator
+  function getPriorityIndicator(priority: string | null): string {
+    if (!priority) return '';
+    
+    switch (priority) {
+      case 'A':
+        return '[A]';
+      case 'B':
+        return '[B]';
+      case 'C':
+        return '[C]';
+      default:
+        return `[${priority}]`;
+    }
+  }
+  
+  // Get priority color class
+  function getPriorityColorClass(priority: string | null): string {
+    if (!priority) return '';
+    
+    switch (priority) {
+      case 'A':
+        return 'text-red-600';
+      case 'B':
+        return 'text-orange-500';
+      case 'C':
+        return 'text-yellow-500';
+      default:
+        return 'text-gray-500';
+    }
+  }
+  
+  // Format deadline or scheduled date
+  function formatDateInfo(headline: OrgHeadline): string {
+    const deadline = headline.title.planning?.deadline;
+    const scheduled = headline.title.planning?.scheduled;
+    
+    if (deadline) {
+      const dateStr = getDateStringFromTimestamp(deadline);
+      return `DEADLINE: ${formatDate(dateStr)}`;
+    } else if (scheduled) {
+      const dateStr = getDateStringFromTimestamp(scheduled);
+      return `SCHEDULED: ${formatDate(dateStr)}`;
+    }
+    
+    return '';
+  }
+  
+  // Get date color class
+  function getDateColorClass(headline: OrgHeadline): string {
+    const deadline = headline.title.planning?.deadline;
+    
+    if (!deadline) return '';
+    
+    const dateStr = getDateStringFromTimestamp(deadline);
+    
+    if (isOverdue(dateStr)) {
+      return 'text-red-600 font-medium';
+    } else if (isToday(dateStr)) {
+      return 'text-orange-500 font-medium';
+    } else if (isThisWeek(dateStr)) {
+      return 'text-blue-600';
+    }
+    
+    return '';
+  }
 </script>
 
 <div class="w-full">
-    <div class="flex gap-4 mb-4">
-        <input
-            type="text"
-            placeholder="Filter by tag..."
-            bind:value={tagFilter}
-            class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
-        />
+  <div class="text-xs text-gray-500 mb-2">
+    {filteredHeadlines.length} items displayed • {focusedIndex >= 0 ? `Item ${focusedIndex + 1} selected` : 'No selection'}
+  </div>
+  
+  <!-- Filter buttons -->
+  <div class="flex gap-2 mb-4">
+    <button 
+      class="px-3 py-1 text-sm rounded-md {activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+      onclick={() => { activeFilter = 'all' }}>
+      All
+    </button>
+    <button 
+      class="px-3 py-1 text-sm rounded-md {activeFilter === 'today' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+      onclick={() => { activeFilter = 'today' }}>
+      Today
+    </button>
+    <button 
+      class="px-3 py-1 text-sm rounded-md {activeFilter === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+      onclick={() => { activeFilter = 'week' }}>
+      This Week
+    </button>
+    <button 
+      class="px-3 py-1 text-sm rounded-md {activeFilter === 'overdue' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+      onclick={() => { activeFilter = 'overdue' }}>
+      Overdue
+    </button>
+  </div>
 
-        <select
-            bind:value={todoFilter}
-            class="px-2 py-1 border border-gray-300 rounded text-sm"
-        >
-            <option value="">All items</option>
-            <option value="task">Tasks only</option>
-            <option value="note">Notes only</option>
-            <option value="TODO">TODO</option>
-            <option value="DONE">DONE</option>
-        </select>
-
-        <select
-            bind:value={dateFilter}
-            class="px-2 py-1 border border-gray-300 rounded text-sm"
-        >
-            <option value="">All dates</option>
-            <option value="today">Today</option>
-            <option value="week">This week</option>
-            <option value="overdue">Overdue</option>
-        </select>
+  {#if loading}
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
     </div>
-
-    {#if loadingState}
-        <div class="py-8 text-center text-gray-500 italic">Loading...</div>
-    {:else if document && flattenedItems.length > 0}
-        <div class="border border-gray-200 rounded overflow-hidden">
-            <!-- Table Header -->
-            <div
-                class="grid grid-cols-12 bg-gray-100 font-medium border-b-2 border-gray-200"
-            >
-                <div class="col-span-4 p-2">Title</div>
-                <div class="col-span-2 p-2">Status</div>
-                <div class="col-span-2 p-2">Date</div>
-                <div class="col-span-3 p-2">Tags</div>
-                <div class="col-span-1 p-2">Priority</div>
-            </div>
-
-            <!-- Table Rows -->
-            {#each filteredItems as item (item.id)}
-                <div
-                    class="grid grid-cols-12 border-b border-gray-100 hover:bg-gray-50"
-                >
-                    <div
-                        class="col-span-4 p-2 flex items-center overflow-hidden text-ellipsis whitespace-nowrap"
-                        style="padding-left: {item.indentLevel * 20 + 8}px;"
-                    >
-                        <!-- Expand/collapse button if has children -->
-                        {#if item.hasChildren}
-                            <button
-                                class="w-5 h-5 mr-2 border border-gray-300 rounded flex items-center justify-center cursor-pointer text-xs hover:bg-gray-100"
-                                onclick={() => toggleExpand(item.id)}
-                                aria-label="Toggle expand"
-                            >
-                                {expandedItems.has(item.id) ? "▼" : "►"}
-                            </button>
-                        {:else}
-                            <span class="w-5 mr-2"></span>
-                        {/if}
-
-                        <!-- Title with proper indentation -->
-                        <span class="truncate" title={item.title}>
-                            {item.title}
-                        </span>
-                    </div>
-
-                    <div class="col-span-2 p-2">
-                        {#if item.todoKeyword}
-                            <span
-                                class="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-red-500 text-white"
-                            >
-                                {item.todoKeyword}
-                            </span>
-                        {:else}
-                            <span class="text-xs text-gray-500 italic"
-                                >Note</span
-                            >
-                        {/if}
-                    </div>
-
-                    <!-- Date column -->
-                    <div class="col-span-2 p-2 flex flex-col gap-1">
-                        {#if item.scheduledDate}
-                            <div class="flex items-center">
-                                <span
-                                    class="text-xs text-blue-600 font-medium mr-1"
-                                    >SC:</span
-                                >
-                                <span class="text-xs"
-                                    >{formatDate(item.scheduledDate)}</span
-                                >
-                            </div>
-                        {/if}
-
-                        {#if item.deadlineDate}
-                            <div class="flex items-center">
-                                <span
-                                    class="text-xs text-red-600 font-medium mr-1"
-                                    >DL:</span
-                                >
-                                <span class="text-xs"
-                                    >{formatDate(item.deadlineDate)}</span
-                                >
-                            </div>
-                        {/if}
-                    </div>
-
-                    <div class="col-span-3 p-2 flex flex-wrap gap-1">
-                        {#each item.tags as tag}
-                            <span
-                                class="inline-block px-1.5 py-0.5 rounded text-xs bg-blue-600 text-white"
-                            >
-                                {tag}
-                            </span>
-                        {/each}
-                    </div>
-
-                    <div class="col-span-1 p-2">
-                        {#if item.priority}
-                            <span
-                                class="inline-block w-5 h-5 rounded-full text-center text-xs font-bold leading-5
-                       {item.priority === 'A'
-                                    ? 'bg-red-500 text-white'
-                                    : item.priority === 'B'
-                                      ? 'bg-yellow-500 text-black'
-                                      : 'bg-green-500 text-white'}"
-                            >
-                                {item.priority}
-                            </span>
-                        {/if}
-                    </div>
+  {:else if headlines.length === 0}
+    <div class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+      No headlines found.
+    </div>
+  {:else}
+    <Table>
+      <TableCaption>Task List View</TableCaption>
+      
+      <TableHeader>
+        <TableRow>
+          <TableHead class="w-[100px]">Status</TableHead>
+          <TableHead>Task</TableHead>
+          <TableHead>Tags</TableHead>
+          <TableHead class="w-[180px]">Date</TableHead>
+        </TableRow>
+      </TableHeader>
+      
+      <TableBody>
+        {#each filteredHeadlines as headline}
+          <TableRow 
+            class={`hover:bg-gray-50 cursor-pointer ${filteredHeadlines.indexOf(headline) === focusedIndex ? 'bg-blue-50 ring-2 ring-blue-200' : ''}`}
+            onclick={() => {
+              const event = new CustomEvent('rowClick', { detail: headline });
+              dispatch('rowClick', headline);
+            }}
+          >
+            <TableCell>
+              {#if headline.title.todo_keyword}
+                <span class="px-2 py-1 rounded text-xs font-medium {getTodoColorClass(headline.title.todo_keyword)}">
+                  {headline.title.todo_keyword}
+                </span>
+              {/if}
+            </TableCell>
+            
+            <TableCell>
+              <div class="flex items-start gap-1">
+                {#if headline.title.priority}
+                  <span class="inline-block mr-1 {getPriorityColorClass(headline.title.priority)}">
+                    {getPriorityIndicator(headline.title.priority)}
+                  </span>
+                {/if}
+                <span class="font-medium">
+                  {headline.title.raw.replace(/^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/, '')}
+                </span>
+              </div>
+              
+              {#if headline.content && headline.content.trim()}
+                <div class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1">
+                  {headline.content.trim().split('\n')[0]}
                 </div>
-            {/each}
-        </div>
-    {:else}
-        <div class="py-8 text-center text-gray-500 italic">
-            No headlines found
-        </div>
-    {/if}
+              {/if}
+            </TableCell>
+            
+            <TableCell>
+              <div class="flex flex-wrap gap-1">
+                {#each headline.title.tags as tag}
+                  <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">
+                    {tag}
+                  </span>
+                {/each}
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <span class={getDateColorClass(headline)}>
+                {formatDateInfo(headline)}
+              </span>
+            </TableCell>
+          </TableRow>
+        {/each}
+      </TableBody>
+    </Table>
+  {/if}
 </div>
