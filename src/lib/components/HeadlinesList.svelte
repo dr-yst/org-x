@@ -9,6 +9,7 @@
     TableHeader,
     TableRow
   } from "$lib/components/ui/table";
+  import { Button } from "$lib/components/ui/button";
   
   import type { OrgHeadline, OrgTimestamp, OrgDocument } from "$lib/bindings";
 
@@ -285,26 +286,31 @@
   
   <!-- Filter buttons -->
   <div class="flex gap-2 mb-4">
-    <button 
-      class="px-3 py-1 text-sm rounded-md {activeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+    <Button 
+      variant={activeFilter === 'all' ? 'default' : 'secondary'}
+      size="sm"
       onclick={() => { activeFilter = 'all' }}>
       All
-    </button>
-    <button 
-      class="px-3 py-1 text-sm rounded-md {activeFilter === 'today' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+    </Button>
+    <Button 
+      variant={activeFilter === 'today' ? 'default' : 'secondary'}
+      class={activeFilter === 'today' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+      size="sm"
       onclick={() => { activeFilter = 'today' }}>
       Today
-    </button>
-    <button 
-      class="px-3 py-1 text-sm rounded-md {activeFilter === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+    </Button>
+    <Button 
+      variant={activeFilter === 'week' ? 'default' : 'secondary'}
+      size="sm"
       onclick={() => { activeFilter = 'week' }}>
       This Week
-    </button>
-    <button 
-      class="px-3 py-1 text-sm rounded-md {activeFilter === 'overdue' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}"
+    </Button>
+    <Button 
+      variant={activeFilter === 'overdue' ? 'destructive' : 'secondary'}
+      size="sm"
       onclick={() => { activeFilter = 'overdue' }}>
       Overdue
-    </button>
+    </Button>
   </div>
 
   {#if loading}

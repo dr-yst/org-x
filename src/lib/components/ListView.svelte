@@ -4,6 +4,7 @@
   import type { OrgDocument, OrgHeadline } from '../bindings';
   import HeadlinesList from './HeadlinesList.svelte';
   import DetailView from './DetailView.svelte';
+  import { Button } from "$lib/components/ui/button";
   
   // Svelte 5 state management with runes
   let document = $state<OrgDocument | null>(null);
@@ -148,9 +149,9 @@
         {#if document.filetags && document.filetags.length > 0}
           <div class="flex flex-wrap gap-2 mb-4">
             {#each document.filetags as tag}
-              <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded-full">
+              <Button variant="secondary" size="sm" class="px-2 py-0.5 h-auto text-xs rounded-full">
                 {tag}
-              </span>
+              </Button>
             {/each}
           </div>
         {/if}
@@ -203,39 +204,43 @@
                 <h4 class="font-medium text-sm">Quick Actions</h4>
               </div>
               <div class="p-1">
-                <button 
-                  class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center gap-2" 
+                <Button 
+                  variant="ghost"
+                  class="w-full justify-start"
                   onclick={() => handleQuickAction('view')}>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                     <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                   </svg>
                   View Details
-                </button>
-                <button 
-                  class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center gap-2" 
+                </Button>
+                <Button 
+                  variant="ghost"
+                  class="w-full justify-start"
                   onclick={() => handleQuickAction('mark-done')}>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                   </svg>
                   Mark as Done
-                </button>
-                <button 
-                  class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center gap-2" 
+                </Button>
+                <Button 
+                  variant="ghost"
+                  class="w-full justify-start"
                   onclick={() => handleQuickAction('priority-up')}>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                   </svg>
                   Increase Priority
-                </button>
-                <button 
-                  class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded-md flex items-center gap-2" 
+                </Button>
+                <Button 
+                  variant="ghost"
+                  class="w-full justify-start"
                   onclick={() => handleQuickAction('priority-down')}>
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                   Decrease Priority
-                </button>
+                </Button>
               </div>
             </div>
           {/if}
@@ -246,14 +251,15 @@
         <div class="w-full">
           <div class="mb-4 flex justify-between items-center">
             <h3 class="text-xl font-semibold text-gray-800">Task Details</h3>
-            <button
-              class="px-2 py-1 rounded-md text-sm text-gray-600 hover:bg-gray-100 flex items-center gap-1"
+            <Button
+              variant="ghost" 
+              size="sm"
               onclick={() => { showDetailView = false; selectedHeadline = null; }}>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
               Close
-            </button>
+            </Button>
           </div>
           <DetailView headline={selectedHeadline} />
         </div>

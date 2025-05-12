@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
+  import { Button } from "$lib/components/ui/button";
   
   // Props definition using Svelte 5 runes
   const { headline = null } = $props<{ headline: OrgHeadline | null }>();
@@ -107,14 +108,14 @@
       </h2>
       
       {#if headline.title.tags && headline.title.tags.length > 0}
-        <div class="flex flex-wrap gap-1 mb-3">
-          {#each headline.title.tags as tag}
-            <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">
-              {tag}
-            </span>
-          {/each}
-        </div>
-      {/if}
+          <div class="flex flex-wrap gap-1 mb-3">
+            {#each headline.title.tags as tag}
+              <Button variant="secondary" size="sm" class="px-2 py-0.5 h-auto text-xs rounded-full">
+                {tag}
+              </Button>
+            {/each}
+          </div>
+        {/if}
     </div>
     
     {#if headline.title.planning}
@@ -163,11 +164,13 @@
     {#if headline.children && headline.children.length > 0}
       <div>
         <h3 class="text-md font-medium mb-2 text-gray-700">Subtasks ({headline.children.length})</h3>
-        <ul class="list-disc pl-5 space-y-1">
+        <ul class="list-disc pl-5 space-y-2">
           {#each headline.children as child}
             <li class="text-sm">
               {#if child.title.todo_keyword}
-                <span class="{getTodoColorClass(child.title.todo_keyword)} font-medium">{child.title.todo_keyword}</span>
+                <Button variant="ghost" size="sm" class="px-2 py-0.5 h-auto {getTodoColorClass(child.title.todo_keyword)} font-medium">
+                  {child.title.todo_keyword}
+                </Button>
               {/if}
               {child.title.raw.replace(/^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/, '')}
             </li>
