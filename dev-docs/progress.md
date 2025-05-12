@@ -46,6 +46,8 @@
 - ✅ Migrate Svelte components to use Svelte 5 runes syntax
 - ✅ Implement date information display in HeadlinesList component
 - ✅ Implement date-based filtering functionality
+- ✅ Configure TailwindCSS for shadcn-svelte compatibility
+- ✅ Implement shadcn-svelte Button components across application
 
 ### Type Definitions and Integration
 - ✅ Set up type definition sharing with tauri-specta
@@ -65,7 +67,7 @@
 ### Frontend Development
 - 🔄 Implementation of basic task list view component
 - 🔄 Implementation of simple filtering functionality
-- 🔄 Construction of basic frontend UI components
+- 🔄 Construction of basic frontend UI components with shadcn-svelte
 - 🔄 Implementation of proper testing for Svelte 5 components
 - ⬜ Implementation of multi-view tab system (deferred to post-MVP)
 - ⬜ Implementation of sidebar-based filtering system (deferred to post-MVP)
@@ -118,18 +120,19 @@ Recent progress includes:
 4. **CSS Improvements**: Resolved Tailwind CSS build issues related to custom theme variables.
 5. **Fixed Rust Test Failures**: All test failures related to the refactoring of OrgHeadline and OrgTitle structures have been fixed. We added missing convenience methods where needed and updated test code to work with the new structure.
 6. **Code Quality Improvements**: Addressed compiler warnings by removing unused imports and marking intentionally unused variables with underscores.
+7. **shadcn-svelte Integration**: Successfully integrated shadcn-svelte component library, starting with the Table and Button components, configured TailwindCSS v3 for compatibility.
 
 While we've designed a comprehensive UI structure with multiple view tabs, display modes, sidebar-based filtering, multi-criteria sorting, and flexible grouping, we've decided to defer these more complex features to post-MVP development. Our immediate focus is now on implementing a clean, functional task list view with basic filtering capabilities. This approach allows us to deliver value more quickly with a simpler initial implementation, while still leveraging the robust backend architecture we've established.
 
 ### Immediate Challenges
-- Implement the basic task list view component
-- Complete the testing setup for Svelte 5 components
-- Implement simple filtering by TODO status, tags, and dates
+- Complete the implementation of the shadcn-svelte Table for the task list view
+- Add more shadcn-svelte components (Badge, Collapsible, Select, Checkbox)
+- Implement proper headline hierarchy rendering with indentation
+- Expand filtering capabilities with shadcn-svelte UI components
 - Implement basic server-side filtering in Rust
-- Design and implement a clean, minimal UI that focuses on task list functionality
-- Ensure good performance with moderate-sized org-mode files
-- Implement basic keyboard navigation for the task list
+- Enhance keyboard navigation for the task list
 - Create a smooth loading experience for initial file parsing
+- Implement skeleton loading states for better UX
 
 ### Next Milestones
 1. **MVP Phase 1** (Goal within 4 weeks):
@@ -175,6 +178,8 @@ While we've designed a comprehensive UI structure with multiple view tabs, displ
 - Chose a simpler approach focusing on server-side filtering first, before considering more complex strategies like partial loading or virtualization
 - Embraced Svelte 5 runes for reactive state management throughout the frontend
 - Enhanced date filtering capabilities directly in the frontend for improved user experience
+- Adopted shadcn-svelte component library for consistent and accessible UI components
+- Configured TailwindCSS v3 for compatibility with shadcn-svelte components
 
 ## Risks and Challenges
 

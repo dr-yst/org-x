@@ -25,6 +25,8 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - ✅ Fixed title and property handling in HeadlinesList component
 - ✅ Fixed all Rust test failures in cargo test
 - ✅ Addressed code warnings to improve code quality
+- ✅ Configured TailwindCSS v3 for shadcn-svelte compatibility
+- ✅ Implemented shadcn-svelte Button components across UI
 - 🔄 Implementation of basic task list view (MVP)
 - 🔄 Implementation of simple filtering functionality
 - ✅ Enhanced representation of DEADLINE and SCHEDULED timestamps
@@ -54,6 +56,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Added missing convenience methods to improve code usability
 - Addressed code warnings to maintain high code quality
 - Cleaned up unnecessary imports and variable declarations
+- Configured TailwindCSS v3 for compatibility with shadcn-svelte components
+- Implemented shadcn-svelte Button components across UI elements for consistent styling
+- Updated filter controls, tags, and action buttons to use shadcn-svelte Button variants
 
 ### Technical Considerations
 - The task list view needs to maintain keyboard operability while providing task information
@@ -76,6 +81,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - OrgHeadline and OrgTitle structures have overlapping fields that should be consolidated
 - During the refactoring of OrgHeadline to use OrgTitle for some fields, we need to update tests carefully
 - Code needs to be kept clean by addressing warnings and removing unused imports/variables
+- shadcn-svelte components require TailwindCSS v3 compatibility, not v4
+- Button component usage should follow shadcn's variant pattern for consistent styling across the app
+- Keyboard navigation patterns should be maintained when implementing shadcn-svelte components
 
 ## Recent Changes
 
@@ -110,6 +118,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Added missing convenience methods to improve code usability and maintain test compatibility
 - Fixed test failures resulting from the refactoring of OrgHeadline and OrgTitle structures
 - Cleaned up code by removing unused imports and addressing compiler warnings
+- Properly configured TailwindCSS v3 for shadcn-svelte compatibility instead of using v4
+- Implemented shadcn-svelte Button components using variants for semantically appropriate styling
+- Maintained consistent keyboard-first approach with shadcn-svelte components
 
 ## Learnings and Discoveries
 
@@ -130,6 +141,9 @@ The current project priority has been adjusted to focus on developing an MVP tha
 - Proper handling of imports and unused variables reduces potential bugs and improves code clarity
 - When fields are moved from one struct to another during refactoring, access patterns need to be updated
 - Adding convenience methods can significantly improve code usability and maintainability
+- shadcn-svelte requires TailwindCSS v3, not the newer v4, for compatibility
+- The Button component from shadcn-svelte provides powerful variant options for semantic UI design
+- Using shadcn-svelte components improves accessibility and visual consistency across the application
 
 ### Difficulties and Solutions
 - Challenge: Determining the appropriate MVP scope
@@ -158,6 +172,10 @@ The current project priority has been adjusted to focus on developing an MVP tha
   - Solution: Add adapter methods where needed to maintain backward compatibility
 - Challenge: Compiler warnings about unused imports and variables
   - Solution: Remove unnecessary imports and mark intentionally unused variables with underscore
+- Challenge: TailwindCSS v4 incompatibility with shadcn-svelte
+  - Solution: Revert to TailwindCSS v3 and properly configure it for shadcn-svelte
+- Challenge: Converting HTML buttons to shadcn-svelte Button components
+  - Solution: Use appropriate variants (default, secondary, ghost, destructive) for semantic styling
 
 ## Next Steps
 
@@ -167,6 +185,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
    - Display of title, scheduled dates, and deadlines
    - Basic tag display
    - Priority indicators
+   - Implement more shadcn-svelte components (Badge, Collapsible, Select)
 2. ✅ Complete implementation of the testing environment
    - Resolve compatibility issues with Svelte 5
    - Implement proper component tests
@@ -176,6 +195,7 @@ The current project priority has been adjusted to focus on developing an MVP tha
 5. ⬜ Basic keyboard navigation for the task list
 6. ⬜ Implementation of file monitoring functionality
 7. ⬜ Consider consolidating OrgHeadline and OrgTitle structures to reduce duplication
+8. ⬜ Add proper loading states using shadcn-svelte Skeleton component
 
 ### Deferred Tasks (Post-MVP)
 1. ✅ Design of multi-view tab system
