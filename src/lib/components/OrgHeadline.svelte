@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { OrgHeadline } from "../bindings";
+  import { Badge } from "$lib/components/ui/badge";
 
   // runesスタイルのprops定義
   const { headline, level = 1 } = $props<{
@@ -54,9 +55,9 @@
       {#if headline.title.tags.length > 0}
         <span class="flex gap-1">
           {#each headline.title.tags as tag}
-            <span class="text-xs text-white bg-blue-600 px-1 py-0.5 rounded">
+            <Badge variant="default" class="text-xs">
               {tag}
-            </span>
+            </Badge>
           {/each}
         </span>
       {/if}

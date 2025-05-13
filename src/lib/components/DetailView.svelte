@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
   import { Button } from "$lib/components/ui/button";
+  import { Badge } from "$lib/components/ui/badge";
   
   // Props definition using Svelte 5 runes
   const { headline = null } = $props<{ headline: OrgHeadline | null }>();
@@ -110,9 +111,9 @@
       {#if headline.title.tags && headline.title.tags.length > 0}
           <div class="flex flex-wrap gap-1 mb-3">
             {#each headline.title.tags as tag}
-              <Button variant="secondary" size="sm" class="px-2 py-0.5 h-auto text-xs rounded-full">
+              <Badge variant="secondary" class="text-xs">
                 {tag}
-              </Button>
+              </Badge>
             {/each}
           </div>
         {/if}

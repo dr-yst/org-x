@@ -5,6 +5,7 @@
     import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";
     import { Button } from "$lib/components/ui/button";
+    import { Badge } from "$lib/components/ui/badge";
 
     // Svelte 5 state management with runes
     let document = $state<OrgDocument | null>(null);
@@ -183,13 +184,9 @@
                 {#if document.filetags && document.filetags.length > 0}
                     <div class="flex flex-wrap gap-2 mb-4">
                         {#each document.filetags as tag}
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                class="px-2 py-0.5 h-auto text-xs rounded-full"
-                            >
+                            <Badge variant="secondary" class="text-xs">
                                 {tag}
-                            </Button>
+                            </Badge>
                         {/each}
                     </div>
                 {/if}

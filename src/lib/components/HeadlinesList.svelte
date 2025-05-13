@@ -10,6 +10,7 @@
         TableRow,
     } from "$lib/components/ui/table";
     import { Button } from "$lib/components/ui/button";
+    import { Badge } from "$lib/components/ui/badge";
 
     import type { OrgHeadline, OrgTimestamp, OrgDocument } from "$lib/bindings";
 
@@ -415,11 +416,9 @@
                         <TableCell>
                             <div class="flex flex-wrap gap-1">
                                 {#each headline.title.tags as tag}
-                                    <span
-                                        class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
-                                    >
+                                    <Badge variant="secondary" class="text-xs">
                                         {tag}
-                                    </span>
+                                    </Badge>
                                 {/each}
                             </div>
                         </TableCell>
