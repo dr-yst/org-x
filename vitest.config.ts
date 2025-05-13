@@ -1,6 +1,6 @@
-import { defineConfig } from 'vitest/config';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
-import path from 'path';
+import { defineConfig } from "vitest/config";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import path from "path";
 
 export default defineConfig({
   plugins: [
@@ -9,32 +9,32 @@ export default defineConfig({
       // Svelte 5のテスト環境向け設定
       compilerOptions: {
         runes: true,
-      }
-    })
+      },
+    }),
   ],
   test: {
-    environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,ts}'],
+    environment: "jsdom",
+    include: ["src/**/*.{test,spec}.{js,ts}"],
     globals: true,
     server: {
       deps: {
-        inline: ['svelte']
-      }
+        inline: ["svelte"],
+      },
     },
     coverage: {
-      reporter: ['text', 'json', 'html'],
+      reporter: ["text", "json", "html"],
     },
     environmentOptions: {
       jsdom: {
         // Ensure svelte+testing-library works with runes
-        customExportConditions: ['svelte']
-      }
-    }
+        // customExportConditions: ['svelte']
+      },
+    },
   },
   resolve: {
     alias: {
-      '$lib': path.resolve(__dirname, './src/lib')
+      $lib: path.resolve(__dirname, "./src/lib"),
     },
-    conditions: ['browser', 'svelte', 'import', 'module', 'node', 'default']
-  }
+    conditions: ["browser", "svelte", "import", "module", "node", "default"],
+  },
 });
