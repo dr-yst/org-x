@@ -6,6 +6,15 @@
     import DetailView from "./DetailView.svelte";
     import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuLabel,
+        DropdownMenuSeparator,
+        DropdownMenuShortcut,
+        DropdownMenuTrigger,
+    } from "$lib/components/ui/dropdown-menu";
 
     // Svelte 5 state management with runes
     let document = $state<OrgDocument | null>(null);
@@ -91,6 +100,22 @@
                 showDetailView = true;
                 showQuickActions = false;
             }
+        } else if (event.key === "e" && showQuickActions) {
+            // Open in external editor
+            event.preventDefault();
+            handleQuickAction("open-editor");
+        } else if (event.key === "d" && showQuickActions) {
+            // Mark as done
+            event.preventDefault();
+            handleQuickAction("mark-done");
+        } else if (event.key === "+" && showQuickActions) {
+            // Increase priority
+            event.preventDefault();
+            handleQuickAction("priority-up");
+        } else if (event.key === "-" && showQuickActions) {
+            // Decrease priority
+            event.preventDefault();
+            handleQuickAction("priority-down");
         }
     }
 
@@ -114,6 +139,20 @@
                 break;
             case "priority-down":
                 console.log("Decrease priority:", headline.id);
+                break;
+            case "open-editor":
+                // Open the file in external editor
+                const document_path = document?.file_path;
+                if (document_path) {
+                    console.log(
+                        "Opening file in external editor:",
+                        document_path,
+                    );
+                    // In a real implementation, we would use the tauri-plugin-opener
+                    // For this demo, we'll just log the intention
+                } else {
+                    console.error("No file path available");
+                }
                 break;
         }
 
@@ -239,7 +278,12 @@
                         <kbd
                             class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
                             >Enter</kbd
-                        > View details
+                        >
+                        View details,
+                        <kbd
+                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
+                            >e</kbd
+                        > Open in editor
                     </p>
                 </div>
             {/if}
@@ -258,21 +302,20 @@
                         on:update={(e) => (filteredHeadlines = e.detail)}
                     />
 
-                    {#if showQuickActions && focusedIndex >= 0 && focusedIndex < filteredHeadlines.length}
-                        <div
-                            class="absolute right-4 top-10 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+                    {#if focusedIndex >= 0 && focusedIndex < filteredHeadlines.length}
+                        <DropdownMenu
+                            open={showQuickActions}
+                            onOpenChange={(open) => (showQuickActions = open)}
                         >
-                            <div
-                                class="p-2 border-b border-gray-200 bg-gray-50 rounded-t-lg"
-                            >
-                                <h4 class="font-medium text-sm">
-                                    Quick Actions
-                                </h4>
-                            </div>
-                            <div class="p-1">
-                                <Button
-                                    variant="ghost"
-                                    class="w-full justify-start"
+                            <DropdownMenuTrigger class="hidden">
+                                <Button variant="ghost">Actions</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent class="w-56" align="end">
+                                <DropdownMenuLabel
+                                    >Quick Actions</DropdownMenuLabel
+                                >
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
                                     onclick={() => handleQuickAction("view")}
                                 >
                                     <svg
@@ -291,10 +334,33 @@
                                         />
                                     </svg>
                                     View Details
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    class="w-full justify-start"
+                                    <DropdownMenuShortcut
+                                        >Enter</DropdownMenuShortcut
+                                    >
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onclick={() =>
+                                        handleQuickAction("open-editor")}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-4 w-4 mr-2"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M4.25 3A1.25 1.25 0 003 4.25v11.5A1.25 1.25 0 004.25 17h11.5A1.25 1.25 0 0017 15.75V4.25A1.25 1.25 0 0015.75 3H4.25zM5 6.5a.5.5 0 01.5-.5h9a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-1zm0 4a.5.5 0 01.5-.5h9a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-1zm0 4a.5.5 0 01.5-.5h5a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-5a.5.5 0 01-.5-.5v-1z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    Open in External Editor
+                                    <DropdownMenuShortcut
+                                        >E</DropdownMenuShortcut
+                                    >
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
                                     onclick={() =>
                                         handleQuickAction("mark-done")}
                                 >
@@ -311,10 +377,11 @@
                                         />
                                     </svg>
                                     Mark as Done
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    class="w-full justify-start"
+                                    <DropdownMenuShortcut
+                                        >D</DropdownMenuShortcut
+                                    >
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                     onclick={() =>
                                         handleQuickAction("priority-up")}
                                 >
@@ -331,10 +398,11 @@
                                         />
                                     </svg>
                                     Increase Priority
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    class="w-full justify-start"
+                                    <DropdownMenuShortcut
+                                        >+</DropdownMenuShortcut
+                                    >
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                     onclick={() =>
                                         handleQuickAction("priority-down")}
                                 >
@@ -351,9 +419,12 @@
                                         />
                                     </svg>
                                     Decrease Priority
-                                </Button>
-                            </div>
-                        </div>
+                                    <DropdownMenuShortcut
+                                        >-</DropdownMenuShortcut
+                                    >
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     {/if}
                 {/if}
             </div>
