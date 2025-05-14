@@ -10,7 +10,16 @@
         TableRow,
     } from "$lib/components/ui/table";
     import { Button } from "$lib/components/ui/button";
-    import { Badge } from "$lib/components/ui/badge";
+    import { Badge, badgeVariants } from "$lib/components/ui/badge";
+    import { cn } from "$lib/utils.ts";
+
+    // Define custom badge classes for TODO status
+    const todoBadgeClasses = {
+        todo: "bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 border-blue-200",
+        done: "bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 border-green-200",
+        waiting: "bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 border-orange-200",
+        cancelled: "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600 border-gray-200"
+    };
 
     import type { OrgHeadline, OrgTimestamp, OrgDocument } from "$lib/bindings";
 
@@ -199,7 +208,25 @@
         }
     }
 
-    // Get color class based on todo_keyword
+    // Get badge class for TODO status
+    function getTodoBadgeClass(todoKeyword: string | null): string {
+        if (!todoKeyword) return "";
+
+        switch (todoKeyword.toUpperCase()) {
+            case "TODO":
+                return todoBadgeClasses.todo;
+            case "DONE":
+                return todoBadgeClasses.done;
+            case "WAITING":
+                return todoBadgeClasses.waiting;
+            case "CANCELLED":
+                return todoBadgeClasses.cancelled;
+            default:
+                return todoBadgeClasses.todo;
+        }
+    }
+
+    // Get color class based on todo_keyword (kept for other usages)
     function getTodoColorClass(todoKeyword: string | null): string {
         if (!todoKeyword) return "";
 
@@ -373,13 +400,16 @@
                     >
                         <TableCell>
                             {#if headline.title.todo_keyword}
-                                <span
-                                    class="px-2 py-1 rounded text-xs font-medium {getTodoColorClass(
-                                        headline.title.todo_keyword,
-                                    )}"
+                                <Badge
+                                    class={cn(
+                                        getTodoBadgeClass(headline.title.todo_keyword),
+                                        headline.title.todo_keyword === "CANCELLED" && "line-through",
+                                        "text-xs font-medium"
+                                    )}
+                                    variant="secondary"
                                 >
                                     {headline.title.todo_keyword}
-                                </span>
+                                </Badge>
                             {/if}
                         </TableCell>
 

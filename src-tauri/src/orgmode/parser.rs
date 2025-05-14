@@ -579,7 +579,7 @@ pub fn parse_sample_org() -> OrgDocument {
 #+CATEGORY: Demo
 #+FILETAGS: :demo:sample:
 
-* TODO Shopping List [0/3]                                         :shopping:chores:
+* TODO Shopping Lists [0/3]                                         :shopping:chores:
 :PROPERTIES:
 :CATEGORY: Shopping
 :DEADLINE: <2025-04-15 Tue>
@@ -597,6 +597,10 @@ To-do list
 ** TODO Next Steps Planning
    - [ ] Allocate resources
    - [ ] Set timeline
+
+* TODO Follow-up Tasks
+   - [ ] Email team for updates
+   - [ ] Schedule next meeting
 "#;
 
     match parse_org_document(sample_content, Some("sample.org")) {
