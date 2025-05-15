@@ -365,8 +365,11 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
 2.  **Rules Updates:** This rules file should be reviewed and updated periodically to reflect learned best practices and project evolution.
 3.  **Document Size Management:** When Memory System files become overly large (typically > 2000 lines):
     - Remove implementation details that can be found in the actual code
-    - Focus on high-level concepts, patterns, and relationships instead of detailed implementations
+    - Focus on high-level concepts, patterns, and relationships instead of detailed implementations that can be understood by reading the source code
     - Use diagrams and concise explanations instead of lengthy code snippets
+    - Document "why" decisions were made rather than just "how" they were implemented
+    - For code structures, document their purpose and relationships rather than internal details
+    - Use code references rather than duplicating code in documentation
     - Reference external files (e.g., images, code files) when appropriate
     - Maintain a balance between completeness and readability
 
