@@ -16,6 +16,15 @@
         DropdownMenuTrigger,
     } from "$lib/components/ui/dropdown-menu";
 
+    import File from "@lucide/svelte/icons/file";
+    import Tag from "@lucide/svelte/icons/tag";
+    import Eye from "@lucide/svelte/icons/eye";
+    import FileEdit from "@lucide/svelte/icons/file-edit";
+    import Check from "@lucide/svelte/icons/check";
+    import ChevronUp from "@lucide/svelte/icons/chevron-up";
+    import ChevronDown from "@lucide/svelte/icons/chevron-down";
+    import X from "@lucide/svelte/icons/x";
+
     // Svelte 5 state management with runes
     let document = $state<OrgDocument | null>(null);
     let loading = $state(true);
@@ -181,36 +190,14 @@
                 <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
                     {#if document.file_path}
                         <div class="flex items-center gap-1">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <File class="h-4 w-4" />
                             <span>{document.file_path}</span>
                         </div>
                     {/if}
 
                     {#if document.category}
                         <div class="flex items-center gap-1">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <Tag class="h-4 w-4" />
                             <span
                                 >Category: <span class="font-medium"
                                     >{document.category}</span
@@ -318,21 +305,7 @@
                                 <DropdownMenuItem
                                     onclick={() => handleQuickAction("view")}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            d="M10 12a2 2 0 100-4 2 2 0 000 4z"
-                                        />
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <Eye class="h-4 w-4 mr-2" />
                                     View Details
                                     <DropdownMenuShortcut
                                         >Enter</DropdownMenuShortcut
@@ -342,18 +315,7 @@
                                     onclick={() =>
                                         handleQuickAction("open-editor")}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M4.25 3A1.25 1.25 0 003 4.25v11.5A1.25 1.25 0 004.25 17h11.5A1.25 1.25 0 0017 15.75V4.25A1.25 1.25 0 0015.75 3H4.25zM5 6.5a.5.5 0 01.5-.5h9a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-1zm0 4a.5.5 0 01.5-.5h9a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-9a.5.5 0 01-.5-.5v-1zm0 4a.5.5 0 01.5-.5h5a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-5a.5.5 0 01-.5-.5v-1z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <FileEdit class="h-4 w-4 mr-2" />
                                     Open in External Editor
                                     <DropdownMenuShortcut
                                         >E</DropdownMenuShortcut
@@ -364,18 +326,7 @@
                                     onclick={() =>
                                         handleQuickAction("mark-done")}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <Check class="h-4 w-4 mr-2" />
                                     Mark as Done
                                     <DropdownMenuShortcut
                                         >D</DropdownMenuShortcut
@@ -385,18 +336,7 @@
                                     onclick={() =>
                                         handleQuickAction("priority-up")}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <ChevronUp class="h-4 w-4 mr-2" />
                                     Increase Priority
                                     <DropdownMenuShortcut
                                         >+</DropdownMenuShortcut
@@ -406,18 +346,7 @@
                                     onclick={() =>
                                         handleQuickAction("priority-down")}
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <ChevronDown class="h-4 w-4 mr-2" />
                                     Decrease Priority
                                     <DropdownMenuShortcut
                                         >-</DropdownMenuShortcut
@@ -443,18 +372,7 @@
                                 selectedHeadline = null;
                             }}
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 mr-1"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <X class="h-4 w-4" />
                             Close
                         </Button>
                     </div>
