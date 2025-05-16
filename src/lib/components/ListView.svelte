@@ -15,6 +15,13 @@
         DropdownMenuShortcut,
         DropdownMenuTrigger,
     } from "$lib/components/ui/dropdown-menu";
+    import {
+        Drawer,
+        DrawerContent,
+        DrawerHeader,
+        DrawerTitle,
+        DrawerClose,
+    } from "$lib/components/ui/drawer";
 
     import File from "@lucide/svelte/icons/file";
     import Tag from "@lucide/svelte/icons/tag";
@@ -169,7 +176,7 @@
     }
 </script>
 
-<div class="w-full h-full p-4 {showDetailView ? 'grid grid-cols-2 gap-4' : ''}">
+<div class="w-full h-full p-4">
     {#if error}
         <div
             class="p-4 border border-red-500 bg-red-50 text-red-700 rounded mb-4"
@@ -358,27 +365,34 @@
                 {/if}
             </div>
 
-            {#if showDetailView}
-                <div class="w-full">
-                    <div class="mb-4 flex justify-between items-center">
-                        <h3 class="text-xl font-semibold text-gray-800">
-                            Task Details
-                        </h3>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onclick={() => {
-                                showDetailView = false;
-                                selectedHeadline = null;
-                            }}
+            <Drawer
+                open={showDetailView}
+                onOpenChange={(open) => {
+                    showDetailView = open;
+                    if (!open) selectedHeadline = null;
+                }}
+            >
+                <DrawerContent class="max-h-[80vh] overflow-y-auto">
+                    <DrawerHeader
+                        class="flex justify-between items-center border-b pb-4"
+                    >
+                        <DrawerTitle
+                            class="text-xl font-semibold text-gray-800"
                         >
-                            <X class="h-4 w-4" />
-                            Close
-                        </Button>
+                            Task Details
+                        </DrawerTitle>
+                        <DrawerClose>
+                            <Button variant="ghost" size="sm">
+                                <X class="h-4 w-4" />
+                                Close
+                            </Button>
+                        </DrawerClose>
+                    </DrawerHeader>
+                    <div class="p-4">
+                        <DetailView headline={selectedHeadline} />
                     </div>
-                    <DetailView headline={selectedHeadline} />
-                </div>
-            {/if}
+                </DrawerContent>
+            </Drawer>
         </div>
     {:else}
         <div
