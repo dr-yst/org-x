@@ -45,6 +45,7 @@
     let showQuickActions = $state(false);
     let selectedHeadline = $state<OrgHeadline | null>(null);
     let showDetailView = $state(false);
+    let showQuickLook = $state(false);
 
     onMount(() => {
         const loadDocument = async () => {
@@ -107,6 +108,8 @@
             } else if (showDetailView) {
                 showDetailView = false;
                 selectedHeadline = null;
+            } else if (showQuickLook) {
+                showQuickLook = false;
             }
         } else if (event.key === "Enter" || event.key === "o") {
             // Open detail view for the selected headline
@@ -115,6 +118,20 @@
                 selectedHeadline = filteredHeadlines[focusedIndex];
                 showDetailView = true;
                 showQuickActions = false;
+            }
+        } else if (event.key == " ") {
+            // Toggle quick look view with spacebar
+            event.preventDefault();
+            if (focusedIndex >= 0 && focusedIndex < filteredHeadlines.length) {
+                if (showQuickLook) {
+                    showQuickLook = false;
+                    selectedHeadline = null;
+                } else {
+                    selectedHeadline = filteredHeadlines[focusedIndex];
+                    showQuickLook = true;
+                    showDetailView = false;
+                    showQuickActions = false;
+                }
             }
         } else if (event.key === "e" && showQuickActions) {
             // Open in external editor
@@ -276,6 +293,11 @@
                         View details,
                         <kbd
                             class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
+                            >Space</kbd
+                        >
+                        Quick look,
+                        <kbd
+                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
                             >e</kbd
                         > Open in editor
                     </p>
@@ -366,9 +388,9 @@
             </div>
 
             <Drawer
-                open={showDetailView}
+                open={showQuickLook}
                 onOpenChange={(open) => {
-                    showDetailView = open;
+                    showQuickLook = open;
                     if (!open) selectedHeadline = null;
                 }}
             >
