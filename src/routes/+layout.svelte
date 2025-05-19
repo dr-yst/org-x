@@ -4,7 +4,7 @@
 </script>
 
 <div class="min-h-screen bg-gray-50">
-    <header class="bg-white shadow-sm p-4 mb-6">
+    <header class="bg-white shadow-xs p-4 mb-6">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-black font-[Poppins] text-indigo-600">
                 Org-X
