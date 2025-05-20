@@ -15,6 +15,8 @@ fn generate_ts_bindings() {
             api::get_sample_org,
             api::parse_org_content,
             api::run_datetime_test,
+            api::start_file_monitoring,
+            api::stop_file_monitoring,
         ]);
     
     builder
@@ -44,6 +46,8 @@ pub fn run() {
             api::get_sample_org,
             api::parse_org_content,
             api::run_datetime_test,
+            api::start_file_monitoring,
+            api::stop_file_monitoring,
         ]);
     
     tauri::Builder::default()

@@ -1,7 +1,10 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
+use crate::orgmode::parser::{parse_org_document};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 
 // Document repository
 pub struct OrgDocumentRepository {
@@ -38,6 +41,33 @@ impl OrgDocumentRepository {
     pub fn remove(&mut self, id: &str) -> Option<OrgDocument> {
         self.last_updated.remove(id);
         self.documents.remove(id)
+    }
+    
+    // Parse a file and add it to the repository
+    pub fn parse_file(&mut self, path: &Path) -> Result<String, String> {
+        // Read the file
+        let content = fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file {}: {}", path.display(), e))?;
+            
+        // Get file name for document ID
+        let file_name = path.file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
+            
+        // Parse the document
+        let mut document = parse_org_document(&content, path.to_str())
+            .map_err(|e| format!("Failed to parse document: {}", e))?;
+            
+        // Use file name as document ID if not set
+        if document.id.is_empty() {
+            document.id = file_name.to_string();
+        }
+        
+        // Add to repository
+        let doc_id = document.id.clone();
+        self.upsert(document);
+        
+        Ok(doc_id)
     }
 
     // Get document for headline
