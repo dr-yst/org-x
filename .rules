@@ -209,6 +209,33 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
 4. **Error Handling:** Use `Result` and `Option` types properly; avoid `unwrap()` and `expect()` in production code.
 5. **Memory Management:** Be aware of memory usage patterns, especially for large data structures.
 
+## 🌐 GitHub Repository Guidelines
+
+1. **Repository Location:** The official repository exists at `dr-yst/org-x`.
+2. **Issue-Based Development:**
+   * Utilize GitHub Issues to break down tasks into smaller, manageable units.
+   * Register all development tasks as GitHub Issues before implementation begins.
+   * Use GitHub Issue templates when available to ensure consistent information capture.
+3. **Memory System Integration:**
+   * Reference GitHub Issue numbers in the Memory System files whenever possible.
+   * Store specific implementation details within the corresponding GitHub Issues rather than duplicating in Memory System.
+   * Link Memory System updates to relevant GitHub Issues for traceability.
+4. **Branch Management:**
+   * Create feature branches named according to the issue they address (e.g., `feature/issue-123`).
+   * Keep branches focused on single issues to maintain clear change history.
+   * Delete branches after merging to maintain a clean repository.
+5. **Pull Requests:**
+   * Create descriptive Pull Requests that reference the GitHub Issues they resolve.
+   * Use the PR description to document implementation decisions not captured in the issue.
+   * Follow the project's PR template if available.
+6. **Commit Practices:**
+   * Write clear commit messages that reference GitHub Issue numbers.
+   * Keep commits atomic and focused on single logical changes.
+   * Use conventional commit format if established for the project.
+7. **Documentation Updates:**
+   * Update relevant documentation as part of the same PR that implements code changes.
+   * Ensure README and other user-facing documentation stays current with implementation.
+
 ## ⚙️ Task Execution & Workflow
 
 **For new migrations, make sure to add them to the same file.**
