@@ -11,7 +11,9 @@ The project is focused on implementing the MVP centered around the task list vie
 - ✅ Date filtering functionality (today, this week, overdue)
 - ✅ Basic keyboard navigation between rows
 - ✅ Integration with shadcn-svelte Button components
-- ✅ TailwindCSS v3 configuration for shadcn-svelte compatibility
+- ✅ TailwindCSS v4 configuration for shadcn-svelte compatibility
+- ✅ Core file monitoring backend implementation with hardcoded paths (Issue #10)
+- ✅ Integration of `notify` crate for file system change detection
 
 ## In Progress
 
@@ -50,7 +52,10 @@ We've broken down the task list view implementation into smaller, focused issues
 1. Support for multiple files
 2. Enhanced TODO filtering
 3. External editor integration
-4. File change monitoring
+4. Complete file monitoring system (Issue #9)
+   - ✅ Core file monitoring backend (Issue #10)
+   - User interface for monitoring configuration (Issue #11)
+   - Integration with user settings (Issue #12)
 
 ### Future Development (Post-MVP)
 1. Multiple view tabs
@@ -66,6 +71,8 @@ We've broken down the task list view implementation into smaller, focused issues
 - shadcn-svelte for accessible UI components with consistent styling
 - Enhanced timestamp handling with OrgDatetime structure
 - Focus on external editor integration rather than built-in editing
+- Implemented file monitoring with debouncing for efficient change detection
+- Used `once_cell` for thread-safe singleton pattern in the file monitor
 
 ## Challenges
 
@@ -74,6 +81,8 @@ We've broken down the task list view implementation into smaller, focused issues
 - Cross-platform editor integration
 - Svelte 5 compatibility with testing frameworks
 - Balancing simplicity and functionality for the MVP
+- Managing cross-platform file system event behavior differences
+- Handling different editor save behaviors with proper debouncing
 
 ## Mitigation Strategies
 
@@ -88,5 +97,6 @@ We've broken down the task list view implementation into smaller, focused issues
 
 - Created Issue #2 for the overall task list view implementation
 - Broke down Issue #2 into six sub-issues (#3-#8) for better management
+- Completed Issue #10 for basic file monitoring implementation
 - Documented completed items and remaining tasks in issue comments
 - Added detailed technical approach and acceptance criteria to each sub-issue

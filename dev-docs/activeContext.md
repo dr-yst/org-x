@@ -19,6 +19,10 @@ The project is focused on developing the MVP centered around the task list view 
   - Table Interaction and Keyboard Navigation (Issue #6)
   - Filter Controls (Issue #7)
   - Backend Connection and Data Integration (Issue #8)
+- 🔄 Implement File Monitoring System (Issue #9)
+  - ✅ Core File Monitoring Backend with Hardcoded Paths (Issue #10)
+  - User Interface for Monitoring Configuration (Issue #11)
+  - Integration with User Settings (Issue #12)
 - 🔄 Server-side filtering in Rust
 - 🔄 Integration with shadcn-svelte components
 - 🔄 Svelte 5 runes implementation
@@ -40,6 +44,8 @@ The project is focused on developing the MVP centered around the task list view 
 - Implemented server-side filtering approach
 - Focused on external editor integration rather than built-in editing
 - Broke down the task list implementation into smaller, focused issues
+- Implemented file monitoring with the `notify` crate for automatic reloading of edited files
+- Used a thread-safe singleton pattern with `once_cell` for the file monitor
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -49,6 +55,8 @@ The project is focused on developing the MVP centered around the task list view 
 - shadcn-svelte components require TailwindCSS v3
 - Headline hierarchy needs to be visually represented with proper indentation and collapsible functionality
 - UI components must be accessible and follow consistent design patterns
+- File monitoring requires debouncing to handle rapid file change events
+- Cross-platform file system events handled by the `notify` crate
 
 ## Next Steps
 
