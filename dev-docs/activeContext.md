@@ -29,13 +29,15 @@ The project is focused on developing the MVP centered around the task list view 
 
 ### Recent Progress
 - ✅ Set up basic shadcn-svelte Table component for task list display
-- ✅ Configured TailwindCSS v3 for shadcn-svelte compatibility
+- ✅ Configured TailwindCSS v4 for shadcn-svelte compatibility
 - ✅ Implemented shadcn-svelte Button components across UI elements
 - ✅ Updated filter controls, tags, and action buttons to use shadcn-svelte Button variants
 - ✅ Created basic keyboard navigation between rows (up/down)
 - ✅ Implemented date-based filtering functionality (today, this week, overdue)
 - ✅ Fixed various Svelte 5 runes-related issues for reactive state management
 - ✅ Broke down main task list implementation into manageable sub-issues (#3-#8)
+- ✅ Implemented core file monitoring system with `notify` crate (Issue #10)
+- ✅ Added debouncing for file change events to optimize performance
 
 ### Recent Decisions
 - Adopted shadcn-svelte as UI component library
@@ -52,7 +54,7 @@ The project is focused on developing the MVP centered around the task list view 
 - Server-side filtering balances performance with implementation simplicity
 - Date-related filtering uses specialized methods in Rust backend
 - Svelte 5's runes system requires adapted testing strategies
-- shadcn-svelte components require TailwindCSS v3
+- shadcn-svelte components require TailwindCSS v4
 - Headline hierarchy needs to be visually represented with proper indentation and collapsible functionality
 - UI components must be accessible and follow consistent design patterns
 - File monitoring requires debouncing to handle rapid file change events
