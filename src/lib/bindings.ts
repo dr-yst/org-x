@@ -30,6 +30,42 @@ export const commands = {
   async runDatetimeTest(): Promise<string> {
     return await TAURI_INVOKE("run_datetime_test");
   },
+  /**
+   * Start monitoring files with hardcoded paths for testing
+   */
+  async startFileMonitoring(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("start_file_monitoring"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Stop file monitoring
+   */
+  async stopFileMonitoring(): Promise<Result<string, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("stop_file_monitoring") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get all documents from the repository
+   */
+  async getAllDocuments(): Promise<Result<OrgDocument[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_all_documents") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
