@@ -215,6 +215,7 @@ REMEMBER: After every memory reset, the AI begins completely fresh. The Memory S
 2. **Issue-Based Development:**
    * Utilize GitHub Issues to break down tasks into smaller, manageable units.
    * Register all development tasks as GitHub Issues before implementation begins.
+   * Make sure to create a design and post its details as comments in the corresponding GitHub Issue for future reference.
    * Use GitHub Issue templates when available to ensure consistent information capture.
 3. **Memory System Integration:**
    * Reference GitHub Issue numbers in the Memory System files whenever possible.
