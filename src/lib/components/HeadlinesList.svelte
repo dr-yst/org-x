@@ -70,7 +70,7 @@
             if (headline.title.todo_keyword === "DONE") return false;
 
             // Get deadline timestamp if it exists
-            const deadline = headline.title.planning?.deadline;
+            const deadline = headline.title.planning?.deadline || null;
 
             switch (filter) {
                 case "today":

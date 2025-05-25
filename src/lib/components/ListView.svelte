@@ -33,13 +33,14 @@
     import X from "@lucide/svelte/icons/x";
 
     // Svelte 5 state management with runes
-    let document = $state<OrgDocument | null>(null);
+    let documents = $state<OrgDocument[]>([]);
     let loading = $state(true);
     let error = $state<string | null>(null);
 
     // Keyboard navigation state
     let focusedIndex = $state<number>(-1); // -1 means no focus
     let filteredHeadlines = $state<OrgHeadline[]>([]);
+    let allHeadlines = $state<OrgHeadline[]>([]);
     const filterOptions = ["all", "today", "week", "overdue"];
     let activeFilterIndex = $state(0); // Default to 'all'
     let showQuickActions = $state(false);
@@ -48,18 +49,49 @@
     let showQuickLook = $state(false);
 
     onMount(() => {
-        const loadDocument = async () => {
+        const loadDocuments = async () => {
             try {
-                // Load sample document
-                document = await commands.getSampleOrg();
-                loading = false;
+                console.log("Starting document loading...");
+                
+                // Start file monitoring first to ensure documents are loaded
+                console.log("Starting file monitoring...");
+                const monitorResult = await commands.startFileMonitoring();
+                console.log("File monitoring result:", monitorResult);
+                
+                if (monitorResult.status === "error") {
+                    console.error("Failed to start file monitoring:", monitorResult.error);
+                    error = "Failed to start file monitoring: " + monitorResult.error;
+                    loading = false;
+                    return;
+                }
+
+                // Load all documents from repository
+                console.log("Loading all documents...");
+                const result = await commands.getAllDocuments();
+                console.log("Get all documents result:", result);
+                
+                if (result.status === "ok") {
+                    documents = result.data;
+                    console.log("Loaded documents:", documents.length);
+                    
+                    // Flatten all headlines from all documents
+                    allHeadlines = documents.flatMap(doc => doc.headlines);
+                    console.log("Total headlines:", allHeadlines.length);
+                    
+                    loading = false;
+                } else {
+                    error = result.error;
+                    loading = false;
+                    console.error("Error loading documents:", result.error);
+                }
             } catch (err) {
+                console.error("Exception during document loading:", err);
                 error = String(err);
                 loading = false;
             }
         };
 
-        loadDocument();
+        loadDocuments();
 
         // Add keyboard event listener
         window.addEventListener("keydown", handleKeyDown);
@@ -72,8 +104,8 @@
 
     // Handle keyboard navigation
     function handleKeyDown(event: KeyboardEvent) {
-        // Only handle keyboard events when document is loaded
-        if (!document || loading) return;
+        // Only handle keyboard events when documents are loaded
+        if (documents.length === 0 || loading) return;
 
         if (event.key === "j" || event.key === "ArrowDown") {
             // Move focus down
@@ -175,16 +207,19 @@
                 break;
             case "open-editor":
                 // Open the file in external editor
-                const document_path = document?.file_path;
-                if (document_path) {
-                    console.log(
-                        "Opening file in external editor:",
-                        document_path,
+                if (selectedHeadline) {
+                    // Find the document that contains this headline
+                    const parentDocument = documents.find(doc => 
+                        doc.id === selectedHeadline!.document_id
                     );
-                    // In a real implementation, we would use the tauri-plugin-opener
-                    // For this demo, we'll just log the intention
-                } else {
-                    console.error("No file path available");
+                    if (parentDocument?.file_path) {
+                        console.log(
+                            "Opening file in external editor:",
+                            parentDocument.file_path,
+                        );
+                        // In a real implementation, we would use the tauri-plugin-opener
+                        // For this demo, we'll just log the intention
+                    }
                 }
                 break;
         }
@@ -206,52 +241,33 @@
                 class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"
             ></div>
         </div>
-    {:else if document}
+    {:else if documents.length > 0}
         {#if !showDetailView}
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold mb-2">{document.title}</h2>
+                <h2 class="text-2xl font-semibold mb-2">
+                    {documents.length > 1 ? `${documents.length} Documents` : documents[0].title}
+                </h2>
 
                 <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                    {#if document.file_path}
-                        <div class="flex items-center gap-1">
-                            <File class="h-4 w-4" />
-                            <span>{document.file_path}</span>
-                        </div>
-                    {/if}
-
-                    {#if document.category}
-                        <div class="flex items-center gap-1">
-                            <Tag class="h-4 w-4" />
-                            <span
-                                >Category: <span class="font-medium"
-                                    >{document.category}</span
-                                ></span
-                            >
-                        </div>
-                    {/if}
+                    <div class="flex items-center gap-1">
+                        <File class="h-4 w-4" />
+                        <span>{documents.length} file{documents.length !== 1 ? 's' : ''} loaded</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-1">
+                        <Tag class="h-4 w-4" />
+                        <span>{allHeadlines.length} headlines total</span>
+                    </div>
                 </div>
 
-                {#if document.filetags && document.filetags.length > 0}
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        {#each document.filetags as tag}
-                            <Badge variant="secondary" class="text-xs">
-                                {tag}
-                            </Badge>
-                        {/each}
-                    </div>
-                {/if}
-
-                {#if Object.keys(document.properties || {}).length > 0}
-                    <div class="p-3 bg-gray-50 rounded-md mb-4 text-sm">
-                        <h3 class="font-medium text-gray-700 mb-2">
-                            Properties
-                        </h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            {#each Object.entries(document.properties || {}) as [key, value]}
-                                <div class="text-gray-500 font-medium">
-                                    {key}
-                                </div>
-                                <div class="text-gray-800">{value}</div>
+                {#if documents.length > 1}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Loaded Documents:</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {#each documents as doc}
+                                <Badge variant="outline" class="text-xs">
+                                    {doc.title || doc.id}
+                                </Badge>
                             {/each}
                         </div>
                     </div>
@@ -307,8 +323,7 @@
             <div class="relative">
                 {#if !showDetailView}
                     <HeadlinesList
-                        headlines={document.headlines}
-                        {document}
+                        headlines={allHeadlines}
                         {focusedIndex}
                         on:rowClick={(e) => {
                             selectedHeadline = e.detail;
@@ -418,9 +433,9 @@
         </div>
     {:else}
         <div
-            class="p-4 border border-yellow-500 bg-yellow-50 text-yellow-700 rounded"
+            class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200"
         >
-            No document loaded.
+            No documents loaded. Make sure test files exist in the test_files directory.
         </div>
     {/if}
 </div>
