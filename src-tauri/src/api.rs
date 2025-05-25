@@ -39,7 +39,7 @@ pub fn run_datetime_test() -> String {
 /// Start monitoring files with hardcoded paths for testing
 #[tauri::command]
 #[specta::specta]
-pub fn start_file_monitoring() -> Result<String, String> {
+pub async fn start_file_monitoring() -> Result<String, String> {
     // Get a lock on the monitor
     let mut monitor_lock = FILE_MONITOR.lock()
         .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
@@ -55,6 +55,34 @@ pub fn start_file_monitoring() -> Result<String, String> {
     if let Some(monitor) = monitor_lock.as_mut() {
         // Add hardcoded paths for testing
         monitor.add_hardcoded_paths()?;
+        
+        // Parse initial files into the repository
+        let repo = monitor.get_repository();
+        {
+            let mut repo_lock = repo.lock()
+                .map_err(|e| format!("Failed to lock repository: {}", e))?;
+            
+            // Debug: Show current working directory
+            match std::env::current_dir() {
+                Ok(cwd) => println!("Current working directory: {}", cwd.display()),
+                Err(e) => eprintln!("Failed to get current directory: {}", e),
+            }
+            
+            // Parse all test files - use paths relative to project root
+            let test_files = vec![
+                "../test_files/example.org",
+                "../test_files/tasks.org", 
+                "../test_files/projects.org",
+                "../test_files/notes.org",
+            ];
+            
+            for file_path in test_files {
+                match repo_lock.parse_file(std::path::Path::new(file_path)) {
+                    Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
+                    Err(e) => eprintln!("Failed to parse file {}: {}", file_path, e),
+                }
+            }
+        }
         
         // Start monitoring
         monitor.start_monitoring()?;
@@ -78,5 +106,30 @@ pub fn stop_file_monitoring() -> Result<String, String> {
         Ok("File monitoring stopped".to_string())
     } else {
         Ok("File monitoring was not running".to_string())
+    }
+}
+
+/// Get all documents from the repository
+#[tauri::command]
+#[specta::specta]
+pub async fn get_all_documents() -> Result<Vec<OrgDocument>, String> {
+    // Get a lock on the monitor
+    let monitor_lock = FILE_MONITOR.lock()
+        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    
+    if let Some(monitor) = monitor_lock.as_ref() {
+        // Access the repository from the monitor
+        let repository = monitor.get_repository();
+        let repository_lock = repository.lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        
+        // Get all documents from the repository
+        let documents = repository_lock.list();
+        
+        // Convert from Vec<&OrgDocument> to Vec<OrgDocument>
+        Ok(documents.into_iter().cloned().collect())
+    } else {
+        // If no monitor exists, return empty list
+        Ok(Vec::new())
     }
 }

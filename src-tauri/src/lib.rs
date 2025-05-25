@@ -17,6 +17,7 @@ fn generate_ts_bindings() {
             api::run_datetime_test,
             api::start_file_monitoring,
             api::stop_file_monitoring,
+            api::get_all_documents,
         ]);
     
     builder
@@ -48,6 +49,7 @@ pub fn run() {
             api::run_datetime_test,
             api::start_file_monitoring,
             api::stop_file_monitoring,
+            api::get_all_documents,
         ]);
     
     tauri::Builder::default()

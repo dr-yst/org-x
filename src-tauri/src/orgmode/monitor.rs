@@ -327,11 +327,14 @@ impl FileMonitor {
     
     /// Add hardcoded paths for testing
     pub fn add_hardcoded_paths(&mut self) -> Result<(), String> {
-        // Add some example paths for testing
+        // Add multiple test files for testing multi-document functionality
         // These will be replaced with user-configured paths in the future
         let test_paths = vec![
-            MonitoredPath::file(PathBuf::from("test_files/example.org")),
-            MonitoredPath::directory(PathBuf::from("test_files"), true),
+            MonitoredPath::file(PathBuf::from("../test_files/example.org")),
+            MonitoredPath::file(PathBuf::from("../test_files/tasks.org")),
+            MonitoredPath::file(PathBuf::from("../test_files/projects.org")),
+            MonitoredPath::file(PathBuf::from("../test_files/notes.org")),
+            MonitoredPath::directory(PathBuf::from("../test_files"), true),
         ];
         
         for path in test_paths {
@@ -339,6 +342,11 @@ impl FileMonitor {
         }
         
         Ok(())
+    }
+    
+    /// Get a reference to the repository
+    pub fn get_repository(&self) -> Arc<Mutex<OrgDocumentRepository>> {
+        self.repository.clone()
     }
     
     /// Get the path from an event if it's relevant
