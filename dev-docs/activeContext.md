@@ -38,6 +38,13 @@ The project is focused on developing the MVP centered around the task list view 
 - ✅ Broke down main task list implementation into manageable sub-issues (#3-#8)
 - ✅ Implemented core file monitoring system with `notify` crate (Issue #10)
 - ✅ Added debouncing for file change events to optimize performance
+- ✅ **COMPLETED Issue #14: Multi-document parsing and display functionality**
+  - ✅ Implemented backend support for parsing multiple org files simultaneously
+  - ✅ Created document lookup pattern using Map<string, OrgDocument> for efficient access
+  - ✅ Eliminated HeadlineWithDocument interface in favor of clean data architecture
+  - ✅ Added visual document context with color-coded badges in HeadlinesList
+  - ✅ Fixed loading state management and async command handling
+  - ✅ Updated test infrastructure for new data patterns
 
 ### Recent Decisions
 - Adopted shadcn-svelte as UI component library
@@ -48,6 +55,10 @@ The project is focused on developing the MVP centered around the task list view 
 - Broke down the task list implementation into smaller, focused issues
 - Implemented file monitoring with the `notify` crate for automatic reloading of edited files
 - Used a thread-safe singleton pattern with `once_cell` for the file monitor
+- **Adopted document lookup pattern** instead of denormalized data structures for cleaner architecture
+- **Eliminated HeadlineWithDocument interface** in favor of using existing `document_id` field in `OrgHeadline`
+- **Implemented visual document distinction** using color-coded badges based on filename hash
+- **Enhanced loading state management** with retry logic and exponential backoff for robustness
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -59,6 +70,10 @@ The project is focused on developing the MVP centered around the task list view 
 - UI components must be accessible and follow consistent design patterns
 - File monitoring requires debouncing to handle rapid file change events
 - Cross-platform file system events handled by the `notify` crate
+- **Multi-document architecture** uses efficient Map-based lookups to avoid data duplication
+- **Document context display** requires consistent visual patterns and color coding
+- **Async command handling** in Tauri requires proper error handling and retry mechanisms
+- **Test infrastructure** must accommodate mocked Tauri commands and jest-dom matchers
 
 ## Next Steps
 
@@ -90,6 +105,15 @@ The project is focused on developing the MVP centered around the task list view 
 - Performance optimization for large org-mode files
 
 ## GitHub Issues
+
+### Completed Issues
+- ✅ **Issue #14: Implement parsing of multiple org files and display all headlines in ListView**
+  - Successfully implemented multi-document support with document lookup pattern
+  - Added visual document context with color-coded badges
+  - Refactored data architecture to eliminate redundant interfaces
+  - Fixed loading state management and async handling
+
+### Active Issues
 The basic task list view component implementation has been broken down into the following issues:
 
 1. **Issue #3: Implement Task List Table Structure using shadcn-svelte**
