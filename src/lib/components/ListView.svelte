@@ -3,6 +3,8 @@
     import { commands } from "../bindings";
     import type { OrgDocument, OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
+
+
     import DetailView from "./DetailView.svelte";
     import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
@@ -37,6 +39,9 @@
     let loading = $state(true);
     let error = $state<string | null>(null);
 
+    // Document lookup map for efficient document access
+    let documentMap = $state<Map<string, OrgDocument>>(new Map());
+
     // Keyboard navigation state
     let focusedIndex = $state<number>(-1); // -1 means no focus
     let filteredHeadlines = $state<OrgHeadline[]>([]);
@@ -48,55 +53,96 @@
     let showDetailView = $state(false);
     let showQuickLook = $state(false);
 
+    // Helper function to get document for a headline
+    function getDocumentForHeadline(headline: OrgHeadline): OrgDocument | null {
+        return documentMap.get(headline.document_id) || null;
+    }
+
+    // Helper function to get document title for a headline
+    function getDocumentTitle(headline: OrgHeadline): string {
+        const doc = getDocumentForHeadline(headline);
+        if (!doc) return 'Unknown Document';
+        return doc.title || doc.file_path.split('/').pop() || 'Untitled';
+    }
+
     onMount(() => {
+        console.log("🚀 ListView onMount called");
+        
         const loadDocuments = async () => {
             try {
-                console.log("Starting document loading...");
+                loading = true;
+                error = null;
                 
-                // Start file monitoring first to ensure documents are loaded
-                console.log("Starting file monitoring...");
+                console.log("📡 Starting file monitoring...");
                 const monitorResult = await commands.startFileMonitoring();
-                console.log("File monitoring result:", monitorResult);
                 
                 if (monitorResult.status === "error") {
-                    console.error("Failed to start file monitoring:", monitorResult.error);
-                    error = "Failed to start file monitoring: " + monitorResult.error;
+                    error = monitorResult.error;
                     loading = false;
                     return;
                 }
-
-                // Load all documents from repository
-                console.log("Loading all documents...");
-                const result = await commands.getAllDocuments();
-                console.log("Get all documents result:", result);
                 
-                if (result.status === "ok") {
-                    documents = result.data;
-                    console.log("Loaded documents:", documents.length);
+                console.log("📚 Loading documents...");
+                // Retry loading documents with exponential backoff
+                let retryCount = 0;
+                const maxRetries = 5;
+                let docs: any[] = [];
+                
+                while (retryCount < maxRetries) {
+                    const docsResult = await commands.getAllDocuments();
                     
-                    // Flatten all headlines from all documents
-                    allHeadlines = documents.flatMap(doc => doc.headlines);
-                    console.log("Total headlines:", allHeadlines.length);
+                    if (docsResult.status === "error") {
+                        console.warn(`Attempt ${retryCount + 1} failed:`, docsResult.error);
+                        retryCount++;
+                        if (retryCount >= maxRetries) {
+                            error = docsResult.error;
+                            loading = false;
+                            return;
+                        }
+                        // Wait before retrying (exponential backoff)
+                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+                        continue;
+                    }
                     
-                    loading = false;
-                } else {
-                    error = result.error;
-                    loading = false;
-                    console.error("Error loading documents:", result.error);
+                    docs = docsResult.data || [];
+                    if (docs.length > 0) {
+                        break; // Successfully loaded documents
+                    }
+                    
+                    retryCount++;
+                    if (retryCount >= maxRetries) {
+                        error = "No documents found after multiple attempts";
+                        loading = false;
+                        return;
+                    }
+                    
+                    console.log(`No documents found, retrying in ${Math.pow(2, retryCount)} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
                 }
+                
+                documents = docs;
+                
+                // Create document map for efficient lookups
+                documentMap = new Map(docs.map(doc => [doc.id, doc]));
+                
+                // Flatten all headlines from all documents
+                allHeadlines = documents.flatMap(doc => doc.headlines);
+                
+                console.log(`✅ Loaded ${documents.length} documents, ${allHeadlines.length} headlines`);
+                loading = false;
+                
             } catch (err) {
-                console.error("Exception during document loading:", err);
+                console.error("Error:", err);
                 error = String(err);
                 loading = false;
             }
         };
-
+        
         loadDocuments();
 
         // Add keyboard event listener
         window.addEventListener("keydown", handleKeyDown);
 
-        // Cleanup on component unmount
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
@@ -324,6 +370,8 @@
                 {#if !showDetailView}
                     <HeadlinesList
                         headlines={allHeadlines}
+                        documentMap={documentMap}
+                        {loading}
                         {focusedIndex}
                         on:rowClick={(e) => {
                             selectedHeadline = e.detail;

@@ -28,12 +28,13 @@
     // Props definition using Svelte 5 runes
     const {
         headlines = [],
+        documentMap = new Map(),
         loading = false,
         focusedIndex = -1,
     } = $props<{
         headlines: OrgHeadline[];
+        documentMap?: Map<string, OrgDocument>;
         loading?: boolean;
-        document?: OrgDocument | null;
         focusedIndex?: number;
     }>();
 
@@ -45,6 +46,22 @@
         update: OrgHeadline[];
     }>();
 
+    // Helper functions for document lookup
+    function getDocumentForHeadline(headline: OrgHeadline): OrgDocument | null {
+        return documentMap.get(headline.document_id) || null;
+    }
+
+    function getDocumentTitle(headline: OrgHeadline): string {
+        const doc = getDocumentForHeadline(headline);
+        if (!doc) return "Unknown Document";
+        return doc.title || doc.file_path.split("/").pop() || "Untitled";
+    }
+
+    function getDocumentPath(headline: OrgHeadline): string {
+        const doc = getDocumentForHeadline(headline);
+        return doc?.file_path || "";
+    }
+
     // State for filtering
     let activeFilter = $state("all"); // 'all', 'today', 'week', 'overdue'
 
@@ -55,7 +72,7 @@
         dispatch("update", filtered);
     });
 
-    // Filter headlines based on the active filter
+    // Apply filtering logic based on the active filter
     function getFilteredHeadlines(
         headlines: OrgHeadline[],
         filter: string,
@@ -312,6 +329,32 @@
 
         return "";
     }
+
+    // Get document color class for visual distinction
+    function getDocumentColorClass(headline: OrgHeadline): string {
+        const documentPath = getDocumentPath(headline);
+        // Extract filename from path for consistent color assignment
+        const filename = documentPath.split("/").pop() || "";
+
+        // Simple hash function to assign consistent colors
+        let hash = 0;
+        for (let i = 0; i < filename.length; i++) {
+            hash = filename.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        // Use hash to select from predefined color classes
+        const colors = [
+            "border-blue-300 text-blue-700 bg-blue-50",
+            "border-green-300 text-green-700 bg-green-50",
+            "border-purple-300 text-purple-700 bg-purple-50",
+            "border-orange-300 text-orange-700 bg-orange-50",
+            "border-pink-300 text-pink-700 bg-pink-50",
+            "border-indigo-300 text-indigo-700 bg-indigo-50",
+        ];
+
+        const colorIndex = Math.abs(hash) % colors.length;
+        return colors[colorIndex];
+    }
 </script>
 
 <div class="w-full">
@@ -384,6 +427,7 @@
                 <TableRow>
                     <TableHead class="w-[100px]">Status</TableHead>
                     <TableHead>Task</TableHead>
+                    <TableHead class="w-[120px]">Document</TableHead>
                     <TableHead>Tags</TableHead>
                     <TableHead class="w-[180px]">Date</TableHead>
                 </TableRow>
@@ -446,6 +490,15 @@
                                     {headline.content.trim().split("\n")[0]}
                                 </div>
                             {/if}
+                        </TableCell>
+
+                        <TableCell>
+                            <Badge
+                                variant="outline"
+                                class={`text-xs ${getDocumentColorClass(headline)}`}
+                            >
+                                {getDocumentTitle(headline)}
+                            </Badge>
                         </TableCell>
 
                         <TableCell>
