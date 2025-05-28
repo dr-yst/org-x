@@ -133,3 +133,74 @@ pub async fn get_all_documents() -> Result<Vec<OrgDocument>, String> {
         Ok(Vec::new())
     }
 }
+
+/// Get document by ID
+#[tauri::command]
+#[specta::specta]
+pub async fn get_org_document_by_id(document_id: String) -> Result<Option<OrgDocument>, String> {
+    // Get a lock on the monitor
+    let monitor_lock = FILE_MONITOR.lock()
+        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    
+    if let Some(monitor) = monitor_lock.as_ref() {
+        // Access the repository from the monitor
+        let repository = monitor.get_repository();
+        let repository_lock = repository.lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        
+        // Get document by ID
+        Ok(repository_lock.get(&document_id).cloned())
+    } else {
+        Ok(None)
+    }
+}
+
+/// Get document display title by ID
+#[tauri::command]
+#[specta::specta]
+pub async fn get_org_document_display_title_by_id(document_id: String) -> Result<String, String> {
+    // Get a lock on the monitor
+    let monitor_lock = FILE_MONITOR.lock()
+        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    
+    if let Some(monitor) = monitor_lock.as_ref() {
+        // Access the repository from the monitor
+        let repository = monitor.get_repository();
+        let repository_lock = repository.lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        
+        // Get title by ID
+        if let Some(title) = repository_lock.get_title_by_id(&document_id) {
+            Ok(title)
+        } else {
+            Err("Document not found".to_string())
+        }
+    } else {
+        Err("Document repository not available".to_string())
+    }
+}
+
+/// Get document file path by ID
+#[tauri::command]
+#[specta::specta]
+pub async fn get_org_document_path_by_id(document_id: String) -> Result<String, String> {
+    // Get a lock on the monitor
+    let monitor_lock = FILE_MONITOR.lock()
+        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    
+    if let Some(monitor) = monitor_lock.as_ref() {
+        // Access the repository from the monitor
+        let repository = monitor.get_repository();
+        let repository_lock = repository.lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        
+        // Get path by ID
+        if let Some(path) = repository_lock.get_path_by_id(&document_id) {
+            Ok(path)
+        } else {
+            Err("Document not found".to_string())
+        }
+    } else {
+        Err("Document repository not available".to_string())
+    }
+}

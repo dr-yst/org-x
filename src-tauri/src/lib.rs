@@ -18,6 +18,9 @@ fn generate_ts_bindings() {
             api::start_file_monitoring,
             api::stop_file_monitoring,
             api::get_all_documents,
+            api::get_org_document_by_id,
+            api::get_org_document_display_title_by_id,
+            api::get_org_document_path_by_id,
         ]);
     
     builder
@@ -50,6 +53,9 @@ pub fn run() {
             api::start_file_monitoring,
             api::stop_file_monitoring,
             api::get_all_documents,
+            api::get_org_document_by_id,
+            api::get_org_document_display_title_by_id,
+            api::get_org_document_path_by_id,
         ]);
     
     tauri::Builder::default()

@@ -109,6 +109,27 @@ impl OrgDocumentRepository {
         }
         None
     }
+
+    /// Get display title by document ID
+    /// Returns the document title if available, otherwise falls back to filename or "Untitled"
+    pub fn get_title_by_id(&self, id: &str) -> Option<String> {
+        self.get(id).map(|doc| {
+            if !doc.title.is_empty() {
+                doc.title.clone()
+            } else {
+                std::path::Path::new(&doc.file_path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("Untitled")
+                    .to_string()
+            }
+        })
+    }
+
+    /// Get file path by document ID
+    pub fn get_path_by_id(&self, id: &str) -> Option<String> {
+        self.get(id).map(|doc| doc.file_path.clone())
+    }
 }
 
 #[cfg(test)]
@@ -257,5 +278,84 @@ mod tests {
 
         // Test finding non-existent headline
         assert!(repo.get_document_for_headline("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_document_lookup_helper_methods() {
+        let mut repo = OrgDocumentRepository::new();
+
+        // Create test documents with different scenarios
+        let doc1 = OrgDocument {
+            id: "doc1".to_string(),
+            title: "Test Document 1".to_string(),
+            content: "Content 1".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/path/to/test1.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag1".to_string(),
+            todo_config: None,
+        };
+
+        // Document with empty title (should fall back to filename)
+        let doc2 = OrgDocument {
+            id: "doc2".to_string(),
+            title: "".to_string(),
+            content: "Content 2".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/path/to/test2.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag2".to_string(),
+            todo_config: None,
+        };
+
+        // Document with invalid path that has no filename (should fall back to "Untitled")
+        let doc3 = OrgDocument {
+            id: "doc3".to_string(),
+            title: "".to_string(),
+            content: "Content 3".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag3".to_string(),
+            todo_config: None,
+        };
+
+        repo.upsert(doc1);
+        repo.upsert(doc2);
+        repo.upsert(doc3);
+
+        // Test get_title_by_id with document that has title
+        let title1 = repo.get_title_by_id("doc1").unwrap();
+        assert_eq!(title1, "Test Document 1");
+
+        // Test get_title_by_id with document that has empty title (should use filename)
+        let title2 = repo.get_title_by_id("doc2").unwrap();
+        assert_eq!(title2, "test2.org");
+
+        // Test get_title_by_id with document that has empty path (should use "Untitled")
+        let title3 = repo.get_title_by_id("doc3").unwrap();
+        assert_eq!(title3, "Untitled");
+
+        // Test get_title_by_id with non-existent document
+        assert!(repo.get_title_by_id("nonexistent").is_none());
+
+        // Test get_path_by_id
+        let path1 = repo.get_path_by_id("doc1").unwrap();
+        assert_eq!(path1, "/path/to/test1.org");
+
+        let path2 = repo.get_path_by_id("doc2").unwrap();
+        assert_eq!(path2, "/path/to/test2.org");
+
+        // Test get_path_by_id with non-existent document
+        assert!(repo.get_path_by_id("nonexistent").is_none());
     }
 }

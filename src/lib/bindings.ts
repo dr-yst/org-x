@@ -66,6 +66,56 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Get document by ID
+   */
+  async getOrgDocumentById(
+    documentId: string,
+  ): Promise<Result<OrgDocument | null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_by_id", { documentId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get document display title by ID
+   */
+  async getOrgDocumentDisplayTitleById(
+    documentId: string,
+  ): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_display_title_by_id", {
+          documentId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get document file path by ID
+   */
+  async getOrgDocumentPathById(
+    documentId: string,
+  ): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_path_by_id", { documentId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
