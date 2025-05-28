@@ -19,6 +19,10 @@ The project is focused on implementing the MVP centered around the task list vie
 - ✅ Visual document context with color-coded badges
 - ✅ Improved loading state management with retry logic
 - ✅ Clean data architecture eliminating redundant interfaces
+- ✅ **Refactored document lookup functions to Rust backend (Issue #15)**
+- ✅ Eliminated code duplication in ListView and HeadlinesList components
+- ✅ Implemented async Tauri commands with frontend caching for document lookups
+- ✅ Enhanced type safety with Tauri-Specta integration for document operations
 
 ## In Progress
 
@@ -82,6 +86,9 @@ We've broken down the task list view implementation into smaller, focused issues
 - **Clean data architecture** eliminating HeadlineWithDocument interface in favor of existing document_id references
 - **Visual document distinction** using hash-based color coding for document badges
 - **Robust loading state management** with exponential backoff retry logic for async operations
+- **Centralized document operations** moved duplicate document lookup functions from frontend to Rust backend via Tauri commands
+- **Frontend caching strategy** implemented async document lookup with local caching to optimize performance
+- **Type-safe IPC** leveraged Tauri-Specta for seamless type generation between Rust backend and TypeScript frontend
 
 ## Challenges
 
@@ -112,5 +119,12 @@ We've broken down the task list view implementation into smaller, focused issues
   - Successfully resolved Tokio runtime issues and loading state bugs
   - Refactored data architecture for cleaner, more maintainable code
   - Added comprehensive visual document context with color-coded badges
+- ✅ **Completed Issue #15** for document lookup refactoring
+  - Extended OrgDocumentRepository with helper methods for title and path lookups
+  - Added three new Tauri commands for document operations with proper error handling
+  - Removed duplicated functions from ListView.svelte and HeadlinesList.svelte components
+  - Implemented frontend caching with async/await patterns for optimal performance
+  - Updated component architecture to eliminate documentMap prop dependency
+  - Enhanced maintainability with single source of truth for document lookup logic
 - Documented completed items and remaining tasks in issue comments
 - Added detailed technical approach and acceptance criteria to each sub-issue

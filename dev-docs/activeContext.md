@@ -45,6 +45,13 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Added visual document context with color-coded badges in HeadlinesList
   - ✅ Fixed loading state management and async command handling
   - ✅ Updated test infrastructure for new data patterns
+- ✅ **COMPLETED Issue #15: Refactored document lookup functions to Rust backend**
+  - ✅ Extended OrgDocumentRepository with get_title_by_id and get_path_by_id helper methods
+  - ✅ Added three new Tauri commands for document operations with proper error handling
+  - ✅ Removed duplicated functions from ListView.svelte and HeadlinesList.svelte components
+  - ✅ Implemented frontend caching with async/await patterns for optimal performance
+  - ✅ Updated component architecture to eliminate documentMap prop dependency
+  - ✅ Enhanced type safety with Tauri-Specta integration for document operations
 
 ### Recent Decisions
 - Adopted shadcn-svelte as UI component library
@@ -74,6 +81,9 @@ The project is focused on developing the MVP centered around the task list view 
 - **Document context display** requires consistent visual patterns and color coding
 - **Async command handling** in Tauri requires proper error handling and retry mechanisms
 - **Test infrastructure** must accommodate mocked Tauri commands and jest-dom matchers
+- **Centralized document operations** ensure single source of truth and eliminate code duplication
+- **Frontend caching strategy** balances performance with fresh data while maintaining UI responsiveness
+- **Type-safe IPC** leverages Tauri-Specta for seamless communication between Rust backend and TypeScript frontend
 
 ## Next Steps
 
@@ -112,6 +122,12 @@ The project is focused on developing the MVP centered around the task list view 
   - Added visual document context with color-coded badges
   - Refactored data architecture to eliminate redundant interfaces
   - Fixed loading state management and async handling
+- ✅ **Issue #15: Refactor document lookup functions to Rust backend using Tauri-Specta**
+  - Extended OrgDocumentRepository with helper methods for efficient document operations
+  - Added three new Tauri commands with comprehensive error handling and type safety
+  - Eliminated code duplication across ListView and HeadlinesList components
+  - Implemented frontend caching strategy for optimal performance with async operations
+  - Enhanced maintainability with centralized document lookup logic in Rust backend
 
 ### Active Issues
 The basic task list view component implementation has been broken down into the following issues:
