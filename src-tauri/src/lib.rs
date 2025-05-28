@@ -45,11 +45,25 @@ pub fn run() {
     // Create a new Builder for the Tauri commands
     use tauri_specta::{Builder, collect_commands};
     
+    #[cfg(debug_assertions)]
     let builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             api::get_sample_org,
             api::parse_org_content,
             api::run_datetime_test,
+            api::start_file_monitoring,
+            api::stop_file_monitoring,
+            api::get_all_documents,
+            api::get_org_document_by_id,
+            api::get_org_document_display_title_by_id,
+            api::get_org_document_path_by_id,
+        ]);
+    
+    #[cfg(not(debug_assertions))]
+    let builder = Builder::<tauri::Wry>::new()
+        .commands(collect_commands![
+            api::get_sample_org,
+            api::parse_org_content,
             api::start_file_monitoring,
             api::stop_file_monitoring,
             api::get_all_documents,
