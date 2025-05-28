@@ -9,6 +9,20 @@ import type {
   OrgDatetime,
 } from "$lib/bindings";
 
+// Mock the commands from bindings
+vi.mock("$lib/bindings", () => ({
+  commands: {
+    getOrgDocumentDisplayTitleById: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: "Test Document"
+    }),
+    getOrgDocumentPathById: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: "/test/path/test.org"
+    }),
+  },
+}));
+
 
 
 // Helper to create test OrgDatetime
@@ -84,24 +98,8 @@ function createHeadline(
 
 describe("HeadlinesList Component", () => {
   let testHeadlines: OrgHeadline[];
-  let testDocumentMap: Map<string, any>;
 
   beforeEach(() => {
-    // Create test document map
-    testDocumentMap = new Map([
-      ["test-doc", {
-        id: "test-doc",
-        title: "Test Document",
-        file_path: "/test/path/test.org",
-        content: "",
-        headlines: [],
-        filetags: [],
-        properties: {},
-        category: "",
-        etag: "test-etag",
-        todo_config: null
-      }]
-    ]);
     // Create test data - mixing deadlines, priorities, tags and todo states
     const today = new Date();
     const yesterday = new Date(today);
@@ -173,7 +171,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("renders correctly with headlines", () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Should show all non-DONE headlines by default
     expect(screen.getByText("Overdue task")).toBeInTheDocument();
@@ -189,7 +187,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("shows loading state correctly", () => {
-    render(HeadlinesList, { headlines: [], documentMap: testDocumentMap, loading: true });
+    render(HeadlinesList, { headlines: [], loading: true });
 
     // Should show loading spinner
     const spinner = document.querySelector(".animate-spin");
@@ -197,14 +195,14 @@ describe("HeadlinesList Component", () => {
   });
 
   it("shows empty state correctly", () => {
-    render(HeadlinesList, { headlines: [], documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: [] });
 
     // Should show empty message
     expect(screen.getByText("No headlines found.")).toBeInTheDocument();
   });
 
   it("filters by today correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Click "Today" filter button
     await fireEvent.click(screen.getByText("Today"));
@@ -216,7 +214,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("filters by overdue correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Click "Overdue" filter button
     await fireEvent.click(screen.getByText("Overdue"));
@@ -228,7 +226,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("filters by this week correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Click "This Week" filter button
     await fireEvent.click(screen.getByText("This Week"));
@@ -240,7 +238,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("displays tags correctly", () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Check tags are displayed - use getAllByText for tags that appear multiple times
     expect(screen.getAllByText("work")).toHaveLength(2); // appears in 2 headlines
@@ -250,7 +248,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("displays priority indicators correctly", () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Check priority indicators
     expect(screen.getByText("[A]")).toBeInTheDocument();
@@ -259,7 +257,7 @@ describe("HeadlinesList Component", () => {
   });
 
   it("displays deadline information correctly", () => {
-    render(HeadlinesList, { headlines: testHeadlines, documentMap: testDocumentMap });
+    render(HeadlinesList, { headlines: testHeadlines });
 
     // Check deadline info (exact format may vary so using partial text)
     expect(screen.getByText(/DEADLINE: Today/i)).toBeInTheDocument();

@@ -12,6 +12,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Badge, badgeVariants } from "$lib/components/ui/badge";
     import { cn } from "$lib/utils";
+    import { commands } from "$lib/bindings";
 
     // Define custom badge classes for TODO status
     const todoBadgeClasses = {
@@ -28,12 +29,10 @@
     // Props definition using Svelte 5 runes
     const {
         headlines = [],
-        documentMap = new Map(),
         loading = false,
         focusedIndex = -1,
     } = $props<{
         headlines: OrgHeadline[];
-        documentMap?: Map<string, OrgDocument>;
         loading?: boolean;
         focusedIndex?: number;
     }>();
@@ -46,20 +45,53 @@
         update: OrgHeadline[];
     }>();
 
-    // Helper functions for document lookup
-    function getDocumentForHeadline(headline: OrgHeadline): OrgDocument | null {
-        return documentMap.get(headline.document_id) || null;
+    // Frontend cache for document information
+    let documentTitleCache = $state<Record<string, string>>({});
+    let documentPathCache = $state<Record<string, string>>({});
+
+    // Async helper functions using Tauri commands
+    async function fetchDocumentTitle(documentId: string): Promise<string> {
+        if (documentTitleCache[documentId]) {
+            return documentTitleCache[documentId];
+        }
+        
+        try {
+            const result = await commands.getOrgDocumentDisplayTitleById(documentId);
+            if (result.status === "ok") {
+                documentTitleCache[documentId] = result.data;
+                return result.data;
+            } else {
+                console.error("Error fetching document title:", result.error);
+                documentTitleCache[documentId] = "Unknown Document";
+                return "Unknown Document";
+            }
+        } catch (e) {
+            console.error("Exception fetching document title:", e);
+            documentTitleCache[documentId] = "Unknown Document";
+            return "Unknown Document";
+        }
     }
 
-    function getDocumentTitle(headline: OrgHeadline): string {
-        const doc = getDocumentForHeadline(headline);
-        if (!doc) return "Unknown Document";
-        return doc.title || doc.file_path.split("/").pop() || "Untitled";
-    }
-
-    function getDocumentPath(headline: OrgHeadline): string {
-        const doc = getDocumentForHeadline(headline);
-        return doc?.file_path || "";
+    async function fetchDocumentPath(documentId: string): Promise<string> {
+        if (documentPathCache[documentId]) {
+            return documentPathCache[documentId];
+        }
+        
+        try {
+            const result = await commands.getOrgDocumentPathById(documentId);
+            if (result.status === "ok") {
+                documentPathCache[documentId] = result.data;
+                return result.data;
+            } else {
+                console.error("Error fetching document path:", result.error);
+                documentPathCache[documentId] = "";
+                return "";
+            }
+        } catch (e) {
+            console.error("Exception fetching document path:", e);
+            documentPathCache[documentId] = "";
+            return "";
+        }
     }
 
     // State for filtering
@@ -331,8 +363,8 @@
     }
 
     // Get document color class for visual distinction
-    function getDocumentColorClass(headline: OrgHeadline): string {
-        const documentPath = getDocumentPath(headline);
+    async function getDocumentColorClass(headline: OrgHeadline): Promise<string> {
+        const documentPath = await fetchDocumentPath(headline.document_id);
         // Extract filename from path for consistent color assignment
         const filename = documentPath.split("/").pop() || "";
 
@@ -493,12 +525,21 @@
                         </TableCell>
 
                         <TableCell>
-                            <Badge
-                                variant="outline"
-                                class={`text-xs ${getDocumentColorClass(headline)}`}
-                            >
-                                {getDocumentTitle(headline)}
-                            </Badge>
+                            {#await Promise.all([fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)]) then [title, colorClass]}
+                                <Badge
+                                    variant="outline"
+                                    class={`text-xs ${colorClass}`}
+                                >
+                                    {title}
+                                </Badge>
+                            {:catch}
+                                <Badge
+                                    variant="outline"
+                                    class="text-xs text-gray-600 border-gray-200 bg-gray-50"
+                                >
+                                    Unknown Document
+                                </Badge>
+                            {/await}
                         </TableCell>
 
                         <TableCell>

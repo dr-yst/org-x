@@ -53,17 +53,7 @@
     let showDetailView = $state(false);
     let showQuickLook = $state(false);
 
-    // Helper function to get document for a headline
-    function getDocumentForHeadline(headline: OrgHeadline): OrgDocument | null {
-        return documentMap.get(headline.document_id) || null;
-    }
 
-    // Helper function to get document title for a headline
-    function getDocumentTitle(headline: OrgHeadline): string {
-        const doc = getDocumentForHeadline(headline);
-        if (!doc) return 'Unknown Document';
-        return doc.title || doc.file_path.split('/').pop() || 'Untitled';
-    }
 
     onMount(() => {
         console.log("🚀 ListView onMount called");
@@ -370,7 +360,6 @@
                 {#if !showDetailView}
                     <HeadlinesList
                         headlines={allHeadlines}
-                        documentMap={documentMap}
                         {loading}
                         {focusedIndex}
                         on:rowClick={(e) => {
