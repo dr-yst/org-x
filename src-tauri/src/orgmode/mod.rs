@@ -18,7 +18,7 @@ pub use datetime::OrgDatetime;
 pub use document::OrgDocument;
 pub use headline::OrgHeadline;
 pub use metadata::{CategoryInfo, GlobalMetadata, MetadataManager, TagInfo};
-pub use monitor::{FileMonitor, MonitoredPath, PathType};
+pub use monitor::FileMonitor;
 pub use parser::{parse_org_document, parse_sample_org, OrgError};
 pub use planning::OrgPlanning;
 pub use repository::OrgDocumentRepository;

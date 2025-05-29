@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod orgmode;
 pub mod api;
+pub mod settings;
 #[cfg(debug_assertions)]
 pub mod test_datetime;
 
@@ -21,6 +22,15 @@ fn generate_ts_bindings() {
             api::get_org_document_by_id,
             api::get_org_document_display_title_by_id,
             api::get_org_document_path_by_id,
+            api::load_user_settings,
+            api::save_user_settings,
+            api::add_monitored_path,
+            api::remove_monitored_path,
+            api::update_monitored_path,
+            api::set_path_enabled,
+            api::set_parse_override,
+            api::remove_parse_override,
+            api::clear_user_settings,
         ]);
     
     builder
@@ -70,11 +80,21 @@ pub fn run() {
             api::get_org_document_by_id,
             api::get_org_document_display_title_by_id,
             api::get_org_document_path_by_id,
+            api::load_user_settings,
+            api::save_user_settings,
+            api::add_monitored_path,
+            api::remove_monitored_path,
+            api::update_monitored_path,
+            api::set_path_enabled,
+            api::set_parse_override,
+            api::remove_parse_override,
+            api::clear_user_settings,
         ]);
     
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .invoke_handler(builder.invoke_handler())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

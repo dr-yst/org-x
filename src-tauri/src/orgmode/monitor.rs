@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use serde::{Deserialize, Serialize};
+use notify::{Event, EventKind, RecommendedWatcher, Watcher};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
 
 use crate::orgmode::repository::OrgDocumentRepository;
+use crate::settings::MonitoredPath;
 
 #[cfg(test)]
 mod tests {
@@ -19,7 +19,9 @@ mod tests {
     use std::io::Write;
     use std::thread;
     use std::time::Duration;
-    use crate::orgmode::{MonitoredPath, PathType, FileMonitor, OrgDocumentRepository};
+    use crate::orgmode::{FileMonitor, OrgDocumentRepository};
+    use crate::settings::{MonitoredPath, PathType};
+    use notify::RecursiveMode;
 
     // Helper function to create a temporary test directory
     fn setup_test_directory() -> PathBuf {
@@ -50,8 +52,8 @@ mod tests {
 
     #[test]
     fn test_monitored_path_creation() {
-        let file_path = PathBuf::from("/test/path/file.org");
-        let dir_path = PathBuf::from("/test/path/dir");
+        let file_path = "/test/path/file.org".to_string();
+        let dir_path = "/test/path/dir".to_string();
 
         // Test file creation
         let file_monitor = MonitoredPath::file(file_path.clone());
@@ -97,7 +99,7 @@ mod tests {
         let mut monitor = FileMonitor::new(repository);
 
         // Add a path
-        let path = MonitoredPath::file(PathBuf::from("test.org"));
+        let path = MonitoredPath::file("test.org".to_string());
         assert!(monitor.add_path(path.clone()).is_ok());
 
         // Try to add the same path again (should be ok, not duplicate)
@@ -119,7 +121,7 @@ mod tests {
         let mut monitor = FileMonitor::new(repository.clone());
         
         // Add the test file to the monitor
-        let path = MonitoredPath::file(test_file.clone());
+        let path = MonitoredPath::file(test_file.to_string_lossy().to_string());
         assert!(monitor.add_path(path).is_ok());
         
         // Start monitoring
@@ -141,57 +143,6 @@ mod tests {
         
         // Clean up the test directory
         cleanup_test_directory(&test_dir);
-    }
-}
-
-/// Type of path being monitored
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum PathType {
-    File,
-    Directory,
-}
-
-/// Structure to represent a monitored path
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MonitoredPath {
-    /// The path to monitor (file or directory)
-    pub path: PathBuf,
-    /// Type of the path (file or directory)
-    pub path_type: PathType,
-    /// Whether to monitor recursively (for directories)
-    pub recursive: bool,
-    /// Whether this path is currently enabled
-    pub enabled: bool,
-}
-
-impl MonitoredPath {
-    /// Create a new MonitoredPath
-    pub fn new(path: PathBuf, path_type: PathType, recursive: bool) -> Self {
-        Self {
-            path,
-            path_type,
-            recursive,
-            enabled: true,
-        }
-    }
-
-    /// Create a MonitoredPath from a file path
-    pub fn file(path: PathBuf) -> Self {
-        Self::new(path, PathType::File, false)
-    }
-
-    /// Create a MonitoredPath from a directory path
-    pub fn directory(path: PathBuf, recursive: bool) -> Self {
-        Self::new(path, PathType::Directory, recursive)
-    }
-
-    /// Get the appropriate RecursiveMode based on the path configuration
-    pub fn recursive_mode(&self) -> RecursiveMode {
-        match (self.path_type, self.recursive) {
-            (PathType::Directory, true) => RecursiveMode::Recursive,
-            _ => RecursiveMode::NonRecursive,
-        }
     }
 }
 
@@ -230,8 +181,9 @@ impl FileMonitor {
         // If the watcher is already running, start watching this path immediately
         if let Some(watcher) = self.watcher.as_mut() {
             if path.enabled {
+                let path_buf = PathBuf::from(&path.path);
                 watcher
-                    .watch(&path.path, path.recursive_mode())
+                    .watch(&path_buf, path.recursive_mode())
                     .map_err(|e| format!("Failed to watch path: {}", e))?;
             }
         }
@@ -266,9 +218,10 @@ impl FileMonitor {
         for path in &self.paths {
             if path.enabled {
                 if let Some(watcher) = self.watcher.as_mut() {
+                    let path_buf = PathBuf::from(&path.path);
                     watcher
-                        .watch(&path.path, path.recursive_mode())
-                        .map_err(|e| format!("Failed to watch path {}: {}", path.path.display(), e))?;
+                        .watch(&path_buf, path.recursive_mode())
+                        .map_err(|e| format!("Failed to watch path {}: {}", path.path, e))?;
                 }
             }
         }
@@ -330,11 +283,11 @@ impl FileMonitor {
         // Add multiple test files for testing multi-document functionality
         // These will be replaced with user-configured paths in the future
         let test_paths = vec![
-            MonitoredPath::file(PathBuf::from("../test_files/example.org")),
-            MonitoredPath::file(PathBuf::from("../test_files/tasks.org")),
-            MonitoredPath::file(PathBuf::from("../test_files/projects.org")),
-            MonitoredPath::file(PathBuf::from("../test_files/notes.org")),
-            MonitoredPath::directory(PathBuf::from("../test_files"), true),
+            MonitoredPath::file("../test_files/example.org".to_string()),
+            MonitoredPath::file("../test_files/tasks.org".to_string()),
+            MonitoredPath::file("../test_files/projects.org".to_string()),
+            MonitoredPath::file("../test_files/notes.org".to_string()),
+            MonitoredPath::directory("../test_files".to_string(), true),
         ];
         
         for path in test_paths {

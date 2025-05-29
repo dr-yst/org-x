@@ -31,7 +31,7 @@ export const commands = {
     return await TAURI_INVOKE("run_datetime_test");
   },
   /**
-   * Start monitoring files with hardcoded paths for testing
+   * Start monitoring files based on user settings
    */
   async startFileMonitoring(): Promise<Result<string, string>> {
     try {
@@ -116,6 +116,143 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Load user settings
+   */
+  async loadUserSettings(): Promise<Result<UserSettings, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("load_user_settings") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Save user settings
+   */
+  async saveUserSettings(
+    settings: UserSettings,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("save_user_settings", { settings }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add a monitored path to settings
+   */
+  async addMonitoredPath(
+    path: MonitoredPath,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_monitored_path", { path }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove a monitored path from settings
+   */
+  async removeMonitoredPath(
+    path: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_monitored_path", { path }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update a monitored path in settings
+   */
+  async updateMonitoredPath(
+    oldPath: string,
+    newPath: MonitoredPath,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_monitored_path", { oldPath, newPath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set whether a monitored path is enabled
+   */
+  async setPathEnabled(
+    path: string,
+    enabled: boolean,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_path_enabled", { path, enabled }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set parse override for a file
+   */
+  async setParseOverride(
+    filePath: string,
+    parse: boolean,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_parse_override", { filePath, parse }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove parse override for a file
+   */
+  async removeParseOverride(
+    filePath: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_parse_override", { filePath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Clear all settings
+   */
+  async clearUserSettings(): Promise<Result<null, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("clear_user_settings") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -124,6 +261,27 @@ export const commands = {
 
 /** user-defined types **/
 
+/**
+ * Structure to represent a monitored path
+ */
+export type MonitoredPath = {
+  /**
+   * The path to monitor (file or directory)
+   */
+  path: string;
+  /**
+   * Type of the path (file or directory)
+   */
+  path_type: PathType;
+  /**
+   * Whether to monitor recursively (for directories)
+   */
+  recursive: boolean;
+  /**
+   * Whether this path is currently enabled
+   */
+  enabled: boolean;
+};
 /**
  * OrgDatetime represents a date/time in an org-mode file
  * This is similar to Orgize's Datetime but designed to be owned and serializable
@@ -214,6 +372,23 @@ export type OrgTitle = {
   properties: Partial<{ [key in string]: string }>;
   planning: OrgPlanning | null;
 };
+/**
+ * Structure to represent parse override for specific files
+ */
+export type ParseOverride = {
+  /**
+   * The file path
+   */
+  path: string;
+  /**
+   * Whether to parse this file
+   */
+  parse: boolean;
+};
+/**
+ * Type of path being monitored
+ */
+export type PathType = "File" | "Directory";
 export type StateType = "Active" | "Closed";
 export type TodoConfiguration = {
   sequences: TodoSequence[];
@@ -225,6 +400,19 @@ export type TodoStatus = {
   state_type: StateType;
   order: number;
   color: string | null;
+};
+/**
+ * Main user settings structure
+ */
+export type UserSettings = {
+  /**
+   * List of monitored paths
+   */
+  monitored_paths: MonitoredPath[];
+  /**
+   * Parse overrides for specific files
+   */
+  parse_overrides: ParseOverride[];
 };
 
 /** tauri-specta globals **/
