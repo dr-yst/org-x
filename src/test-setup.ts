@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 // Mock Tauri API for tests
-globalThis.__TAURI__ = {
+(globalThis as any).__TAURI__ = {
   invoke: vi.fn(),
   event: {
     listen: vi.fn(),
