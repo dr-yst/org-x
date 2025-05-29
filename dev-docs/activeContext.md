@@ -19,10 +19,10 @@ The project is focused on developing the MVP centered around the task list view 
   - Table Interaction and Keyboard Navigation (Issue #6)
   - Filter Controls (Issue #7)
   - Backend Connection and Data Integration (Issue #8)
-- 🔄 Implement File Monitoring System (Issue #9)
+- ✅ **COMPLETED Issue #9: Implement File Monitoring System**
   - ✅ Core File Monitoring Backend with Hardcoded Paths (Issue #10)
   - ✅ User Interface for Monitoring Configuration (Issue #11)
-  - Integration with User Settings (Issue #12)
+  - ✅ **COMPLETED Issue #12: Implement Tauri Commands for File Monitoring Management**
 - 🔄 Server-side filtering in Rust
 - 🔄 Integration with shadcn-svelte components
 - 🔄 Svelte 5 runes implementation
@@ -79,6 +79,8 @@ The project is focused on developing the MVP centered around the task list view 
 - **Created flexible monitoring path system** supporting both files and directories with recursive options
 - **Added per-file parse control** allowing granular control over which files to process
 - **Integrated settings with file monitoring** for dynamic configuration without application restart
+- **Completed monitoring management API** with full CRUD operations and status checking functionality
+- **Added path coverage validation** allowing frontend to verify which files are actively monitored
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -100,6 +102,8 @@ The project is focused on developing the MVP centered around the task list view 
 - **Settings persistence** uses Tauri Store plugin for atomic updates and cross-platform compatibility
 - **Path validation system** ensures robust error handling and prevents invalid configurations
 - **Directory scanning implementation** supports both recursive and non-recursive monitoring modes
+- **Complete monitoring API** provides all necessary commands for frontend monitoring configuration management
+- **Path coverage checking** enables real-time verification of monitoring status for any file path
 
 ## Next Steps
 
@@ -110,7 +114,7 @@ The project is focused on developing the MVP centered around the task list view 
 4. Add Table Interaction and Keyboard Navigation (Issue #6)
 5. Implement Filter Controls using shadcn-svelte Components (Issue #7)
 6. Complete Backend Connection and Data Integration (Issue #8)
-7. Complete Integration with User Settings (Issue #12) - connect monitoring configuration UI
+7. Complete Backend Connection and Data Integration (Issue #8) - connect task list with actual data
 
 ### Implementation Strategy
 1. Implement the remaining shadcn-svelte components (Badge, Collapsible, Select/MultiSelect)
@@ -145,14 +149,22 @@ The project is focused on developing the MVP centered around the task list view 
   - Eliminated code duplication across ListView and HeadlinesList components
   - Implemented frontend caching strategy for optimal performance with async operations
   - Enhanced maintainability with centralized document lookup logic in Rust backend
-- ✅ **Issue #11: Integrate File Monitoring with User Settings System**
-  - Implemented complete user settings data model with monitored paths and parse overrides
-  - Added Tauri Store plugin integration for persistent, cross-platform settings storage
-  - Created comprehensive path validation and CRUD operations for monitoring configuration
-  - Extended file monitoring system to support both file and directory monitoring with recursion
-  - Added per-file parse override system for granular control over org file processing
-  - Generated complete TypeScript bindings for frontend settings management
-  - Integrated settings with existing file monitoring with graceful fallback to test paths
+- ✅ **COMPLETED Issue #11: Integrate File Monitoring with User Settings System**
+  - ✅ Implemented complete user settings data model with monitored paths and parse overrides
+  - ✅ Added Tauri Store plugin integration for persistent, cross-platform settings storage
+  - ✅ Created comprehensive path validation and CRUD operations for monitoring configuration
+  - ✅ Extended file monitoring system to support both file and directory monitoring with recursion
+  - ✅ Added per-file parse override system for granular control over org file processing
+  - ✅ Generated complete TypeScript bindings for frontend settings management
+  - ✅ Integrated settings with existing file monitoring with graceful fallback to test paths
+- ✅ **COMPLETED Issue #12: Implement Tauri Commands for File Monitoring Management**
+  - ✅ Added missing `check_path_monitoring_status` Tauri command to complete monitoring management API
+  - ✅ Implemented backend command wrapping existing `UserSettings::is_file_covered` method
+  - ✅ Added comprehensive error handling and validation for the new command
+  - ✅ Generated TypeScript bindings for the new command using tauri-specta
+  - ✅ Fixed settings module test issues and verified all backend functionality
+  - ✅ Created integration test component for manual verification of monitoring commands
+  - ✅ Completed full CRUD API for monitoring path management with status checking
 
 ### Active Issues
 The basic task list view component implementation has been broken down into the following issues:
