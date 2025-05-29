@@ -21,7 +21,7 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 - 🔄 Implement File Monitoring System (Issue #9)
   - ✅ Core File Monitoring Backend with Hardcoded Paths (Issue #10)
-  - User Interface for Monitoring Configuration (Issue #11)
+  - ✅ User Interface for Monitoring Configuration (Issue #11)
   - Integration with User Settings (Issue #12)
 - 🔄 Server-side filtering in Rust
 - 🔄 Integration with shadcn-svelte components
@@ -52,6 +52,15 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Implemented frontend caching with async/await patterns for optimal performance
   - ✅ Updated component architecture to eliminate documentMap prop dependency
   - ✅ Enhanced type safety with Tauri-Specta integration for document operations
+- ✅ **COMPLETED Issue #11: Integrate File Monitoring with User Settings System**
+  - ✅ Extended user settings model with monitored_paths and parse_overrides fields
+  - ✅ Implemented serialization/deserialization using Tauri Store plugin for cross-platform persistence
+  - ✅ Created comprehensive CRUD methods for monitored paths and parse overrides
+  - ✅ Added path validation logic with existence checks and type validation
+  - ✅ Integrated with existing file monitoring system with directory scanning capabilities
+  - ✅ Created complete set of Tauri commands for frontend settings management
+  - ✅ Generated TypeScript bindings for all settings data structures and operations
+  - ✅ Implemented graceful fallback to hardcoded paths when no settings configured
 
 ### Recent Decisions
 - Adopted shadcn-svelte as UI component library
@@ -66,6 +75,10 @@ The project is focused on developing the MVP centered around the task list view 
 - **Eliminated HeadlineWithDocument interface** in favor of using existing `document_id` field in `OrgHeadline`
 - **Implemented visual document distinction** using color-coded badges based on filename hash
 - **Enhanced loading state management** with retry logic and exponential backoff for robustness
+- **Implemented comprehensive user settings system** using Tauri Store plugin for persistent configuration
+- **Created flexible monitoring path system** supporting both files and directories with recursive options
+- **Added per-file parse control** allowing granular control over which files to process
+- **Integrated settings with file monitoring** for dynamic configuration without application restart
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -84,6 +97,9 @@ The project is focused on developing the MVP centered around the task list view 
 - **Centralized document operations** ensure single source of truth and eliminate code duplication
 - **Frontend caching strategy** balances performance with fresh data while maintaining UI responsiveness
 - **Type-safe IPC** leverages Tauri-Specta for seamless communication between Rust backend and TypeScript frontend
+- **Settings persistence** uses Tauri Store plugin for atomic updates and cross-platform compatibility
+- **Path validation system** ensures robust error handling and prevents invalid configurations
+- **Directory scanning implementation** supports both recursive and non-recursive monitoring modes
 
 ## Next Steps
 
@@ -94,6 +110,7 @@ The project is focused on developing the MVP centered around the task list view 
 4. Add Table Interaction and Keyboard Navigation (Issue #6)
 5. Implement Filter Controls using shadcn-svelte Components (Issue #7)
 6. Complete Backend Connection and Data Integration (Issue #8)
+7. Complete Integration with User Settings (Issue #12) - connect monitoring configuration UI
 
 ### Implementation Strategy
 1. Implement the remaining shadcn-svelte components (Badge, Collapsible, Select/MultiSelect)
@@ -128,6 +145,14 @@ The project is focused on developing the MVP centered around the task list view 
   - Eliminated code duplication across ListView and HeadlinesList components
   - Implemented frontend caching strategy for optimal performance with async operations
   - Enhanced maintainability with centralized document lookup logic in Rust backend
+- ✅ **Issue #11: Integrate File Monitoring with User Settings System**
+  - Implemented complete user settings data model with monitored paths and parse overrides
+  - Added Tauri Store plugin integration for persistent, cross-platform settings storage
+  - Created comprehensive path validation and CRUD operations for monitoring configuration
+  - Extended file monitoring system to support both file and directory monitoring with recursion
+  - Added per-file parse override system for granular control over org file processing
+  - Generated complete TypeScript bindings for frontend settings management
+  - Integrated settings with existing file monitoring with graceful fallback to test paths
 
 ### Active Issues
 The basic task list view component implementation has been broken down into the following issues:
