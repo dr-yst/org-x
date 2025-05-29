@@ -253,6 +253,22 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Check if a file path is covered by current monitoring configuration
+   */
+  async checkPathMonitoringStatus(
+    filePath: string,
+  ): Promise<Result<boolean, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("check_path_monitoring_status", { filePath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
