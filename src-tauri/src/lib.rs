@@ -31,6 +31,7 @@ fn generate_ts_bindings() {
             api::set_parse_override,
             api::remove_parse_override,
             api::clear_user_settings,
+            api::check_path_monitoring_status,
         ]);
     
     builder
@@ -67,6 +68,16 @@ pub fn run() {
             api::get_org_document_by_id,
             api::get_org_document_display_title_by_id,
             api::get_org_document_path_by_id,
+            api::load_user_settings,
+            api::save_user_settings,
+            api::add_monitored_path,
+            api::remove_monitored_path,
+            api::update_monitored_path,
+            api::set_path_enabled,
+            api::set_parse_override,
+            api::remove_parse_override,
+            api::clear_user_settings,
+            api::check_path_monitoring_status,
         ]);
     
     #[cfg(not(debug_assertions))]
@@ -89,6 +100,7 @@ pub fn run() {
             api::set_parse_override,
             api::remove_parse_override,
             api::clear_user_settings,
+            api::check_path_monitoring_status,
         ]);
     
     tauri::Builder::default()

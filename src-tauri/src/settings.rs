@@ -480,7 +480,11 @@ mod tests {
         fs::create_dir_all(&test_subdir).expect("Failed to create subdirectory");
         
         let test_file = create_test_file(&test_dir, "test.org");
-        let test_subfile = create_test_file(&test_subdir, "sub.org");
+        
+        // Create file in subdirectory
+        let sub_file_path = test_subdir.join("sub.org");
+        let mut sub_file = File::create(&sub_file_path).expect("Failed to create test subfile");
+        sub_file.write_all(b"test content").expect("Failed to write to test subfile");
         
         let mut settings = UserSettings::new();
         
@@ -490,7 +494,7 @@ mod tests {
         
         // Both files should be covered
         assert!(settings.is_file_covered(&test_file.to_string_lossy()));
-        assert!(settings.is_file_covered(&test_subfile.to_string_lossy()));
+        assert!(settings.is_file_covered(&sub_file_path.to_string_lossy()));
         
         cleanup_test_directory(&test_dir);
     }

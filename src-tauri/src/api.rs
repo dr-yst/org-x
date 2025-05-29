@@ -451,3 +451,14 @@ pub async fn clear_user_settings(app_handle: tauri::AppHandle) -> Result<(), Str
         .await
         .map_err(|e| e.to_string())
 }
+
+/// Check if a file path is covered by current monitoring configuration
+#[tauri::command]
+#[specta::specta]
+pub async fn check_path_monitoring_status(app_handle: tauri::AppHandle, file_path: String) -> Result<bool, String> {
+    let settings = SETTINGS_MANAGER.load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    
+    Ok(settings.is_file_covered(&file_path))
+}
