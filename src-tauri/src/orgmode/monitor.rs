@@ -12,14 +12,14 @@ use crate::settings::MonitoredPath;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::FileMonitor;
     use std::path::PathBuf;
     use std::sync::{Arc, Mutex};
     use std::fs::{self, File};
     use std::io::Write;
     use std::thread;
     use std::time::Duration;
-    use crate::orgmode::{FileMonitor, OrgDocumentRepository};
+    use crate::orgmode::OrgDocumentRepository;
     use crate::settings::{MonitoredPath, PathType};
     use notify::RecursiveMode;
 

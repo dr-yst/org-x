@@ -396,7 +396,13 @@ mod tests {
     use std::io::Write;
 
     fn setup_test_directory() -> PathBuf {
-        let temp_dir = std::env::temp_dir().join("org_x_settings_test");
+        use std::time::{SystemTime, UNIX_EPOCH};
+        
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("org_x_settings_test_{}", timestamp));
         if !temp_dir.exists() {
             fs::create_dir_all(&temp_dir).expect("Failed to create test directory");
         }
