@@ -1,9 +1,19 @@
 <script lang="ts">
     import ListView from "$lib/components/ListView.svelte";
+    import MonitoringSidebar from "$lib/components/monitoring/MonitoringSidebar.svelte";
+    import * as Sidebar from "$lib/components/ui/sidebar";
+
+    let sidebarOpen = $state(true);
 </script>
 
-<div class="container mx-auto py-8 px-2">
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <ListView />
-    </div>
-</div>
+<Sidebar.Provider bind:open={sidebarOpen}>
+    <MonitoringSidebar />
+
+    <Sidebar.Inset>
+        <div class="flex-1 overflow-hidden">
+            <div class="h-full bg-white">
+                <ListView />
+            </div>
+        </div>
+    </Sidebar.Inset>
+</Sidebar.Provider>
