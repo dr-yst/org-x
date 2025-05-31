@@ -35,6 +35,14 @@ The project is focused on implementing the MVP centered around the task list vie
 - ✅ Comprehensive CRUD operations with proper error handling and validation
 - ✅ Generated TypeScript bindings for all monitoring management commands
 - ✅ Created integration test component for frontend verification of monitoring functionality
+- ✅ **Completed GUI Components for File Monitoring Management (Issue #13)**
+- ✅ Implemented monitoring sidebar with accordion sections for monitored files and filters
+- ✅ Created MonitoredFilesSection component with tree view for paths and per-file parse control
+- ✅ Added file/directory picker integration using Tauri dialog plugin
+- ✅ Implemented FilterSection with comprehensive task filtering controls
+- ✅ Enhanced main layout to include sidebar with responsive design
+- ✅ Integrated shadcn-svelte components for consistent UI throughout monitoring interface
+- ✅ **Migrated to shadcn-svelte Sidebar Components** - replaced custom sidebar implementation with professional SidebarProvider, SidebarRoot, SidebarContent, and SidebarGroup structure for enhanced responsiveness and collapsible functionality
 
 ## In Progress
 
@@ -70,13 +78,14 @@ We've broken down the task list view implementation into smaller, focused issues
 4. Finalize UI styling with shadcn-svelte and TailwindCSS
 
 ### Medium Term (8 Weeks)
-1. Support for multiple files
-2. Enhanced TODO filtering
-3. External editor integration
+1. Enhanced TODO filtering integration with backend
+2. External editor integration
+3. Advanced filtering features
 - ✅ **Completed file monitoring system (Issue #9)**
    - ✅ Core file monitoring backend (Issue #10)
    - ✅ User interface for monitoring configuration (Issue #11)
    - ✅ Tauri commands for file monitoring management (Issue #12)
+   - ✅ GUI components for file monitoring management (Issue #13)
 
 ### Future Development (Post-MVP)
 1. Multiple view tabs
@@ -106,6 +115,11 @@ We've broken down the task list view implementation into smaller, focused issues
 - **Per-file parse control** enabling granular management of which org files to process regardless of monitoring configuration
 - **Complete monitoring management API** providing full CRUD operations and real-time status checking for monitored paths
 - **Path coverage validation** allowing frontend applications to verify which files are actively monitored by the system
+- **Monitoring sidebar interface** with accordion-based layout supporting both monitoring configuration and task filtering
+- **File/directory picker integration** using Tauri dialog plugin for seamless path selection across platforms
+- **Per-file parse control** allowing granular management of which org files to process through intuitive UI switches
+- **Responsive monitoring UI** with scrollable file sections and always-visible filter controls for optimal user experience
+- **Professional sidebar implementation** using shadcn-svelte Sidebar components with collapsible functionality, responsive behavior, and consistent design patterns
 
 ## Challenges
 
@@ -151,5 +165,13 @@ We've broken down the task list view implementation into smaller, focused issues
   - Created complete set of Tauri commands for frontend settings management integration
   - Generated TypeScript bindings for type-safe settings operations in the frontend
   - Integrated settings system with existing file monitoring with graceful fallback behavior
+- ✅ **Completed Issue #13** for GUI components for file monitoring management
+  - Implemented monitoring sidebar with accordion sections using shadcn-svelte components
+  - Created MonitoredFilesSection with tree view, file/directory picker, and per-file parse controls
+  - Added comprehensive FilterSection with TODO status, date range, tags, and categories filtering
+  - Enhanced main application layout to include responsive sidebar design
+  - Integrated Tauri dialog plugin for cross-platform file/directory selection
+  - Applied Svelte 5 runes patterns throughout the monitoring interface components
+  - **Migrated to shadcn-svelte Sidebar system** - replaced custom sidebar with SidebarProvider, SidebarRoot, SidebarContent, SidebarGroup, and SidebarGroupLabel components for professional layout and responsive behavior
 - Documented completed items and remaining tasks in issue comments
 - Added detailed technical approach and acceptance criteria to each sub-issue

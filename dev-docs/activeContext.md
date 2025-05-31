@@ -23,9 +23,10 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Core File Monitoring Backend with Hardcoded Paths (Issue #10)
   - ✅ User Interface for Monitoring Configuration (Issue #11)
   - ✅ **COMPLETED Issue #12: Implement Tauri Commands for File Monitoring Management**
-- 🔄 Server-side filtering in Rust
-- 🔄 Integration with shadcn-svelte components
-- 🔄 Svelte 5 runes implementation
+  - ✅ **COMPLETED Issue #13: Implement GUI Components for File Monitoring Management**
+  - 🔄 Server-side filtering in Rust
+  - 🔄 Integration with shadcn-svelte components
+  - 🔄 Svelte 5 runes implementation
 
 ### Recent Progress
 - ✅ Set up basic shadcn-svelte Table component for task list display
@@ -81,6 +82,10 @@ The project is focused on developing the MVP centered around the task list view 
 - **Integrated settings with file monitoring** for dynamic configuration without application restart
 - **Completed monitoring management API** with full CRUD operations and status checking functionality
 - **Added path coverage validation** allowing frontend to verify which files are actively monitored
+- **Implemented monitoring GUI interface** with accordion-based sidebar layout for file management and filtering
+- **Enhanced user experience** with file/directory picker integration and responsive design patterns
+- **Migrated to shadcn-svelte Sidebar system** providing professional sidebar layout with collapsible functionality and proper responsive behavior
+- **Improved UI consistency** by adopting shadcn-svelte design patterns throughout the monitoring interface
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -112,15 +117,17 @@ The project is focused on developing the MVP centered around the task list view 
 2. Implement Headline Rendering with Collapsible Functionality (Issue #4)
 3. Implement Task Information Display with shadcn-svelte Components (Issue #5)
 4. Add Table Interaction and Keyboard Navigation (Issue #6)
-5. Implement Filter Controls using shadcn-svelte Components (Issue #7)
+5. Integrate Filter Controls with Backend Data (Issue #7) - connect sidebar filters to task list
 6. Complete Backend Connection and Data Integration (Issue #8)
-7. Complete Backend Connection and Data Integration (Issue #8) - connect task list with actual data
+7. ✅ Enhanced monitoring sidebar with shadcn-svelte Sidebar components
+8. Integrate monitoring sidebar filters with HeadlinesList component for real-time filtering
 
 ### Implementation Strategy
-1. Implement the remaining shadcn-svelte components (Badge, Collapsible, Select/MultiSelect)
+1. ✅ Implement shadcn-svelte Sidebar components for professional layout structure
 2. Enhance headline hierarchy representation with proper indentation and collapsible functionality
-3. Improve the filtering interface with a comprehensive filter panel
+3. ✅ Improve the filtering interface with a comprehensive filter panel using shadcn-svelte components
 4. Polish interaction and visuals with enhanced keyboard navigation and loading states
+5. Connect sidebar filters with HeadlinesList component for real-time filtering
 
 ### Deferred Features (Post-MVP)
 1. Multi-view tab system
@@ -165,9 +172,19 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Fixed settings module test issues and verified all backend functionality
   - ✅ Created integration test component for manual verification of monitoring commands
   - ✅ Completed full CRUD API for monitoring path management with status checking
+- ✅ **COMPLETED Issue #13: Implement GUI Components for File Monitoring Management**
+  - ✅ Created MonitoringSidebar component with accordion sections for monitored files and filters
+  - ✅ Implemented MonitoredFilesSection with file/directory management and per-file parse controls
+  - ✅ Added FilterSection with comprehensive task filtering (TODO status, dates, tags, categories)
+  - ✅ Integrated Tauri dialog plugin for cross-platform file/directory picker functionality
+  - ✅ Enhanced main application layout to include responsive sidebar design
+  - ✅ Applied Svelte 5 runes patterns throughout monitoring interface components
+  - ✅ Used shadcn-svelte components for consistent UI design and accessibility
+  - ✅ **MIGRATED to shadcn-svelte Sidebar components** - replaced custom sidebar with proper SidebarProvider, SidebarRoot, SidebarContent, SidebarGroup structure
+  - ✅ **Enhanced UI consistency** - updated spacing, sizing, and component structure to match shadcn-svelte design patterns
 
 ### Active Issues
-The basic task list view component implementation has been broken down into the following issues:
+The basic task list view component implementation has been broken down into the following issues, with file monitoring GUI now completed:
 
 1. **Issue #3: Implement Task List Table Structure using shadcn-svelte**
    - Core table structure, column configuration, and styling
