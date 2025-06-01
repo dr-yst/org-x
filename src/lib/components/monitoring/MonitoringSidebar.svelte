@@ -42,7 +42,7 @@
 
 <Sidebar.Root side="left" variant="sidebar" collapsible="icon">
     <Sidebar.Header>
-        <div class="flex items-center justify-between gap-2 px-4 py-2">
+        <div class="flex items-center gap-2 px-4 py-2" class:justify-between={sidebar.state === "expanded"} class:justify-center={sidebar.state === "collapsed"}>
             {#if sidebar.state === "expanded"}
                 <div class="flex items-center gap-2">
                     <Settings class="h-4 w-4" />
