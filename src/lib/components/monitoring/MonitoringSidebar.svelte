@@ -8,6 +8,8 @@
     import FilterSection from "./FilterSection.svelte";
     import { Settings, Filter, FolderOpen } from "@lucide/svelte";
 
+    const sidebar = Sidebar.useSidebar();
+
     let settings: UserSettings | null = $state(null);
     let loading = $state(false);
     let error: string | null = $state(null);
@@ -40,12 +42,18 @@
 
 <Sidebar.Root side="left" variant="sidebar" collapsible="icon">
     <Sidebar.Header>
-        <div class="flex items-center gap-2 px-4 py-2">
-            <Settings class="h-4 w-4" />
-            <span class="font-semibold">Monitoring & Filters</span>
+        <div class="flex items-center justify-between gap-2 px-4 py-2">
+            {#if sidebar.state === "expanded"}
+                <div class="flex items-center gap-2">
+                    <Settings class="h-4 w-4" />
+                    <span class="font-semibold">Monitoring & Filters</span>
+                </div>
+            {/if}
+            <Sidebar.Trigger />
         </div>
     </Sidebar.Header>
 
+    {#if sidebar.state === "expanded"}
     <Sidebar.Content>
         {#if loading}
             <Sidebar.Group>
@@ -98,4 +106,5 @@
             </Sidebar.Group>
         {/if}
     </Sidebar.Content>
+    {/if}
 </Sidebar.Root>
