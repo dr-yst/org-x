@@ -24,6 +24,15 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ User Interface for Monitoring Configuration (Issue #11)
   - ✅ **COMPLETED Issue #12: Implement Tauri Commands for File Monitoring Management**
   - ✅ **COMPLETED Issue #13: Implement GUI Components for File Monitoring Management**
+  - ✅ **COMPLETED Issue #9: Full Implementation of Configurable File Monitoring System**
+    - ✅ Removed hardcoded paths from backend
+    - ✅ Unified MonitoredPath structure with parse_enabled field
+    - ✅ Removed ParseOverride complexity in favor of simple toggle
+    - ✅ Always recursive directory monitoring
+    - ✅ Enhanced UI with file/directory icons and toggle switches
+    - ✅ Sidebar displays filename/dirname with full path tooltips
+    - ✅ ListView always reflects monitored paths set in the UI
+    - ✅ Real-time monitoring configuration updates with automatic ListView refresh
   - 🔄 Server-side filtering in Rust
   - 🔄 Integration with shadcn-svelte components
   - 🔄 Svelte 5 runes implementation
@@ -82,10 +91,12 @@ The project is focused on developing the MVP centered around the task list view 
 - **Integrated settings with file monitoring** for dynamic configuration without application restart
 - **Completed monitoring management API** with full CRUD operations and status checking functionality
 - **Added path coverage validation** allowing frontend to verify which files are actively monitored
-- **Implemented monitoring GUI interface** with accordion-based sidebar layout for file management and filtering
+- **Enhanced monitoring GUI interface** with accordion-based sidebar layout for file management and filtering
 - **Enhanced user experience** with file/directory picker integration and responsive design patterns
 - **Migrated to shadcn-svelte Sidebar system** providing professional sidebar layout with collapsible functionality and proper responsive behavior
 - **Improved UI consistency** by adopting shadcn-svelte design patterns throughout the monitoring interface
+- **Completed Issue #9 implementation** with unified data model, real-time UI synchronization, and elimination of hardcoded paths
+- **Enhanced monitoring configuration** with simplified parse_enabled toggle, always-recursive directory monitoring, and immediate ListView updates
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -106,7 +117,10 @@ The project is focused on developing the MVP centered around the task list view 
 - **Type-safe IPC** leverages Tauri-Specta for seamless communication between Rust backend and TypeScript frontend
 - **Settings persistence** uses Tauri Store plugin for atomic updates and cross-platform compatibility
 - **Path validation system** ensures robust error handling and prevents invalid configurations
-- **Directory scanning implementation** supports both recursive and non-recursive monitoring modes
+- **Unified monitoring architecture** with parse_enabled field eliminates complexity of separate ParseOverride system
+- **Always-recursive directory monitoring** simplifies configuration and ensures consistent behavior across platforms
+- **Real-time monitoring updates** with automatic file monitoring restart when configuration changes
+- **ListView synchronization** ensures displayed headlines always match current monitoring configuration
 - **Complete monitoring API** provides all necessary commands for frontend monitoring configuration management
 - **Path coverage checking** enables real-time verification of monitoring status for any file path
 

@@ -43,6 +43,16 @@ The project is focused on implementing the MVP centered around the task list vie
 - ✅ Enhanced main layout to include sidebar with responsive design
 - ✅ Integrated shadcn-svelte components for consistent UI throughout monitoring interface
 - ✅ **Migrated to shadcn-svelte Sidebar Components** - replaced custom sidebar implementation with professional SidebarProvider, SidebarRoot, SidebarContent, and SidebarGroup structure for enhanced responsiveness and collapsible functionality
+- ✅ **COMPLETED Issue #9: Full Implementation of Configurable File Monitoring System**
+  - ✅ Removed hardcoded paths from backend monitoring system
+  - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
+  - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
+  - ✅ Implemented always-recursive directory monitoring for consistent behavior
+  - ✅ Enhanced UI with file/directory icons and toggle switches for parse control
+  - ✅ Updated sidebar to display filename/dirname with full path tooltips for better readability
+  - ✅ Ensured ListView always reflects monitored paths set in the UI with real-time updates
+  - ✅ Added automatic monitoring restart when configuration changes for immediate effect
+  - ✅ Implemented ListView refresh mechanism triggered by monitoring setting changes
 
 ## In Progress
 
