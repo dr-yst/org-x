@@ -193,49 +193,19 @@ export const commands = {
     }
   },
   /**
-   * Set whether a monitored path is enabled
+   * Set whether parsing is enabled for a monitored path
    */
-  async setPathEnabled(
+  async setPathParseEnabled(
     path: string,
-    enabled: boolean,
+    parseEnabled: boolean,
   ): Promise<Result<UserSettings, string>> {
     try {
       return {
         status: "ok",
-        data: await TAURI_INVOKE("set_path_enabled", { path, enabled }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Set parse override for a file
-   */
-  async setParseOverride(
-    filePath: string,
-    parse: boolean,
-  ): Promise<Result<UserSettings, string>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_parse_override", { filePath, parse }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove parse override for a file
-   */
-  async removeParseOverride(
-    filePath: string,
-  ): Promise<Result<UserSettings, string>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_parse_override", { filePath }),
+        data: await TAURI_INVOKE("set_path_parse_enabled", {
+          path,
+          parseEnabled,
+        }),
       };
     } catch (e) {
       if (e instanceof Error) throw e;
@@ -290,13 +260,9 @@ export type MonitoredPath = {
    */
   path_type: PathType;
   /**
-   * Whether to monitor recursively (for directories)
+   * Whether this path should be parsed for org-mode content
    */
-  recursive: boolean;
-  /**
-   * Whether this path is currently enabled
-   */
-  enabled: boolean;
+  parse_enabled: boolean;
 };
 /**
  * OrgDatetime represents a date/time in an org-mode file
@@ -389,19 +355,6 @@ export type OrgTitle = {
   planning: OrgPlanning | null;
 };
 /**
- * Structure to represent parse override for specific files
- */
-export type ParseOverride = {
-  /**
-   * The file path
-   */
-  path: string;
-  /**
-   * Whether to parse this file
-   */
-  parse: boolean;
-};
-/**
  * Type of path being monitored
  */
 export type PathType = "File" | "Directory";
@@ -425,10 +378,6 @@ export type UserSettings = {
    * List of monitored paths
    */
   monitored_paths: MonitoredPath[];
-  /**
-   * Parse overrides for specific files
-   */
-  parse_overrides: ParseOverride[];
 };
 
 /** tauri-specta globals **/
