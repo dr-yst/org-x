@@ -25,7 +25,7 @@
       const loadResult = await commands.loadUserSettings();
       if (loadResult.status === 'ok') {
         settings = loadResult.data;
-        addTestResult(`✓ Settings loaded: ${settings.monitored_paths.length} paths, ${settings.parse_overrides.length} overrides`);
+        addTestResult(`✓ Settings loaded: ${settings.monitored_paths.length} paths`);
       } else {
         addTestResult(`✗ Failed to load settings: ${loadResult.error}`);
         return;
@@ -42,14 +42,13 @@
 
       // Test 3: Add a test monitored path
       addTestResult('Test 3: Adding a test monitored path...');
-      const testPath: MonitoredPath = {
+      const newPath: MonitoredPath = {
         path: '/test/example.org',
         path_type: 'File',
-        recursive: false,
-        enabled: true
+        parse_enabled: true
       };
       
-      const addPathResult = await commands.addMonitoredPath(testPath);
+      const addPathResult = await commands.addMonitoredPath(newPath);
       if (addPathResult.status === 'ok') {
         settings = addPathResult.data;
         addTestResult(`✓ Path added: ${settings.monitored_paths.length} total paths`);
@@ -71,12 +70,12 @@
       }
 
       // Test 5: Disable the path
-      addTestResult('Test 5: Disabling the monitored path...');
-      const disableResult = await commands.setPathEnabled('/test/example.org', false);
+      addTestResult('Test 5: Disabling parsing for the monitored path...');
+      const disableResult = await commands.setPathParseEnabled('/test/example.org', false);
       if (disableResult.status === 'ok') {
         settings = disableResult.data;
         const path = settings.monitored_paths.find(p => p.path === '/test/example.org');
-        addTestResult(`✓ Path disabled: enabled=${path?.enabled}`);
+        addTestResult(`✓ Path parsing disabled: parse_enabled=${path?.parse_enabled}`);
       } else {
         addTestResult(`✗ Failed to disable path: ${disableResult.error}`);
       }
@@ -94,12 +93,12 @@
       }
 
       // Test 7: Re-enable the path
-      addTestResult('Test 7: Re-enabling the monitored path...');
-      const enableResult = await commands.setPathEnabled('/test/example.org', true);
+      addTestResult('Test 7: Re-enabling parsing for the monitored path...');
+      const enableResult = await commands.setPathParseEnabled('/test/example.org', true);
       if (enableResult.status === 'ok') {
         settings = enableResult.data;
         const path = settings.monitored_paths.find(p => p.path === '/test/example.org');
-        addTestResult(`✓ Path re-enabled: enabled=${path?.enabled}`);
+        addTestResult(`✓ Path parsing re-enabled: parse_enabled=${path?.parse_enabled}`);
       } else {
         addTestResult(`✗ Failed to re-enable path: ${enableResult.error}`);
       }
@@ -152,7 +151,7 @@
       const clearResult = await commands.clearUserSettings();
       if (clearResult.status === 'ok') {
         addTestResult('✓ Settings cleared successfully');
-        settings = { monitored_paths: [], parse_overrides: [] };
+        settings = { monitored_paths: [] };
       } else {
         addTestResult(`✗ Failed to clear settings: ${clearResult.error}`);
       }
@@ -195,14 +194,14 @@
       <h2 class="font-semibold mb-2">Current Settings:</h2>
       <div class="text-sm">
         <div>Monitored Paths: {settings.monitored_paths.length}</div>
-        <div>Parse Overrides: {settings.parse_overrides.length}</div>
+        <div>Parse Enabled Paths: {settings.monitored_paths.filter(p => p.parse_enabled).length}</div>
         {#if settings.monitored_paths.length > 0}
           <details class="mt-2">
             <summary class="cursor-pointer font-medium">View Paths</summary>
             <ul class="mt-1 ml-4">
               {#each settings.monitored_paths as path}
                 <li class="text-xs">
-                  {path.path} ({path.path_type}, enabled: {path.enabled})
+                  {path.path} ({path.path_type}, parse_enabled: {path.parse_enabled})
                 </li>
               {/each}
             </ul>
