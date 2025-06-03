@@ -125,14 +125,9 @@ pub async fn start_file_monitoring(app_handle: tauri::AppHandle) -> Result<Strin
     }
     
     if let Some(monitor) = monitor_lock.as_mut() {
-        // Add paths from user settings
-        for monitored_path in settings.get_enabled_paths() {
+        // Add paths from user settings (only those with parsing enabled)
+        for monitored_path in settings.get_parse_enabled_paths() {
             monitor.add_path(monitored_path.clone())?;
-        }
-        
-        // If no paths configured, add hardcoded paths for testing
-        if settings.monitored_paths.is_empty() {
-            monitor.add_hardcoded_paths()?;
         }
         
         // Parse initial files into the repository
@@ -147,51 +142,27 @@ pub async fn start_file_monitoring(app_handle: tauri::AppHandle) -> Result<Strin
                 Err(e) => eprintln!("Failed to get current directory: {}", e),
             }
             
-            // Parse files based on settings
-            if settings.monitored_paths.is_empty() {
-                // Parse all test files - use paths relative to project root
-                let test_files = vec![
-                    "../test_files/example.org",
-                    "../test_files/tasks.org", 
-                    "../test_files/projects.org",
-                    "../test_files/notes.org",
-                ];
-                
-                for file_path in test_files {
-                    if settings.should_parse_file(file_path) {
-                        match repo_lock.parse_file(std::path::Path::new(file_path)) {
-                            Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
-                            Err(e) => eprintln!("Failed to parse file {}: {}", file_path, e),
+            // Parse files from monitored paths (only those with parsing enabled)
+            for monitored_path in settings.get_parse_enabled_paths() {
+                match monitored_path.path_type {
+                    PathType::File => {
+                        match repo_lock.parse_file(std::path::Path::new(&monitored_path.path)) {
+                            Ok(doc_id) => println!("Successfully parsed file: {} -> {}", monitored_path.path, doc_id),
+                            Err(e) => eprintln!("Failed to parse file {}: {}", monitored_path.path, e),
                         }
                     }
-                }
-            } else {
-                // Parse files from monitored paths
-                for monitored_path in settings.get_enabled_paths() {
-                    match monitored_path.path_type {
-                        PathType::File => {
-                            if settings.should_parse_file(&monitored_path.path) {
-                                match repo_lock.parse_file(std::path::Path::new(&monitored_path.path)) {
-                                    Ok(doc_id) => println!("Successfully parsed file: {} -> {}", monitored_path.path, doc_id),
-                                    Err(e) => eprintln!("Failed to parse file {}: {}", monitored_path.path, e),
-                                }
-                            }
-                        }
-                        PathType::Directory => {
-                            // Scan directory for org files
-                            match scan_directory_for_org_files(&monitored_path.path, monitored_path.recursive) {
-                                Ok(org_files) => {
-                                    for file_path in org_files {
-                                        if settings.should_parse_file(&file_path) {
-                                            match repo_lock.parse_file(std::path::Path::new(&file_path)) {
-                                                Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
-                                                Err(e) => eprintln!("Failed to parse file {}: {}", file_path, e),
-                                            }
-                                        }
+                    PathType::Directory => {
+                        // Scan directory for org files (always recursive now)
+                        match scan_directory_for_org_files(&monitored_path.path, true) {
+                            Ok(org_files) => {
+                                for file_path in org_files {
+                                    match repo_lock.parse_file(std::path::Path::new(&file_path)) {
+                                        Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
+                                        Err(e) => eprintln!("Failed to parse file {}: {}", file_path, e),
                                     }
                                 }
-                                Err(e) => eprintln!("Failed to scan directory {}: {}", monitored_path.path, e),
                             }
+                            Err(e) => eprintln!("Failed to scan directory {}: {}", monitored_path.path, e),
                         }
                     }
                 }
@@ -201,7 +172,7 @@ pub async fn start_file_monitoring(app_handle: tauri::AppHandle) -> Result<Strin
         // Start monitoring
         monitor.start_monitoring()?;
         
-        let monitored_count = settings.get_enabled_paths().len();
+        let monitored_count = settings.get_parse_enabled_paths().len();
         Ok(format!("File monitoring started with {} monitored paths from settings", monitored_count))
     } else {
         Err("Failed to initialize file monitor".to_string())
@@ -338,6 +309,17 @@ pub async fn save_user_settings(app_handle: tauri::AppHandle, settings: UserSett
         .map_err(|e| e.to_string())
 }
 
+/// Helper function to restart file monitoring with current settings
+async fn restart_file_monitoring_with_settings(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    // Stop current monitoring
+    let _ = stop_file_monitoring().await;
+    
+    // Start monitoring with updated settings
+    let _ = start_file_monitoring(app_handle.clone()).await?;
+    
+    Ok(())
+}
+
 /// Add a monitored path to settings
 #[tauri::command]
 #[specta::specta]
@@ -353,6 +335,9 @@ pub async fn add_monitored_path(app_handle: tauri::AppHandle, path: MonitoredPat
         .await
         .map_err(|e| e.to_string())?;
     
+    // Restart monitoring to reflect changes
+    restart_file_monitoring_with_settings(&app_handle).await?;
+    
     Ok(settings)
 }
 
@@ -364,11 +349,16 @@ pub async fn remove_monitored_path(app_handle: tauri::AppHandle, path: String) -
         .await
         .map_err(|e| e.to_string())?;
     
-    settings.remove_monitored_path(&path);
+    if !settings.remove_monitored_path(&path) {
+        return Err(format!("Path not found: {}", path));
+    }
     
     SETTINGS_MANAGER.save_settings(&app_handle, &settings)
         .await
         .map_err(|e| e.to_string())?;
+    
+    // Restart monitoring to reflect changes
+    restart_file_monitoring_with_settings(&app_handle).await?;
     
     Ok(settings)
 }
@@ -391,57 +381,28 @@ pub async fn update_monitored_path(app_handle: tauri::AppHandle, old_path: Strin
     Ok(settings)
 }
 
-/// Set whether a monitored path is enabled
+/// Set whether parsing is enabled for a monitored path
 #[tauri::command]
 #[specta::specta]
-pub async fn set_path_enabled(app_handle: tauri::AppHandle, path: String, enabled: bool) -> Result<UserSettings, String> {
+pub async fn set_path_parse_enabled(app_handle: tauri::AppHandle, path: String, parse_enabled: bool) -> Result<UserSettings, String> {
     let mut settings = SETTINGS_MANAGER.load_settings(&app_handle)
         .await
         .map_err(|e| e.to_string())?;
     
-    settings.set_path_enabled(&path, enabled)
+    settings.set_path_parse_enabled(&path, parse_enabled)
         .map_err(|e| e.to_string())?;
     
     SETTINGS_MANAGER.save_settings(&app_handle, &settings)
         .await
         .map_err(|e| e.to_string())?;
+    
+    // Restart monitoring to reflect changes
+    restart_file_monitoring_with_settings(&app_handle).await?;
     
     Ok(settings)
 }
 
-/// Set parse override for a file
-#[tauri::command]
-#[specta::specta]
-pub async fn set_parse_override(app_handle: tauri::AppHandle, file_path: String, parse: bool) -> Result<UserSettings, String> {
-    let mut settings = SETTINGS_MANAGER.load_settings(&app_handle)
-        .await
-        .map_err(|e| e.to_string())?;
-    
-    settings.set_parse_override(file_path, parse);
-    
-    SETTINGS_MANAGER.save_settings(&app_handle, &settings)
-        .await
-        .map_err(|e| e.to_string())?;
-    
-    Ok(settings)
-}
 
-/// Remove parse override for a file
-#[tauri::command]
-#[specta::specta]
-pub async fn remove_parse_override(app_handle: tauri::AppHandle, file_path: String) -> Result<UserSettings, String> {
-    let mut settings = SETTINGS_MANAGER.load_settings(&app_handle)
-        .await
-        .map_err(|e| e.to_string())?;
-    
-    settings.remove_parse_override(&file_path);
-    
-    SETTINGS_MANAGER.save_settings(&app_handle, &settings)
-        .await
-        .map_err(|e| e.to_string())?;
-    
-    Ok(settings)
-}
 
 /// Clear all settings
 #[tauri::command]

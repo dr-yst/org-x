@@ -27,9 +27,7 @@ fn generate_ts_bindings() {
             api::add_monitored_path,
             api::remove_monitored_path,
             api::update_monitored_path,
-            api::set_path_enabled,
-            api::set_parse_override,
-            api::remove_parse_override,
+            api::set_path_parse_enabled,
             api::clear_user_settings,
             api::check_path_monitoring_status,
         ]);
@@ -73,9 +71,7 @@ pub fn run() {
             api::add_monitored_path,
             api::remove_monitored_path,
             api::update_monitored_path,
-            api::set_path_enabled,
-            api::set_parse_override,
-            api::remove_parse_override,
+            api::set_path_parse_enabled,
             api::clear_user_settings,
             api::check_path_monitoring_status,
         ]);
@@ -96,9 +92,7 @@ pub fn run() {
             api::add_monitored_path,
             api::remove_monitored_path,
             api::update_monitored_path,
-            api::set_path_enabled,
-            api::set_parse_override,
-            api::remove_parse_override,
+            api::set_path_parse_enabled,
             api::clear_user_settings,
             api::check_path_monitoring_status,
         ]);

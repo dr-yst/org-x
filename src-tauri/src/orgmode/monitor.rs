@@ -59,23 +59,17 @@ mod tests {
         let file_monitor = MonitoredPath::file(file_path.clone());
         assert_eq!(file_monitor.path, file_path);
         assert_eq!(file_monitor.path_type, PathType::File);
-        assert_eq!(file_monitor.recursive, false);
-        assert_eq!(file_monitor.enabled, true);
+        assert_eq!(file_monitor.parse_enabled, true);
 
         // Test directory creation
-        let dir_monitor = MonitoredPath::directory(dir_path.clone(), true);
+        let dir_monitor = MonitoredPath::directory(dir_path.clone());
         assert_eq!(dir_monitor.path, dir_path);
         assert_eq!(dir_monitor.path_type, PathType::Directory);
-        assert_eq!(dir_monitor.recursive, true);
-        assert_eq!(dir_monitor.enabled, true);
+        assert_eq!(dir_monitor.parse_enabled, true);
 
         // Test recursive mode
         assert_eq!(file_monitor.recursive_mode(), RecursiveMode::NonRecursive);
         assert_eq!(dir_monitor.recursive_mode(), RecursiveMode::Recursive);
-
-        // Test non-recursive directory
-        let non_recursive_dir = MonitoredPath::directory(dir_path.clone(), false);
-        assert_eq!(non_recursive_dir.recursive_mode(), RecursiveMode::NonRecursive);
     }
 
     #[test]
@@ -180,7 +174,7 @@ impl FileMonitor {
         
         // If the watcher is already running, start watching this path immediately
         if let Some(watcher) = self.watcher.as_mut() {
-            if path.enabled {
+            if path.parse_enabled {
                 let path_buf = PathBuf::from(&path.path);
                 watcher
                     .watch(&path_buf, path.recursive_mode())
@@ -214,9 +208,9 @@ impl FileMonitor {
         
         self.watcher = Some(watcher);
         
-        // Start watching all enabled paths
+        // Start watching all paths with parsing enabled
         for path in &self.paths {
-            if path.enabled {
+            if path.parse_enabled {
                 if let Some(watcher) = self.watcher.as_mut() {
                     let path_buf = PathBuf::from(&path.path);
                     watcher
@@ -277,25 +271,7 @@ impl FileMonitor {
         self.watcher = None;
         self.change_tx = None;
     }
-    
-    /// Add hardcoded paths for testing
-    pub fn add_hardcoded_paths(&mut self) -> Result<(), String> {
-        // Add multiple test files for testing multi-document functionality
-        // These will be replaced with user-configured paths in the future
-        let test_paths = vec![
-            MonitoredPath::file("../test_files/example.org".to_string()),
-            MonitoredPath::file("../test_files/tasks.org".to_string()),
-            MonitoredPath::file("../test_files/projects.org".to_string()),
-            MonitoredPath::file("../test_files/notes.org".to_string()),
-            MonitoredPath::directory("../test_files".to_string(), true),
-        ];
-        
-        for path in test_paths {
-            self.add_path(path)?;
-        }
-        
-        Ok(())
-    }
+
     
     /// Get a reference to the repository
     pub fn get_repository(&self) -> Arc<Mutex<OrgDocumentRepository>> {
