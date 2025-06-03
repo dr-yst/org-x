@@ -21,39 +21,17 @@
     let addDialogOpen = $state(false);
     let newPathInput = $state("");
     let newPathType: PathType = $state("Directory");
-    let newPathRecursive = $state(true);
     let adding = $state(false);
     let error: string | null = $state(null);
 
     // Compute monitored files from paths
     let monitoredFiles = $derived.by(() => {
-        // This would ideally come from the backend, but for now we'll show the paths
-        // In a real implementation, the backend would resolve directory paths to individual files
-        const files: Array<{
-            path: string;
-            isEnabled: boolean;
-            fromPath: string;
-        }> = [];
-
-        settings.monitored_paths.forEach((monitoredPath) => {
-            if (monitoredPath.path_type === "File") {
-                files.push({
-                    path: monitoredPath.path,
-                    isEnabled: monitoredPath.enabled,
-                    fromPath: monitoredPath.path,
-                });
-            } else {
-                // For directories, we'd need to call backend to get actual files
-                // For now, show the directory itself
-                files.push({
-                    path: monitoredPath.path,
-                    isEnabled: monitoredPath.enabled,
-                    fromPath: monitoredPath.path,
-                });
-            }
-        });
-
-        return files;
+        // Show the paths directly from settings
+        return settings.monitored_paths.map((monitoredPath) => ({
+            path: monitoredPath.path,
+            path_type: monitoredPath.path_type,
+            parse_enabled: monitoredPath.parse_enabled,
+        }));
     });
 
     async function openPathPicker() {
@@ -82,9 +60,7 @@
             const newPath: MonitoredPath = {
                 path: newPathInput.trim(),
                 path_type: newPathType,
-                recursive:
-                    newPathType === "Directory" ? newPathRecursive : false,
-                enabled: true,
+                parse_enabled: true,
             };
 
             const result = await commands.addMonitoredPath(newPath);
@@ -93,7 +69,6 @@
                 addDialogOpen = false;
                 newPathInput = "";
                 newPathType = "Directory";
-                newPathRecursive = true;
             } else {
                 error = result.error;
             }
@@ -115,33 +90,15 @@
         }
     }
 
-    async function togglePathEnabled(path: string, enabled: boolean) {
+    async function togglePathParseEnabled(path: string, parseEnabled: boolean) {
         try {
-            const result = await commands.setPathEnabled(path, enabled);
+            const result = await commands.setPathParseEnabled(path, parseEnabled);
             if (result.status === "ok") {
                 onSettingsUpdate(result.data);
             }
         } catch (err) {
-            console.error("Failed to toggle path:", err);
+            console.error("Failed to toggle path parse:", err);
         }
-    }
-
-    async function toggleFileParseEnabled(filePath: string, enabled: boolean) {
-        try {
-            const result = await commands.setParseOverride(filePath, enabled);
-            if (result.status === "ok") {
-                onSettingsUpdate(result.data);
-            }
-        } catch (err) {
-            console.error("Failed to toggle file parse:", err);
-        }
-    }
-
-    function getFileParseEnabled(filePath: string): boolean {
-        const override = settings.parse_overrides.find(
-            (p) => p.path === filePath,
-        );
-        return override ? override.parse : true; // Default to enabled if no override
     }
 </script>
 
@@ -205,14 +162,8 @@
                     </div>
                 </div>
                 {#if newPathType === "Directory"}
-                    <div class="flex items-center space-x-2">
-                        <Switch.Root
-                            id="recursive"
-                            bind:checked={newPathRecursive}
-                        />
-                        <Label.Root for="recursive"
-                            >Monitor recursively</Label.Root
-                        >
+                    <div class="text-xs text-muted-foreground">
+                        Directories are always monitored recursively
                     </div>
                 {/if}
                 {#if error}
@@ -261,23 +212,21 @@
                                         class="text-sm font-medium truncate"
                                         title={path.path}
                                     >
-                                        {path.path}
+                                        {path.path.split('/').pop() || path.path.split('\\').pop() || path.path}
                                     </div>
                                     <div class="text-xs text-muted-foreground">
                                         {path.path_type}
                                         {#if path.path_type === "Directory"}
-                                            · {path.recursive
-                                                ? "Recursive"
-                                                : "Non-recursive"}
+                                            · Recursive
                                         {/if}
                                     </div>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <Switch.Root
-                                    checked={path.enabled}
+                                    checked={path.parse_enabled}
                                     onCheckedChange={(checked) =>
-                                        togglePathEnabled(path.path, checked)}
+                                        togglePathParseEnabled(path.path, checked)}
                                 />
                                 <Button.Root
                                     variant="ghost"
@@ -288,50 +237,6 @@
                                     <Trash2 class="h-4 w-4" />
                                 </Button.Root>
                             </div>
-                        </div>
-                    </div>
-                {/each}
-            </div>
-        </div>
-    {/if}
-
-    <!-- Monitored Files Table -->
-    {#if monitoredFiles.length > 0}
-        <div class="space-y-2">
-            <h4 class="text-xs font-medium text-muted-foreground">
-                Monitored Files
-            </h4>
-            <div class="text-xs text-muted-foreground">
-                Control which files are parsed for org-mode content
-            </div>
-            <div class="space-y-1">
-                {#each monitoredFiles as file}
-                    <div
-                        class="flex items-center justify-between py-1 px-2 rounded border border-border"
-                    >
-                        <div class="flex items-center gap-2 flex-1 min-w-0">
-                            <File
-                                class="h-3 w-3 text-muted-foreground flex-shrink-0"
-                            />
-                            <div class="text-sm truncate" title={file.path}>
-                                {file.path.split("/").pop() || file.path}
-                            </div>
-                            {#if !file.isEnabled}
-                                <Badge variant="secondary" class="text-xs"
-                                    >Path disabled</Badge
-                                >
-                            {/if}
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <div class="text-xs text-muted-foreground">
-                                Parse
-                            </div>
-                            <Switch.Root
-                                checked={getFileParseEnabled(file.path)}
-                                disabled={!file.isEnabled}
-                                onCheckedChange={(checked) =>
-                                    toggleFileParseEnabled(file.path, checked)}
-                            />
                         </div>
                     </div>
                 {/each}

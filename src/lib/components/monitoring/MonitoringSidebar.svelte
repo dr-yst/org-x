@@ -37,6 +37,12 @@
 
     async function handleSettingsUpdate(updatedSettings: UserSettings) {
         settings = updatedSettings;
+        
+        // Trigger ListView refresh when monitoring settings change
+        if (typeof window !== 'undefined' && (window as any).refreshListView) {
+            console.log("🔄 Triggering ListView refresh due to monitoring settings change");
+            await (window as any).refreshListView();
+        }
     }
 </script>
 

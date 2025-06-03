@@ -48,6 +48,46 @@
     let allHeadlines = $state<OrgHeadline[]>([]);
     const filterOptions = ["all", "today", "week", "overdue"];
     let activeFilterIndex = $state(0); // Default to 'all'
+
+    // Refresh flag for monitoring changes
+    let refreshTrigger = $state(0);
+    
+    // Function to refresh documents from backend
+    async function refreshDocuments() {
+        try {
+            loading = true;
+            error = null;
+            
+            console.log("🔄 Refreshing documents...");
+            const docsResult = await commands.getAllDocuments();
+            
+            if (docsResult.status === "error") {
+                error = docsResult.error;
+                documents = [];
+                allHeadlines = [];
+                documentMap = new Map();
+            } else {
+                const docs = docsResult.data || [];
+                documents = docs;
+                documentMap = new Map(docs.map(doc => [doc.id, doc]));
+                allHeadlines = documents.flatMap(doc => doc.headlines);
+                console.log(`📚 Refreshed: ${docs.length} documents, ${allHeadlines.length} headlines`);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : "Unknown error";
+            documents = [];
+            allHeadlines = [];
+            documentMap = new Map();
+        } finally {
+            loading = false;
+        }
+    }
+    
+    // Expose refresh function globally for monitoring sidebar
+    if (typeof window !== 'undefined') {
+        (window as any).refreshListView = refreshDocuments;
+    }
+    
     let showQuickActions = $state(false);
     let selectedHeadline = $state<OrgHeadline | null>(null);
     let showDetailView = $state(false);
@@ -67,9 +107,8 @@
                 const monitorResult = await commands.startFileMonitoring();
                 
                 if (monitorResult.status === "error") {
-                    error = monitorResult.error;
-                    loading = false;
-                    return;
+                    console.warn("File monitoring failed:", monitorResult.error);
+                    // Continue anyway - may have some documents from previous sessions
                 }
                 
                 console.log("📚 Loading documents...");
@@ -101,9 +140,8 @@
                     
                     retryCount++;
                     if (retryCount >= maxRetries) {
-                        error = "No documents found after multiple attempts";
-                        loading = false;
-                        return;
+                        console.log("No documents found - this is normal when no monitoring paths are configured");
+                        break;
                     }
                     
                     console.log(`No documents found, retrying in ${Math.pow(2, retryCount)} seconds...`);
