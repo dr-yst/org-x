@@ -311,8 +311,34 @@ pub async fn save_user_settings(app_handle: tauri::AppHandle, settings: UserSett
 
 /// Helper function to restart file monitoring with current settings
 async fn restart_file_monitoring_with_settings(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    // Load current settings to check what files should be covered
+    let settings = SETTINGS_MANAGER.load_settings(app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    
     // Stop current monitoring
     let _ = stop_file_monitoring().await;
+    
+    // Prune the repository to remove documents that are no longer covered
+    {
+        let monitor_lock = FILE_MONITOR.lock()
+            .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+        
+        if let Some(monitor) = monitor_lock.as_ref() {
+            let repository = monitor.get_repository();
+            let mut repository_lock = repository.lock()
+                .map_err(|e| format!("Failed to lock repository: {}", e))?;
+            
+            // Prune documents not covered by current settings
+            let removed_ids = repository_lock.prune_uncovered_documents(|file_path| {
+                settings.is_file_covered(file_path)
+            });
+            
+            if !removed_ids.is_empty() {
+                println!("Pruned {} documents from repository: {:?}", removed_ids.len(), removed_ids);
+            }
+        }
+    }
     
     // Start monitoring with updated settings
     let _ = start_file_monitoring(app_handle.clone()).await?;

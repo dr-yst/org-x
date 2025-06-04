@@ -400,8 +400,11 @@ mod tests {
 
     #[test]
     fn test_parse_enabled() {
+        let test_dir = setup_test_directory();
+        let test_file = create_test_file(&test_dir, "test.org");
+        let test_path = test_file.to_string_lossy().to_string();
+
         let mut settings = UserSettings::new();
-        let test_path = "/test/file.org".to_string();
 
         // Add a monitored path
         let path = MonitoredPath::file(test_path.clone());
@@ -423,6 +426,8 @@ mod tests {
             .set_path_parse_enabled(&test_path, true)
             .expect("Failed to enable parsing");
         assert!(settings.should_parse_path(&test_path));
+
+        cleanup_test_directory(&test_dir);
     }
 
     #[test]
