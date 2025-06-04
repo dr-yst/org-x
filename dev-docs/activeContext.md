@@ -76,6 +76,14 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Fixed root cause where backend repository retained stale documents after settings changes
   - ✅ Ensured UI immediately reflects current monitoring configuration by removing uncovered documents
   - ✅ Added integration test for Issue #16 scenario to prevent regression
+- ✅ **COMPLETED Issue #18: ListView spinner/empty state logic for no monitored paths**
+  - ✅ ListView now checks for monitored paths before loading documents
+  - ✅ If no monitored paths are set, the loading spinner is never shown and an immediate empty state message is displayed:  
+    “No monitored paths configured. Please add a file or directory in the sidebar to get started.”
+  - ✅ Spinner only appears if monitored paths exist and documents are being loaded
+  - ✅ All relevant UI and state logic updated for this pattern
+  - ✅ Tests updated to cover all scenarios (no monitored paths, no documents, loading, error, normal)
+  - ✅ UX now matches modern empty state best practices and avoids confusing infinite spinners
 - ✅ **COMPLETED Issue #11: Integrate File Monitoring with User Settings System**
   - ✅ Extended user settings model with monitored_paths and parse_overrides fields
   - ✅ Implemented serialization/deserialization using Tauri Store plugin for cross-platform persistence
@@ -111,6 +119,16 @@ The project is focused on developing the MVP centered around the task list view 
 - **Improved UI consistency** by adopting shadcn-svelte design patterns throughout the monitoring interface
 - **Completed Issue #9 implementation** with unified data model, real-time UI synchronization, and elimination of hardcoded paths
 - **Enhanced monitoring configuration** with simplified parse_enabled toggle, always-recursive directory monitoring, and immediate ListView updates
+- **ListView spinner/empty state logic now matches modern UX:**  
+  - ListView checks for monitored paths before loading.  
+  - If none are set, spinner is skipped and an empty state message is shown immediately.  
+  - Spinner only appears if monitored paths exist and documents are loading.  
+  - This prevents confusing infinite spinners and provides clear feedback for new users.
+- **ListView spinner/empty state logic now matches modern UX:**  
+  - ListView checks for monitored paths before loading.  
+  - If none are set, spinner is skipped and an empty state message is shown immediately.  
+  - Spinner only appears if monitored paths exist and documents are loading.  
+  - This prevents confusing infinite spinners and provides clear feedback for new users.
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability
@@ -171,6 +189,9 @@ The project is focused on developing the MVP centered around the task list view 
 - Performance optimization for large org-mode files
 
 ## GitHub Issues
+
+> **NOTE:** src/lib/bindings.ts changed since last read.  
+> If any new/removed/renamed Tauri commands or types are present, update API usage and documentation accordingly.
 
 ### Completed Issues
 - ✅ **Issue #14: Implement parsing of multiple org files and display all headlines in ListView**

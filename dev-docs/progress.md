@@ -74,6 +74,17 @@ We've broken down the task list view implementation into smaller, focused issues
 - 🔄 Server-side filtering implementation in Rust
 - 🔄 Integration of more shadcn-svelte components (Collapsible, Select)
 
+---
+
+### Recently Completed
+
+- ✅ **COMPLETED Issue #18: ListView spinner/empty state logic**
+  - Updated ListView.svelte to check for monitored paths before loading documents.
+  - Spinner is never shown when no monitored paths are set; instead, an immediate empty state message is displayed.
+  - Loading spinner only appears if monitored paths exist and documents are being loaded.
+  - Tests updated to cover all relevant scenarios (no monitored paths, no documents, normal loading, error).
+  - Improved UX for new users and clarified empty state messaging.
+
 ## Remaining Tasks
 
 ### Task List View Implementation
