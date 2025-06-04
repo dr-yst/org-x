@@ -38,6 +38,9 @@
     let loading = $state(true);
     let error = $state<string | null>(null);
 
+    // Track if there are any monitored paths
+    let hasMonitoredPaths = $state(true);
+
     // Document lookup map for efficient document access
     let documentMap = $state<Map<string, OrgDocument>>(new Map());
 
@@ -97,7 +100,45 @@
     onMount(() => {
         console.log("🚀 ListView onMount called");
 
-        const loadDocuments = async () => {
+        const loadDocumentsWithMonitoredCheck = async () => {
+            loading = true;
+            error = null;
+
+            // Step 1: Check monitored paths before loading documents
+            try {
+                const settingsResult = await commands.loadUserSettings();
+                if (
+                    settingsResult.status === "ok" &&
+                    settingsResult.data.monitored_paths.length === 0
+                ) {
+                    hasMonitoredPaths = false;
+                    loading = false;
+                    documents = [];
+                    allHeadlines = [];
+                    documentMap = new Map();
+                    return;
+                } else if (settingsResult.status === "ok") {
+                    hasMonitoredPaths = true;
+                } else {
+                    // If error loading settings, treat as no monitored paths
+                    hasMonitoredPaths = false;
+                    loading = false;
+                    documents = [];
+                    allHeadlines = [];
+                    documentMap = new Map();
+                    return;
+                }
+            } catch (e) {
+                // On error, treat as no monitored paths
+                hasMonitoredPaths = false;
+                loading = false;
+                documents = [];
+                allHeadlines = [];
+                documentMap = new Map();
+                return;
+            }
+
+            // Step 2: If monitored paths exist, proceed as before
             try {
                 loading = true;
                 error = null;
@@ -180,7 +221,7 @@
             }
         };
 
-        loadDocuments();
+        loadDocumentsWithMonitoredCheck();
 
         // Add keyboard event listener
         window.addEventListener("keydown", handleKeyDown);
@@ -323,11 +364,16 @@
         >
             Error: {error}
         </div>
-    {:else if loading}
+    {:else if loading && hasMonitoredPaths}
         <div class="w-full h-64 flex items-center justify-center">
             <div
                 class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"
             ></div>
+        </div>
+    {:else if !hasMonitoredPaths}
+        <div class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+            No monitored paths configured.<br>
+            Please add a file or directory in the sidebar to get started.
         </div>
     {:else if documents.length > 0}
         {#if !showDetailView}
