@@ -4,7 +4,6 @@
     import type { OrgDocument, OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
 
-
     import DetailView from "./DetailView.svelte";
     import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
@@ -51,16 +50,16 @@
 
     // Refresh flag for monitoring changes
     let refreshTrigger = $state(0);
-    
+
     // Function to refresh documents from backend
     async function refreshDocuments() {
         try {
             loading = true;
             error = null;
-            
+
             console.log("🔄 Refreshing documents...");
             const docsResult = await commands.getAllDocuments();
-            
+
             if (docsResult.status === "error") {
                 error = docsResult.error;
                 documents = [];
@@ -69,9 +68,11 @@
             } else {
                 const docs = docsResult.data || [];
                 documents = docs;
-                documentMap = new Map(docs.map(doc => [doc.id, doc]));
-                allHeadlines = documents.flatMap(doc => doc.headlines);
-                console.log(`📚 Refreshed: ${docs.length} documents, ${allHeadlines.length} headlines`);
+                documentMap = new Map(docs.map((doc) => [doc.id, doc]));
+                allHeadlines = documents.flatMap((doc) => doc.headlines);
+                console.log(
+                    `📚 Refreshed: ${docs.length} documents, ${allHeadlines.length} headlines`,
+                );
             }
         } catch (err) {
             error = err instanceof Error ? err.message : "Unknown error";
@@ -82,46 +83,50 @@
             loading = false;
         }
     }
-    
+
     // Expose refresh function globally for monitoring sidebar
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
         (window as any).refreshListView = refreshDocuments;
     }
-    
+
     let showQuickActions = $state(false);
     let selectedHeadline = $state<OrgHeadline | null>(null);
     let showDetailView = $state(false);
     let showQuickLook = $state(false);
 
-
-
     onMount(() => {
         console.log("🚀 ListView onMount called");
-        
+
         const loadDocuments = async () => {
             try {
                 loading = true;
                 error = null;
-                
+
                 console.log("📡 Starting file monitoring...");
                 const monitorResult = await commands.startFileMonitoring();
-                
+
                 if (monitorResult.status === "error") {
-                    console.warn("File monitoring failed:", monitorResult.error);
+                    console.warn(
+                        "File monitoring failed:",
+                        monitorResult.error,
+                    );
                     // Continue anyway - may have some documents from previous sessions
                 }
-                
+
                 console.log("📚 Loading documents...");
                 // Retry loading documents with exponential backoff
                 let retryCount = 0;
                 const maxRetries = 5;
                 let docs: any[] = [];
-                
+
                 while (retryCount < maxRetries) {
                     const docsResult = await commands.getAllDocuments();
-                    
+
                     if (docsResult.status === "error") {
-                        console.warn(`Attempt ${retryCount + 1} failed:`, docsResult.error);
+                        console.warn(
+                            `Attempt ${retryCount + 1} failed:`,
+                            docsResult.error,
+                        );
                         retryCount++;
                         if (retryCount >= maxRetries) {
                             error = docsResult.error;
@@ -129,43 +134,52 @@
                             return;
                         }
                         // Wait before retrying (exponential backoff)
-                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+                        await new Promise((resolve) =>
+                            setTimeout(resolve, Math.pow(2, retryCount) * 1000),
+                        );
                         continue;
                     }
-                    
+
                     docs = docsResult.data || [];
                     if (docs.length > 0) {
                         break; // Successfully loaded documents
                     }
-                    
+
                     retryCount++;
                     if (retryCount >= maxRetries) {
-                        console.log("No documents found - this is normal when no monitoring paths are configured");
+                        console.log(
+                            "No documents found - this is normal when no monitoring paths are configured",
+                        );
                         break;
                     }
-                    
-                    console.log(`No documents found, retrying in ${Math.pow(2, retryCount)} seconds...`);
-                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+
+                    console.log(
+                        `No documents found, retrying in ${Math.pow(2, retryCount)} seconds...`,
+                    );
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, Math.pow(2, retryCount) * 1000),
+                    );
                 }
-                
+
                 documents = docs;
-                
+
                 // Create document map for efficient lookups
-                documentMap = new Map(docs.map(doc => [doc.id, doc]));
-                
+                documentMap = new Map(docs.map((doc) => [doc.id, doc]));
+
                 // Flatten all headlines from all documents
-                allHeadlines = documents.flatMap(doc => doc.headlines);
-                
-                console.log(`✅ Loaded ${documents.length} documents, ${allHeadlines.length} headlines`);
+                allHeadlines = documents.flatMap((doc) => doc.headlines);
+
+                console.log(
+                    `✅ Loaded ${documents.length} documents, ${allHeadlines.length} headlines`,
+                );
                 loading = false;
-                
             } catch (err) {
                 console.error("Error:", err);
                 error = String(err);
                 loading = false;
             }
         };
-        
+
         loadDocuments();
 
         // Add keyboard event listener
@@ -283,8 +297,8 @@
                 // Open the file in external editor
                 if (selectedHeadline) {
                     // Find the document that contains this headline
-                    const parentDocument = documents.find(doc => 
-                        doc.id === selectedHeadline!.document_id
+                    const parentDocument = documents.find(
+                        (doc) => doc.id === selectedHeadline!.document_id,
                     );
                     if (parentDocument?.file_path) {
                         console.log(
@@ -319,15 +333,21 @@
         {#if !showDetailView}
             <div class="mb-6">
                 <h2 class="text-2xl font-semibold mb-2">
-                    {documents.length > 1 ? `${documents.length} Documents` : documents[0].title}
+                    {documents.length > 1
+                        ? `${documents.length} Documents`
+                        : documents[0].title}
                 </h2>
 
                 <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
                     <div class="flex items-center gap-1">
                         <File class="h-4 w-4" />
-                        <span>{documents.length} file{documents.length !== 1 ? 's' : ''} loaded</span>
+                        <span
+                            >{documents.length} file{documents.length !== 1
+                                ? "s"
+                                : ""} loaded</span
+                        >
                     </div>
-                    
+
                     <div class="flex items-center gap-1">
                         <Tag class="h-4 w-4" />
                         <span>{allHeadlines.length} headlines total</span>
@@ -336,7 +356,9 @@
 
                 {#if documents.length > 1}
                     <div class="mb-4">
-                        <h3 class="text-sm font-medium text-gray-700 mb-2">Loaded Documents:</h3>
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">
+                            Loaded Documents:
+                        </h3>
                         <div class="flex flex-wrap gap-2">
                             {#each documents as doc}
                                 <Badge variant="outline" class="text-xs">
@@ -510,7 +532,7 @@
         <div
             class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200"
         >
-            No documents loaded. Make sure test files exist in the test_files directory.
+            No documents loaded. Make sure you have added some documents.
         </div>
     {/if}
 </div>
