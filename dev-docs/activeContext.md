@@ -33,9 +33,16 @@ The project is focused on developing the MVP centered around the task list view 
     - ✅ Sidebar displays filename/dirname with full path tooltips
     - ✅ ListView always reflects monitored paths set in the UI
     - ✅ Real-time monitoring configuration updates with automatic ListView refresh
-  - 🔄 Server-side filtering in Rust
-  - 🔄 Integration with shadcn-svelte components
-  - 🔄 Svelte 5 runes implementation
+  - ✅ **COMPLETED Issue #16: Fix Monitoring Path Changes Not Reflected in UI**
+    - ✅ Implemented repository pruning functionality to remove documents no longer covered by monitoring settings
+    - ✅ Added `prune_uncovered_documents` method to OrgDocumentRepository with comprehensive test coverage
+    - ✅ Integrated repository pruning into monitoring restart workflow in `restart_file_monitoring_with_settings`
+    - ✅ Fixed root cause where backend repository retained stale documents after settings changes
+    - ✅ Ensured UI immediately reflects current monitoring configuration by removing uncovered documents
+    - ✅ Added integration test for Issue #16 scenario to prevent regression
+    - 🔄 Server-side filtering in Rust
+    - 🔄 Integration with shadcn-svelte components
+    - 🔄 Svelte 5 runes implementation
 
 ### Recent Progress
 - ✅ Set up basic shadcn-svelte Table component for task list display
@@ -62,6 +69,13 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ Implemented frontend caching with async/await patterns for optimal performance
   - ✅ Updated component architecture to eliminate documentMap prop dependency
   - ✅ Enhanced type safety with Tauri-Specta integration for document operations
+- ✅ **COMPLETED Issue #16: Fix Monitoring Path Changes Not Reflected in UI**
+  - ✅ Implemented repository pruning functionality to remove documents no longer covered by monitoring settings
+  - ✅ Added `prune_uncovered_documents` method to OrgDocumentRepository with comprehensive test coverage
+  - ✅ Integrated repository pruning into monitoring restart workflow in `restart_file_monitoring_with_settings`
+  - ✅ Fixed root cause where backend repository retained stale documents after settings changes
+  - ✅ Ensured UI immediately reflects current monitoring configuration by removing uncovered documents
+  - ✅ Added integration test for Issue #16 scenario to prevent regression
 - ✅ **COMPLETED Issue #11: Integrate File Monitoring with User Settings System**
   - ✅ Extended user settings model with monitored_paths and parse_overrides fields
   - ✅ Implemented serialization/deserialization using Tauri Store plugin for cross-platform persistence

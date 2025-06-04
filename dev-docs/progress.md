@@ -53,6 +53,13 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Ensured ListView always reflects monitored paths set in the UI with real-time updates
   - ✅ Added automatic monitoring restart when configuration changes for immediate effect
   - ✅ Implemented ListView refresh mechanism triggered by monitoring setting changes
+- ✅ **COMPLETED Issue #16: Fix Monitoring Path Changes Not Reflected in UI**
+  - ✅ Implemented repository pruning functionality to remove documents no longer covered by monitoring settings
+  - ✅ Added `prune_uncovered_documents` method to OrgDocumentRepository with comprehensive test coverage
+  - ✅ Integrated repository pruning into monitoring restart workflow to ensure UI reflects current configuration
+  - ✅ Fixed bug where disabling parsing or removing monitored paths left stale documents in the UI
+  - ✅ Ensured that when all monitored paths are removed, the ListView becomes empty as expected
+  - ✅ Added specific integration test for Issue #16 scenario to prevent regression
 
 ## In Progress
 
