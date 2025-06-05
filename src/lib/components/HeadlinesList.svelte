@@ -389,7 +389,7 @@
     }
 </script>
 
-<div class="w-full">
+<div class="w-full min-w-0">
     <div class="text-xs text-gray-500 mb-2">
         {filteredHeadlines.length} items displayed • {focusedIndex >= 0
             ? `Item ${focusedIndex + 1} selected`
@@ -452,114 +452,116 @@
             No headlines found.
         </div>
     {:else}
-        <Table>
-            <TableCaption>Task List View</TableCaption>
+        <div class="overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0">
+            <Table>
+                <TableCaption>Task List View</TableCaption>
 
-            <TableHeader>
-                <TableRow>
-                    <TableHead class="w-[100px]">Status</TableHead>
-                    <TableHead>Task</TableHead>
-                    <TableHead class="w-[120px]">Document</TableHead>
-                    <TableHead>Tags</TableHead>
-                    <TableHead class="w-[180px]">Date</TableHead>
-                </TableRow>
-            </TableHeader>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead class="w-[100px]">Status</TableHead>
+                        <TableHead>Task</TableHead>
+                        <TableHead class="w-[120px]">Document</TableHead>
+                        <TableHead>Tags</TableHead>
+                        <TableHead class="w-[180px]">Date</TableHead>
+                    </TableRow>
+                </TableHeader>
 
-            <TableBody>
-                {#each filteredHeadlines as headline}
-                    <TableRow
-                        class={`hover:bg-gray-50 cursor-pointer ${filteredHeadlines.indexOf(headline) === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
-                        onclick={() => {
-                            const event = new CustomEvent("rowClick", {
-                                detail: headline,
-                            });
-                            dispatch("rowClick", headline);
-                        }}
-                    >
-                        <TableCell>
-                            {#if headline.title.todo_keyword}
-                                <Badge
-                                    class={cn(
-                                        getTodoBadgeClass(
-                                            headline.title.todo_keyword,
-                                        ),
-                                        headline.title.todo_keyword ===
-                                            "CANCELLED" && "line-through",
-                                        "text-xs font-medium",
-                                    )}
-                                    variant="secondary"
-                                >
-                                    {headline.title.todo_keyword}
-                                </Badge>
-                            {/if}
-                        </TableCell>
-
-                        <TableCell>
-                            <div class="flex items-start gap-1">
-                                {#if headline.title.priority}
-                                    <span
-                                        class="inline-block mr-1 {getPriorityColorClass(
-                                            headline.title.priority,
-                                        )}"
+                <TableBody>
+                    {#each filteredHeadlines as headline}
+                        <TableRow
+                            class={`hover:bg-gray-50 cursor-pointer ${filteredHeadlines.indexOf(headline) === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
+                            onclick={() => {
+                                const event = new CustomEvent("rowClick", {
+                                    detail: headline,
+                                });
+                                dispatch("rowClick", headline);
+                            }}
+                        >
+                            <TableCell>
+                                {#if headline.title.todo_keyword}
+                                    <Badge
+                                        class={cn(
+                                            getTodoBadgeClass(
+                                                headline.title.todo_keyword,
+                                            ),
+                                            headline.title.todo_keyword ===
+                                                "CANCELLED" && "line-through",
+                                            "text-xs font-medium",
+                                        )}
+                                        variant="secondary"
                                     >
-                                        {getPriorityIndicator(
-                                            headline.title.priority,
+                                        {headline.title.todo_keyword}
+                                    </Badge>
+                                {/if}
+                            </TableCell>
+
+                            <TableCell>
+                                <div class="flex items-start gap-1">
+                                    {#if headline.title.priority}
+                                        <span
+                                            class="inline-block mr-1 {getPriorityColorClass(
+                                                headline.title.priority,
+                                            )}"
+                                        >
+                                            {getPriorityIndicator(
+                                                headline.title.priority,
+                                            )}
+                                        </span>
+                                    {/if}
+                                    <span class="font-medium">
+                                        {headline.title.raw.replace(
+                                            /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
+                                            "",
                                         )}
                                     </span>
-                                {/if}
-                                <span class="font-medium">
-                                    {headline.title.raw.replace(
-                                        /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                        "",
-                                    )}
-                                </span>
-                            </div>
-
-                            {#if headline.content && headline.content.trim()}
-                                <div
-                                    class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1"
-                                >
-                                    {headline.content.trim().split("\n")[0]}
                                 </div>
-                            {/if}
-                        </TableCell>
 
-                        <TableCell>
-                            {#await Promise.all([fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)]) then [title, colorClass]}
-                                <Badge
-                                    variant="outline"
-                                    class={`text-xs ${colorClass}`}
-                                >
-                                    {title}
-                                </Badge>
-                            {:catch}
-                                <Badge
-                                    variant="outline"
-                                    class="text-xs text-gray-600 border-gray-200 bg-gray-50"
-                                >
-                                    Unknown Document
-                                </Badge>
-                            {/await}
-                        </TableCell>
+                                {#if headline.content && headline.content.trim()}
+                                    <div
+                                        class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1"
+                                    >
+                                        {headline.content.trim().split("\n")[0]}
+                                    </div>
+                                {/if}
+                            </TableCell>
 
-                        <TableCell>
-                            <div class="flex flex-wrap gap-1">
-                                {#each headline.title.tags as tag}
-                                    <Badge variant="secondary" class="text-xs">
-                                        {tag}
+                            <TableCell>
+                                {#await Promise.all([fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)]) then [title, colorClass]}
+                                    <Badge
+                                        variant="outline"
+                                        class={`text-xs ${colorClass}`}
+                                    >
+                                        {title}
                                     </Badge>
-                                {/each}
-                            </div>
-                        </TableCell>
+                                {:catch}
+                                    <Badge
+                                        variant="outline"
+                                        class="text-xs text-gray-600 border-gray-200 bg-gray-50"
+                                    >
+                                        Unknown Document
+                                    </Badge>
+                                {/await}
+                            </TableCell>
 
-                        <TableCell>
-                            <span class={getDateColorClass(headline)}>
-                                {formatDateInfo(headline)}
-                            </span>
-                        </TableCell>
-                    </TableRow>
-                {/each}
-            </TableBody>
-        </Table>
+                            <TableCell>
+                                <div class="flex flex-wrap gap-1">
+                                    {#each headline.title.tags as tag}
+                                        <Badge variant="secondary" class="text-xs">
+                                            {tag}
+                                        </Badge>
+                                    {/each}
+                                </div>
+                            </TableCell>
+
+                            <TableCell>
+                                <span class={getDateColorClass(headline)}>
+                                    {formatDateInfo(headline)}
+                                </span>
+                            </TableCell>
+                        </TableRow>
+                    {/each}
+                </TableBody>
+            </Table>
+        </div>
     {/if}
 </div>

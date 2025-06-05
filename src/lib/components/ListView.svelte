@@ -417,7 +417,7 @@
             </div>
         {/if}
 
-        <div class={showDetailView ? "" : "w-full"}>
+        <div class={showDetailView ? "" : "w-full min-w-0 flex-1"}>
             {#if !showDetailView}
                 <div class="mb-4 flex flex-col gap-2">
                     <h3 class="text-xl font-semibold text-gray-800">

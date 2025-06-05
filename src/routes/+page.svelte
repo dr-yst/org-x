@@ -10,7 +10,7 @@
     <MonitoringSidebar />
 
     <Sidebar.Inset>
-        <div class="flex-1 overflow-hidden">
+        <div class="flex-1 min-w-0 overflow-hidden">
             <div class="h-full bg-white">
                 <ListView />
             </div>
