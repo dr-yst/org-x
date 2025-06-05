@@ -54,39 +54,6 @@
     // Refresh flag for monitoring changes
     let refreshTrigger = $state(0);
 
-    // Function to refresh documents from backend
-    async function refreshDocuments() {
-        try {
-            loading = true;
-            error = null;
-
-            console.log("🔄 Refreshing documents...");
-            const docsResult = await commands.getAllDocuments();
-
-            if (docsResult.status === "error") {
-                error = docsResult.error;
-                documents = [];
-                allHeadlines = [];
-                documentMap = new Map();
-            } else {
-                const docs = docsResult.data || [];
-                documents = docs;
-                documentMap = new Map(docs.map((doc) => [doc.id, doc]));
-                allHeadlines = documents.flatMap((doc) => doc.headlines);
-                console.log(
-                    `📚 Refreshed: ${docs.length} documents, ${allHeadlines.length} headlines`,
-                );
-            }
-        } catch (err) {
-            error = err instanceof Error ? err.message : "Unknown error";
-            documents = [];
-            allHeadlines = [];
-            documentMap = new Map();
-        } finally {
-            loading = false;
-        }
-    }
-
     // Expose refresh function globally for monitoring sidebar
     if (typeof window !== "undefined") {
         (window as any).refreshListView = refreshDocuments;
@@ -97,39 +64,27 @@
     let showDetailView = $state(false);
     let showQuickLook = $state(false);
 
-    onMount(() => {
-        console.log("🚀 ListView onMount called");
+    // Unified refresh logic: always checks monitored paths and loads documents
+    async function refreshDocuments() {
+        loading = true;
+        error = null;
 
-        const loadDocumentsWithMonitoredCheck = async () => {
-            loading = true;
-            error = null;
-
-            // Step 1: Check monitored paths before loading documents
-            try {
-                const settingsResult = await commands.loadUserSettings();
-                if (
-                    settingsResult.status === "ok" &&
-                    settingsResult.data.monitored_paths.length === 0
-                ) {
-                    hasMonitoredPaths = false;
-                    loading = false;
-                    documents = [];
-                    allHeadlines = [];
-                    documentMap = new Map();
-                    return;
-                } else if (settingsResult.status === "ok") {
-                    hasMonitoredPaths = true;
-                } else {
-                    // If error loading settings, treat as no monitored paths
-                    hasMonitoredPaths = false;
-                    loading = false;
-                    documents = [];
-                    allHeadlines = [];
-                    documentMap = new Map();
-                    return;
-                }
-            } catch (e) {
-                // On error, treat as no monitored paths
+        // Always check monitored paths
+        try {
+            const settingsResult = await commands.loadUserSettings();
+            if (
+                settingsResult.status === "ok" &&
+                settingsResult.data.monitored_paths.length === 0
+            ) {
+                hasMonitoredPaths = false;
+                loading = false;
+                documents = [];
+                allHeadlines = [];
+                documentMap = new Map();
+                return;
+            } else if (settingsResult.status === "ok") {
+                hasMonitoredPaths = true;
+            } else {
                 hasMonitoredPaths = false;
                 loading = false;
                 documents = [];
@@ -137,95 +92,96 @@
                 documentMap = new Map();
                 return;
             }
+        } catch (e) {
+            hasMonitoredPaths = false;
+            loading = false;
+            documents = [];
+            allHeadlines = [];
+            documentMap = new Map();
+            return;
+        }
 
-            // Step 2: If monitored paths exist, proceed as before
-            try {
-                loading = true;
-                error = null;
+        // If monitored paths exist, load documents as before
+        try {
+            loading = true;
+            error = null;
 
-                console.log("📡 Starting file monitoring...");
-                const monitorResult = await commands.startFileMonitoring();
+            console.log("📡 Starting file monitoring...");
+            const monitorResult = await commands.startFileMonitoring();
 
-                if (monitorResult.status === "error") {
+            if (monitorResult.status === "error") {
+                console.warn("File monitoring failed:", monitorResult.error);
+                // Continue anyway - may have some documents from previous sessions
+            }
+
+            console.log("📚 Loading documents...");
+            // Retry loading documents with exponential backoff
+            let retryCount = 0;
+            const maxRetries = 5;
+            let docs: any[] = [];
+
+            while (retryCount < maxRetries) {
+                const docsResult = await commands.getAllDocuments();
+
+                if (docsResult.status === "error") {
                     console.warn(
-                        "File monitoring failed:",
-                        monitorResult.error,
+                        `Attempt ${retryCount + 1} failed:`,
+                        docsResult.error,
                     );
-                    // Continue anyway - may have some documents from previous sessions
-                }
-
-                console.log("📚 Loading documents...");
-                // Retry loading documents with exponential backoff
-                let retryCount = 0;
-                const maxRetries = 5;
-                let docs: any[] = [];
-
-                while (retryCount < maxRetries) {
-                    const docsResult = await commands.getAllDocuments();
-
-                    if (docsResult.status === "error") {
-                        console.warn(
-                            `Attempt ${retryCount + 1} failed:`,
-                            docsResult.error,
-                        );
-                        retryCount++;
-                        if (retryCount >= maxRetries) {
-                            error = docsResult.error;
-                            loading = false;
-                            return;
-                        }
-                        // Wait before retrying (exponential backoff)
-                        await new Promise((resolve) =>
-                            setTimeout(resolve, Math.pow(2, retryCount) * 1000),
-                        );
-                        continue;
-                    }
-
-                    docs = docsResult.data || [];
-                    if (docs.length > 0) {
-                        break; // Successfully loaded documents
-                    }
-
                     retryCount++;
                     if (retryCount >= maxRetries) {
-                        console.log(
-                            "No documents found - this is normal when no monitoring paths are configured",
-                        );
-                        break;
+                        error = docsResult.error;
+                        loading = false;
+                        return;
                     }
-
-                    console.log(
-                        `No documents found, retrying in ${Math.pow(2, retryCount)} seconds...`,
-                    );
                     await new Promise((resolve) =>
                         setTimeout(resolve, Math.pow(2, retryCount) * 1000),
                     );
+                    continue;
                 }
 
-                documents = docs;
+                docs = docsResult.data || [];
+                if (docs.length > 0) {
+                    break; // Successfully loaded documents
+                }
 
-                // Create document map for efficient lookups
-                documentMap = new Map(docs.map((doc) => [doc.id, doc]));
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                    console.log(
+                        "No documents found - this is normal when no monitoring paths are configured",
+                    );
+                    break;
+                }
 
-                // Flatten all headlines from all documents
-                allHeadlines = documents.flatMap((doc) => doc.headlines);
-
-                console.log(
-                    `✅ Loaded ${documents.length} documents, ${allHeadlines.length} headlines`,
+                await new Promise((resolve) =>
+                    setTimeout(resolve, Math.pow(2, retryCount) * 1000),
                 );
-                loading = false;
-            } catch (err) {
-                console.error("Error:", err);
-                error = String(err);
-                loading = false;
             }
-        };
 
-        loadDocumentsWithMonitoredCheck();
+            documents = docs;
+            documentMap = new Map(docs.map((doc) => [doc.id, doc]));
+            allHeadlines = documents.flatMap((doc) => doc.headlines);
 
-        // Add keyboard event listener
+            console.log(
+                `✅ Loaded ${documents.length} documents, ${allHeadlines.length} headlines`,
+            );
+            loading = false;
+        } catch (err) {
+            console.error("Error:", err);
+            error = String(err);
+            loading = false;
+        }
+    }
+
+    // Set global refresh function
+    if (typeof window !== "undefined") {
+        (window as any).refreshListView = refreshDocuments;
+    }
+
+    onMount(() => {
+        console.log("🚀 ListView onMount called");
+        refreshDocuments();
         window.addEventListener("keydown", handleKeyDown);
-
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
@@ -371,8 +327,10 @@
             ></div>
         </div>
     {:else if !hasMonitoredPaths}
-        <div class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-            No monitored paths configured.<br>
+        <div
+            class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200"
+        >
+            No monitored paths configured.<br />
             Please add a file or directory in the sidebar to get started.
         </div>
     {:else if documents.length > 0}
