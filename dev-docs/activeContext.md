@@ -254,3 +254,20 @@ The basic task list view component implementation has been broken down into the 
    - Backend data connection and server-side filtering
 
 Each issue has detailed tasks, technical approach, and acceptance criteria to guide implementation.
+
+### Recently Completed Issues
+
+1. **Issue #17: [BUG] ListView/Table Expands Beyond Screen Width; Sidebar Transparency Issues [RESOLVED]**
+   - **Problem**: Table in ListView expanded horizontally beyond viewport causing page-level horizontal scrollbar; sidebar background transparency issues
+   - **Root Cause**: Table container lacked proper overflow constraints and height limitations
+   - **Solution Implemented**:
+     - Added overflow container with `overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0` around Table component
+     - Applied flexbox constraints (`min-w-0 flex-1`) to ListView container to prevent overflow
+     - Updated main page layout with proper flex constraints (`min-w-0`)
+     - Verified sidebar already has proper `bg-sidebar` background from shadcn-svelte
+   - **Files Modified**:
+     - `src/lib/components/HeadlinesList.svelte`: Wrapped table in overflow-constrained container
+     - `src/lib/components/ListView.svelte`: Added flex constraints to prevent overflow
+     - `src/routes/+page.svelte`: Updated layout with proper min-width constraints
+   - **Testing**: Created comprehensive styling tests to verify overflow constraints work correctly
+   - **Result**: Table now scrolls internally instead of causing page-level overflow; height constrained to 80vh as requested

@@ -60,6 +60,14 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Fixed bug where disabling parsing or removing monitored paths left stale documents in the UI
   - ✅ Ensured that when all monitored paths are removed, the ListView becomes empty as expected
   - ✅ Added specific integration test for Issue #16 scenario to prevent regression
+- ✅ **COMPLETED Issue #17: Fix ListView/Table Expands Beyond Screen Width; Sidebar Transparency Issues**
+  - ✅ Implemented table overflow constraints with `overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0` wrapper
+  - ✅ Added flex constraints to ListView container to prevent horizontal expansion beyond viewport
+  - ✅ Updated main layout with proper `min-w-0` flex constraints for responsive behavior
+  - ✅ Verified sidebar already has proper `bg-sidebar` background through shadcn-svelte components
+  - ✅ Table now scrolls internally (both horizontally and vertically) instead of causing page-level overflow
+  - ✅ Height constrained to 80vh as requested, keeping header/sidebar/UI elements always visible
+  - ✅ Created comprehensive styling tests to verify overflow constraints work correctly
 
 ## In Progress
 
