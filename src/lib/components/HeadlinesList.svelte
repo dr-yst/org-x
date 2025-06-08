@@ -29,20 +29,19 @@
     // Props definition using Svelte 5 runes
     const {
         headlines = [],
-        loading = false,
         focusedIndex = -1,
+        activeFilter = "all",
     } = $props<{
         headlines: OrgHeadline[];
-        loading?: boolean;
         focusedIndex?: number;
+        activeFilter?: string;
     }>();
-
-    let filteredHeadlines = $state<OrgHeadline[]>([]);
 
     // Event dispatcher
     const dispatch = createEventDispatcher<{
-        rowClick: OrgHeadline;
-        update: OrgHeadline[];
+        focusChanged: number;
+        filterChanged: number;
+        headlineSelected: OrgHeadline;
     }>();
 
     // Frontend cache for document information
@@ -94,45 +93,8 @@
         }
     }
 
-    // State for filtering
-    let activeFilter = $state("all"); // 'all', 'today', 'week', 'overdue'
-
-    // Update filteredHeadlines whenever headlines or activeFilter changes
-    $effect(() => {
-        const filtered = getFilteredHeadlines(headlines, activeFilter);
-        filteredHeadlines = filtered;
-        dispatch("update", filtered);
-    });
-
-    // Apply filtering logic based on the active filter
-    function getFilteredHeadlines(
-        headlines: OrgHeadline[],
-        filter: string,
-    ): OrgHeadline[] {
-        if (filter === "all") return headlines;
-
-        return headlines.filter((headline) => {
-            // Only include items with todo_keyword
-            if (!headline.title.todo_keyword) return false;
-
-            // If todo status is 'DONE', exclude from all active filters
-            if (headline.title.todo_keyword === "DONE") return false;
-
-            // Get deadline timestamp if it exists
-            const deadline = headline.title.planning?.deadline || null;
-
-            switch (filter) {
-                case "today":
-                    return isToday(getDateStringFromTimestamp(deadline));
-                case "week":
-                    return isThisWeek(getDateStringFromTimestamp(deadline));
-                case "overdue":
-                    return isOverdue(getDateStringFromTimestamp(deadline));
-                default:
-                    return true;
-            }
-        });
-    }
+    // Filter options
+    const filterOptions = ["all", "today", "week", "overdue"];
 
     // Helper function to extract date string from OrgTimestamp
     function getDateStringFromTimestamp(
@@ -391,61 +353,33 @@
 
 <div class="w-full min-w-0">
     <div class="text-xs text-gray-500 mb-2">
-        {filteredHeadlines.length} items displayed • {focusedIndex >= 0
+        {headlines.length} items displayed • {focusedIndex >= 0
             ? `Item ${focusedIndex + 1} selected`
             : "No selection"}
     </div>
 
     <!-- Filter buttons -->
     <div class="flex gap-2 mb-4">
-        <Button
-            variant={activeFilter === "all" ? "default" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "all";
-            }}
-        >
-            All
-        </Button>
-        <Button
-            variant={activeFilter === "today" ? "default" : "secondary"}
-            class={activeFilter === "today"
-                ? "bg-orange-500 hover:bg-orange-600"
-                : ""}
-            size="sm"
-            onclick={() => {
-                activeFilter = "today";
-            }}
-        >
-            Today
-        </Button>
-        <Button
-            variant={activeFilter === "week" ? "default" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "week";
-            }}
-        >
-            This Week
-        </Button>
-        <Button
-            variant={activeFilter === "overdue" ? "destructive" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "overdue";
-            }}
-        >
-            Overdue
-        </Button>
+        {#each filterOptions as filter, index}
+            <Button
+                variant={activeFilter === filter ? "default" : "secondary"}
+                class={activeFilter === "today" && filter === "today"
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : activeFilter === "overdue" && filter === "overdue"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : ""}
+                size="sm"
+                onclick={() => dispatch("filterChanged", index)}
+            >
+                {filter === "all" ? "All" : 
+                 filter === "today" ? "Today" :
+                 filter === "week" ? "This Week" :
+                 filter === "overdue" ? "Overdue" : filter}
+            </Button>
+        {/each}
     </div>
 
-    {#if loading}
-        <div class="flex justify-center items-center h-64">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"
-            ></div>
-        </div>
-    {:else if headlines.length === 0}
+    {#if headlines.length === 0}
         <div
             class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200"
         >
@@ -467,14 +401,12 @@
                 </TableHeader>
 
                 <TableBody>
-                    {#each filteredHeadlines as headline}
+                    {#each headlines as headline, index}
                         <TableRow
-                            class={`hover:bg-gray-50 cursor-pointer ${filteredHeadlines.indexOf(headline) === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
+                            class={`hover:bg-gray-50 cursor-pointer ${index === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
                             onclick={() => {
-                                const event = new CustomEvent("rowClick", {
-                                    detail: headline,
-                                });
-                                dispatch("rowClick", headline);
+                                dispatch("focusChanged", index);
+                                dispatch("headlineSelected", headline);
                             }}
                         >
                             <TableCell>
