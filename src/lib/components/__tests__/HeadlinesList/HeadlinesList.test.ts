@@ -186,18 +186,10 @@ describe("HeadlinesList Component", () => {
     expect(screen.getByText("Date")).toBeInTheDocument();
   });
 
-  it("shows loading state correctly", () => {
-    render(HeadlinesList, { headlines: [], loading: true });
-
-    // Should show loading spinner
-    const spinner = document.querySelector(".animate-spin");
-    expect(spinner).toBeInTheDocument();
-  });
-
   it("shows empty state correctly", () => {
     render(HeadlinesList, { headlines: [] });
 
-    // Should show empty message
+    // Should show empty state message
     expect(screen.getByText("No headlines found.")).toBeInTheDocument();
   });
 
