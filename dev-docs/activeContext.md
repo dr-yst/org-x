@@ -19,6 +19,17 @@ The project is focused on developing the MVP centered around the task list view 
   - Table Interaction and Keyboard Navigation (Issue #6)
   - Filter Controls (Issue #7)
   - Backend Connection and Data Integration (Issue #8)
+- ✅ **COMPLETED Issue #20: MVVM Refactor of ListView**
+  - ✅ Created `src/lib/viewmodels/listview.store.ts` with complete business logic separation
+  - ✅ Moved all Tauri command calls (getAllDocuments, loadUserSettings, startFileMonitoring) to store
+  - ✅ Implemented comprehensive filtering logic (today, week, overdue) in store
+  - ✅ Created derived state for documentMap, allHeadlines, filteredHeadlines, document counts
+  - ✅ Refactored ListView.svelte to be purely presentational with store subscriptions
+  - ✅ Updated HeadlinesList.svelte to work with new store-driven architecture
+  - ✅ Implemented proper keyboard navigation and quick actions through store
+  - ✅ Added comprehensive test suite for store functionality (22 tests passing)
+  - ✅ Maintained all existing functionality while improving code organization
+  - ✅ Fixed component prop interfaces to match new store-based approach
 - ✅ **COMPLETED Issue #9: Implement File Monitoring System**
   - ✅ Core File Monitoring Backend with Hardcoded Paths (Issue #10)
   - ✅ User Interface for Monitoring Configuration (Issue #11)
@@ -48,6 +59,13 @@ The project is focused on developing the MVP centered around the task list view 
 - ✅ Set up basic shadcn-svelte Table component for task list display
 - ✅ Configured TailwindCSS v4 for shadcn-svelte compatibility
 - ✅ Implemented shadcn-svelte Button components across UI elements
+- ✅ **Completed MVVM Architecture Refactoring (Issue #20)**
+  - ✅ Successfully separated business logic from view components
+  - ✅ Created comprehensive ViewModel with all state management
+  - ✅ Maintained backward compatibility and all existing features
+  - ✅ Application builds and runs successfully with new architecture
+  - ✅ Added robust test coverage for store functionality
+  - ✅ Improved maintainability and testability of ListView component
 - ✅ Updated filter controls, tags, and action buttons to use shadcn-svelte Button variants
 - ✅ Created basic keyboard navigation between rows (up/down)
 - ✅ Implemented date-based filtering functionality (today, this week, overdue)
@@ -124,11 +142,14 @@ The project is focused on developing the MVP centered around the task list view 
   - If none are set, spinner is skipped and an empty state message is shown immediately.  
   - Spinner only appears if monitored paths exist and documents are loading.  
   - This prevents confusing infinite spinners and provides clear feedback for new users.
-- **ListView spinner/empty state logic now matches modern UX:**  
-  - ListView checks for monitored paths before loading.  
-  - If none are set, spinner is skipped and an empty state message is shown immediately.  
-  - Spinner only appears if monitored paths exist and documents are loading.  
-  - This prevents confusing infinite spinners and provides clear feedback for new users.
+- **Successfully implemented MVVM pattern for ListView (Issue #20):**
+  - Adopted Model-View-ViewModel architecture for better separation of concerns
+  - Created dedicated ViewModel store with all business logic and state management
+  - Moved all Tauri backend calls to store layer for centralized data management
+  - Implemented comprehensive filtering logic and derived state in store
+  - Refactored ListView to be purely presentational with reactive store subscriptions
+  - Maintained all existing functionality while improving code organization and testability
+  - Added robust test coverage to ensure reliability of store functionality
 
 ## Technical Considerations
 - Task list needs to maintain keyboard operability

@@ -48,6 +48,16 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #20: MVVM Refactor of ListView**
+  - ✅ Successfully implemented Model-View-ViewModel pattern for ListView component
+  - ✅ Created dedicated ViewModel store (`src/lib/viewmodels/listview.store.ts`) with comprehensive business logic
+  - ✅ Moved all Tauri command calls to store layer for centralized data management
+  - ✅ Implemented filtering logic (today, week, overdue) and derived state in store
+  - ✅ Refactored ListView.svelte to be purely presentational with reactive store subscriptions
+  - ✅ Updated HeadlinesList.svelte to work with new store-driven architecture
+  - ✅ Maintained all existing functionality while improving code organization and testability
+  - ✅ Added comprehensive test suite for store functionality (22 tests passing)
+  - ✅ Enhanced separation of concerns following modern Svelte and Tauri best practices
   - ✅ Enhanced UI with file/directory icons and toggle switches for parse control
   - ✅ Updated sidebar to display filename/dirname with full path tooltips for better readability
   - ✅ Ensured ListView always reflects monitored paths set in the UI with real-time updates
