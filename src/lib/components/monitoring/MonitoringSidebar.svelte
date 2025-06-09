@@ -96,7 +96,7 @@
                         <FolderOpen class="h-4 w-4" />
                         Org Files
                     </Sidebar.GroupLabel>
-                    <Sidebar.GroupContent>
+                    <Sidebar.GroupContent class="pl-6">
                         <ScrollArea.Root style="max-height: 320px;">
                             <MonitoredFilesSection
                                 {settings}
@@ -114,7 +114,7 @@
                         <Filter class="h-4 w-4" />
                         Filters
                     </Sidebar.GroupLabel>
-                    <Sidebar.GroupContent>
+                    <Sidebar.GroupContent class="pl-6">
                         <FilterSection />
                     </Sidebar.GroupContent>
                 </Sidebar.Group>
