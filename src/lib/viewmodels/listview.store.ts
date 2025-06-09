@@ -127,6 +127,19 @@ export async function refresh(): Promise<void> {
       return;
     } else if (settingsResult.status === "ok") {
       hasMonitoredPaths.set(true);
+      
+      // Check if any monitored paths have parsing enabled
+      const hasParsingEnabled = settingsResult.data.monitored_paths.some(
+        path => path.parse_enabled
+      );
+      
+      if (!hasParsingEnabled) {
+        // No parsing enabled for any paths - skip loading and show empty state immediately
+        console.log("📚 No parsing enabled for any monitored paths - skipping document loading");
+        loading.set(false);
+        documents.set([]);
+        return;
+      }
     } else {
       hasMonitoredPaths.set(false);
       loading.set(false);

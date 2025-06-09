@@ -103,6 +103,40 @@ describe('ListView Store', () => {
       expect(get(showQuickLook)).toBe(false);
     });
 
+    it('should skip loading when all parsing is disabled', async () => {
+      const { commands } = await import('$lib/bindings');
+      
+      // Mock settings with monitored paths but all parsing disabled
+      vi.mocked(commands.loadUserSettings).mockResolvedValue({
+        status: 'ok',
+        data: {
+          monitored_paths: [
+            {
+              path: '/test/path1.org',
+              path_type: 'File',
+              parse_enabled: false
+            },
+            {
+              path: '/test/path2',
+              path_type: 'Directory', 
+              parse_enabled: false
+            }
+          ]
+        }
+      });
+
+      await refresh();
+
+      // Should not be loading and should have no documents
+      expect(get(loading)).toBe(false);
+      expect(get(documents)).toEqual([]);
+      expect(get(hasMonitoredPaths)).toBe(true);
+      
+      // Should not have called document loading commands
+      expect(commands.startFileMonitoring).not.toHaveBeenCalled();
+      expect(commands.getAllDocuments).not.toHaveBeenCalled();
+    });
+
     it('should update documents and derived state', () => {
       documents.set([mockDocument]);
       
