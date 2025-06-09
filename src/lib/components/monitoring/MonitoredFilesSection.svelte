@@ -92,7 +92,10 @@
 
     async function togglePathParseEnabled(path: string, parseEnabled: boolean) {
         try {
-            const result = await commands.setPathParseEnabled(path, parseEnabled);
+            const result = await commands.setPathParseEnabled(
+                path,
+                parseEnabled,
+            );
             if (result.status === "ok") {
                 onSettingsUpdate(result.data);
             }
@@ -103,6 +106,43 @@
 </script>
 
 <div class="space-y-2">
+    <!-- Monitored Paths Table -->
+
+    <div class="space-y-2">
+        <div class="space-y-1">
+            {#each settings.monitored_paths as path}
+                <div class="flex items-center gap-2 py-0.5">
+                    {#if path.path_type === "Directory"}
+                        <Folder class="h-4 w-4 text-muted-foreground" />
+                    {:else}
+                        <File class="h-4 w-4 text-muted-foreground" />
+                    {/if}
+                    <span
+                        class="text-xs font-medium truncate"
+                        title={path.path}
+                    >
+                        {path.path.split("/").pop() ||
+                            path.path.split("\\").pop() ||
+                            path.path}
+                    </span>
+                    <Switch.Root
+                        checked={path.parse_enabled}
+                        onCheckedChange={(checked) =>
+                            togglePathParseEnabled(path.path, checked)}
+                        class="ml-auto"
+                    />
+                    <Button.Root
+                        variant="ghost"
+                        size="sm"
+                        onclick={() => removeMonitoredPath(path.path)}
+                    >
+                        <Trash2 class="h-4 w-4" />
+                    </Button.Root>
+                </div>
+            {/each}
+        </div>
+    </div>
+
     <!-- Add Path Button -->
     <Dialog.Root bind:open={addDialogOpen}>
         <Dialog.Trigger>
@@ -186,67 +226,4 @@
             </Dialog.Footer>
         </Dialog.Content>
     </Dialog.Root>
-
-    <!-- Monitored Paths Table -->
-    {#if settings.monitored_paths.length > 0}
-        <div class="space-y-2">
-            <h4 class="text-xs font-medium text-muted-foreground">
-                Monitored Paths
-            </h4>
-            <div class="space-y-1">
-                {#each settings.monitored_paths as path}
-                    <div class="border border-border rounded-md p-2">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2 flex-1 min-w-0">
-                                {#if path.path_type === "Directory"}
-                                    <Folder
-                                        class="h-4 w-4 text-muted-foreground flex-shrink-0"
-                                    />
-                                {:else}
-                                    <File
-                                        class="h-4 w-4 text-muted-foreground flex-shrink-0"
-                                    />
-                                {/if}
-                                <div class="min-w-0 flex-1">
-                                    <div
-                                        class="text-sm font-medium truncate"
-                                        title={path.path}
-                                    >
-                                        {path.path.split('/').pop() || path.path.split('\\').pop() || path.path}
-                                    </div>
-                                    <div class="text-xs text-muted-foreground">
-                                        {path.path_type}
-                                        {#if path.path_type === "Directory"}
-                                            · Recursive
-                                        {/if}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <Switch.Root
-                                    checked={path.parse_enabled}
-                                    onCheckedChange={(checked) =>
-                                        togglePathParseEnabled(path.path, checked)}
-                                />
-                                <Button.Root
-                                    variant="ghost"
-                                    size="sm"
-                                    onclick={() =>
-                                        removeMonitoredPath(path.path)}
-                                >
-                                    <Trash2 class="h-4 w-4" />
-                                </Button.Root>
-                            </div>
-                        </div>
-                    </div>
-                {/each}
-            </div>
-        </div>
-    {:else}
-        <div class="text-center py-4 text-muted-foreground">
-            <Folder class="h-6 w-6 mx-auto mb-2 opacity-50" />
-            <div class="text-xs">No monitored paths configured</div>
-            <div class="text-xs opacity-70">Add a path to get started</div>
-        </div>
-    {/if}
 </div>

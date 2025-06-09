@@ -37,10 +37,12 @@
 
     async function handleSettingsUpdate(updatedSettings: UserSettings) {
         settings = updatedSettings;
-        
+
         // Trigger ListView refresh when monitoring settings change
-        if (typeof window !== 'undefined' && (window as any).refreshListView) {
-            console.log("🔄 Triggering ListView refresh due to monitoring settings change");
+        if (typeof window !== "undefined" && (window as any).refreshListView) {
+            console.log(
+                "🔄 Triggering ListView refresh due to monitoring settings change",
+            );
             await (window as any).refreshListView();
         }
     }
@@ -48,7 +50,11 @@
 
 <Sidebar.Root side="left" variant="sidebar" collapsible="icon">
     <Sidebar.Header>
-        <div class="flex items-center gap-2 px-4 py-2" class:justify-between={sidebar.state === "expanded"} class:justify-center={sidebar.state === "collapsed"}>
+        <div
+            class="flex items-center gap-2 px-4 py-2"
+            class:justify-between={sidebar.state === "expanded"}
+            class:justify-center={sidebar.state === "collapsed"}
+        >
             {#if sidebar.state === "expanded"}
                 <div class="flex items-center gap-2">
                     <Settings class="h-4 w-4" />
@@ -60,57 +66,59 @@
     </Sidebar.Header>
 
     {#if sidebar.state === "expanded"}
-    <Sidebar.Content>
-        {#if loading}
-            <Sidebar.Group>
-                <div class="flex items-center justify-center p-4">
-                    <div class="text-sm text-muted-foreground">
-                        Loading settings...
+        <Sidebar.Content>
+            {#if loading}
+                <Sidebar.Group>
+                    <div class="flex items-center justify-center p-4">
+                        <div class="text-sm text-muted-foreground">
+                            Loading settings...
+                        </div>
                     </div>
-                </div>
-            </Sidebar.Group>
-        {:else if error}
-            <Sidebar.Group>
-                <div class="p-4">
-                    <div class="text-sm text-destructive">Error: {error}</div>
-                    <button
-                        onclick={loadSettings}
-                        class="mt-2 text-xs text-primary hover:underline"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </Sidebar.Group>
-        {:else if settings}
-            <!-- Monitored Files Section -->
-            <Sidebar.Group>
-                <Sidebar.GroupLabel class="flex items-center gap-2">
-                    <FolderOpen class="h-4 w-4" />
-                    Monitored Files
-                </Sidebar.GroupLabel>
-                <Sidebar.GroupContent>
-                    <ScrollArea.Root style="max-height: 320px;">
-                        <MonitoredFilesSection
-                            {settings}
-                            onSettingsUpdate={handleSettingsUpdate}
-                        />
-                    </ScrollArea.Root>
-                </Sidebar.GroupContent>
-            </Sidebar.Group>
+                </Sidebar.Group>
+            {:else if error}
+                <Sidebar.Group>
+                    <div class="p-4">
+                        <div class="text-sm text-destructive">
+                            Error: {error}
+                        </div>
+                        <button
+                            onclick={loadSettings}
+                            class="mt-2 text-xs text-primary hover:underline"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </Sidebar.Group>
+            {:else if settings}
+                <!-- Monitored Files Section -->
+                <Sidebar.Group>
+                    <Sidebar.GroupLabel class="flex items-center gap-2">
+                        <FolderOpen class="h-4 w-4" />
+                        Org Files
+                    </Sidebar.GroupLabel>
+                    <Sidebar.GroupContent>
+                        <ScrollArea.Root style="max-height: 320px;">
+                            <MonitoredFilesSection
+                                {settings}
+                                onSettingsUpdate={handleSettingsUpdate}
+                            />
+                        </ScrollArea.Root>
+                    </Sidebar.GroupContent>
+                </Sidebar.Group>
 
-            <Sidebar.Separator />
+                <Sidebar.Separator />
 
-            <!-- Filters Section -->
-            <Sidebar.Group>
-                <Sidebar.GroupLabel class="flex items-center gap-2">
-                    <Filter class="h-4 w-4" />
-                    Filters
-                </Sidebar.GroupLabel>
-                <Sidebar.GroupContent>
-                    <FilterSection />
-                </Sidebar.GroupContent>
-            </Sidebar.Group>
-        {/if}
-    </Sidebar.Content>
+                <!-- Filters Section -->
+                <Sidebar.Group>
+                    <Sidebar.GroupLabel class="flex items-center gap-2">
+                        <Filter class="h-4 w-4" />
+                        Filters
+                    </Sidebar.GroupLabel>
+                    <Sidebar.GroupContent>
+                        <FilterSection />
+                    </Sidebar.GroupContent>
+                </Sidebar.Group>
+            {/if}
+        </Sidebar.Content>
     {/if}
 </Sidebar.Root>
