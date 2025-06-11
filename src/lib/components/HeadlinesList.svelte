@@ -12,6 +12,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Badge, badgeVariants } from "$lib/components/ui/badge";
     import { cn } from "$lib/utils";
+    import { commands } from "$lib/bindings";
 
     // Define custom badge classes for TODO status
     const todoBadgeClasses = {
@@ -28,62 +29,72 @@
     // Props definition using Svelte 5 runes
     const {
         headlines = [],
-        loading = false,
         focusedIndex = -1,
+        activeFilter = "all",
     } = $props<{
         headlines: OrgHeadline[];
-        loading?: boolean;
-        document?: OrgDocument | null;
         focusedIndex?: number;
+        activeFilter?: string;
     }>();
-
-    let filteredHeadlines = $state<OrgHeadline[]>([]);
 
     // Event dispatcher
     const dispatch = createEventDispatcher<{
-        rowClick: OrgHeadline;
-        update: OrgHeadline[];
+        focusChanged: number;
+        filterChanged: number;
+        headlineSelected: OrgHeadline;
     }>();
 
-    // State for filtering
-    let activeFilter = $state("all"); // 'all', 'today', 'week', 'overdue'
+    // Frontend cache for document information
+    let documentTitleCache = $state<Record<string, string>>({});
+    let documentPathCache = $state<Record<string, string>>({});
 
-    // Update filteredHeadlines whenever headlines or activeFilter changes
-    $effect(() => {
-        const filtered = getFilteredHeadlines(headlines, activeFilter);
-        filteredHeadlines = filtered;
-        dispatch("update", filtered);
-    });
-
-    // Filter headlines based on the active filter
-    function getFilteredHeadlines(
-        headlines: OrgHeadline[],
-        filter: string,
-    ): OrgHeadline[] {
-        if (filter === "all") return headlines;
-
-        return headlines.filter((headline) => {
-            // Only include items with todo_keyword
-            if (!headline.title.todo_keyword) return false;
-
-            // If todo status is 'DONE', exclude from all active filters
-            if (headline.title.todo_keyword === "DONE") return false;
-
-            // Get deadline timestamp if it exists
-            const deadline = headline.title.planning?.deadline;
-
-            switch (filter) {
-                case "today":
-                    return isToday(getDateStringFromTimestamp(deadline));
-                case "week":
-                    return isThisWeek(getDateStringFromTimestamp(deadline));
-                case "overdue":
-                    return isOverdue(getDateStringFromTimestamp(deadline));
-                default:
-                    return true;
+    // Async helper functions using Tauri commands
+    async function fetchDocumentTitle(documentId: string): Promise<string> {
+        if (documentTitleCache[documentId]) {
+            return documentTitleCache[documentId];
+        }
+        
+        try {
+            const result = await commands.getOrgDocumentDisplayTitleById(documentId);
+            if (result.status === "ok") {
+                documentTitleCache[documentId] = result.data;
+                return result.data;
+            } else {
+                console.error("Error fetching document title:", result.error);
+                documentTitleCache[documentId] = "Unknown Document";
+                return "Unknown Document";
             }
-        });
+        } catch (e) {
+            console.error("Exception fetching document title:", e);
+            documentTitleCache[documentId] = "Unknown Document";
+            return "Unknown Document";
+        }
     }
+
+    async function fetchDocumentPath(documentId: string): Promise<string> {
+        if (documentPathCache[documentId]) {
+            return documentPathCache[documentId];
+        }
+        
+        try {
+            const result = await commands.getOrgDocumentPathById(documentId);
+            if (result.status === "ok") {
+                documentPathCache[documentId] = result.data;
+                return result.data;
+            } else {
+                console.error("Error fetching document path:", result.error);
+                documentPathCache[documentId] = "";
+                return "";
+            }
+        } catch (e) {
+            console.error("Exception fetching document path:", e);
+            documentPathCache[documentId] = "";
+            return "";
+        }
+    }
+
+    // Filter options
+    const filterOptions = ["all", "today", "week", "overdue"];
 
     // Helper function to extract date string from OrgTimestamp
     function getDateStringFromTimestamp(
@@ -312,160 +323,177 @@
 
         return "";
     }
+
+    // Get document color class for visual distinction
+    async function getDocumentColorClass(headline: OrgHeadline): Promise<string> {
+        const documentPath = await fetchDocumentPath(headline.document_id);
+        // Extract filename from path for consistent color assignment
+        const filename = documentPath.split("/").pop() || "";
+
+        // Simple hash function to assign consistent colors
+        let hash = 0;
+        for (let i = 0; i < filename.length; i++) {
+            hash = filename.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        // Use hash to select from predefined color classes
+        const colors = [
+            "border-blue-300 text-blue-700 bg-blue-50",
+            "border-green-300 text-green-700 bg-green-50",
+            "border-purple-300 text-purple-700 bg-purple-50",
+            "border-orange-300 text-orange-700 bg-orange-50",
+            "border-pink-300 text-pink-700 bg-pink-50",
+            "border-indigo-300 text-indigo-700 bg-indigo-50",
+        ];
+
+        const colorIndex = Math.abs(hash) % colors.length;
+        return colors[colorIndex];
+    }
 </script>
 
-<div class="w-full">
+<div class="w-full min-w-0">
     <div class="text-xs text-gray-500 mb-2">
-        {filteredHeadlines.length} items displayed • {focusedIndex >= 0
+        {headlines.length} items displayed • {focusedIndex >= 0
             ? `Item ${focusedIndex + 1} selected`
             : "No selection"}
     </div>
 
     <!-- Filter buttons -->
     <div class="flex gap-2 mb-4">
-        <Button
-            variant={activeFilter === "all" ? "default" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "all";
-            }}
-        >
-            All
-        </Button>
-        <Button
-            variant={activeFilter === "today" ? "default" : "secondary"}
-            class={activeFilter === "today"
-                ? "bg-orange-500 hover:bg-orange-600"
-                : ""}
-            size="sm"
-            onclick={() => {
-                activeFilter = "today";
-            }}
-        >
-            Today
-        </Button>
-        <Button
-            variant={activeFilter === "week" ? "default" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "week";
-            }}
-        >
-            This Week
-        </Button>
-        <Button
-            variant={activeFilter === "overdue" ? "destructive" : "secondary"}
-            size="sm"
-            onclick={() => {
-                activeFilter = "overdue";
-            }}
-        >
-            Overdue
-        </Button>
+        {#each filterOptions as filter, index}
+            <Button
+                variant={activeFilter === filter ? "default" : "secondary"}
+                class={activeFilter === "today" && filter === "today"
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : activeFilter === "overdue" && filter === "overdue"
+                    ? "bg-red-500 hover:bg-red-600"
+                    : ""}
+                size="sm"
+                onclick={() => dispatch("filterChanged", index)}
+            >
+                {filter === "all" ? "All" : 
+                 filter === "today" ? "Today" :
+                 filter === "week" ? "This Week" :
+                 filter === "overdue" ? "Overdue" : filter}
+            </Button>
+        {/each}
     </div>
 
-    {#if loading}
-        <div class="flex justify-center items-center h-64">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"
-            ></div>
-        </div>
-    {:else if headlines.length === 0}
+    {#if headlines.length === 0}
         <div
             class="p-6 text-center text-gray-500 bg-gray-50 rounded-lg border border-gray-200"
         >
             No headlines found.
         </div>
     {:else}
-        <Table>
-            <TableCaption>Task List View</TableCaption>
+        <div class="overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0">
+            <Table>
+                <TableCaption>Task List View</TableCaption>
 
-            <TableHeader>
-                <TableRow>
-                    <TableHead class="w-[100px]">Status</TableHead>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Tags</TableHead>
-                    <TableHead class="w-[180px]">Date</TableHead>
-                </TableRow>
-            </TableHeader>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead class="w-[100px]">Status</TableHead>
+                        <TableHead>Task</TableHead>
+                        <TableHead class="w-[120px]">Document</TableHead>
+                        <TableHead>Tags</TableHead>
+                        <TableHead class="w-[180px]">Date</TableHead>
+                    </TableRow>
+                </TableHeader>
 
-            <TableBody>
-                {#each filteredHeadlines as headline}
-                    <TableRow
-                        class={`hover:bg-gray-50 cursor-pointer ${filteredHeadlines.indexOf(headline) === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
-                        onclick={() => {
-                            const event = new CustomEvent("rowClick", {
-                                detail: headline,
-                            });
-                            dispatch("rowClick", headline);
-                        }}
-                    >
-                        <TableCell>
-                            {#if headline.title.todo_keyword}
-                                <Badge
-                                    class={cn(
-                                        getTodoBadgeClass(
-                                            headline.title.todo_keyword,
-                                        ),
-                                        headline.title.todo_keyword ===
-                                            "CANCELLED" && "line-through",
-                                        "text-xs font-medium",
-                                    )}
-                                    variant="secondary"
-                                >
-                                    {headline.title.todo_keyword}
-                                </Badge>
-                            {/if}
-                        </TableCell>
-
-                        <TableCell>
-                            <div class="flex items-start gap-1">
-                                {#if headline.title.priority}
-                                    <span
-                                        class="inline-block mr-1 {getPriorityColorClass(
-                                            headline.title.priority,
-                                        )}"
+                <TableBody>
+                    {#each headlines as headline, index}
+                        <TableRow
+                            class={`hover:bg-gray-50 cursor-pointer ${index === focusedIndex ? "bg-blue-50 ring-2 ring-blue-200" : ""}`}
+                            onclick={() => {
+                                dispatch("focusChanged", index);
+                                dispatch("headlineSelected", headline);
+                            }}
+                        >
+                            <TableCell>
+                                {#if headline.title.todo_keyword}
+                                    <Badge
+                                        class={cn(
+                                            getTodoBadgeClass(
+                                                headline.title.todo_keyword,
+                                            ),
+                                            headline.title.todo_keyword ===
+                                                "CANCELLED" && "line-through",
+                                            "text-xs font-medium",
+                                        )}
+                                        variant="secondary"
                                     >
-                                        {getPriorityIndicator(
-                                            headline.title.priority,
+                                        {headline.title.todo_keyword}
+                                    </Badge>
+                                {/if}
+                            </TableCell>
+
+                            <TableCell>
+                                <div class="flex items-start gap-1">
+                                    {#if headline.title.priority}
+                                        <span
+                                            class="inline-block mr-1 {getPriorityColorClass(
+                                                headline.title.priority,
+                                            )}"
+                                        >
+                                            {getPriorityIndicator(
+                                                headline.title.priority,
+                                            )}
+                                        </span>
+                                    {/if}
+                                    <span class="font-medium">
+                                        {headline.title.raw.replace(
+                                            /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
+                                            "",
                                         )}
                                     </span>
-                                {/if}
-                                <span class="font-medium">
-                                    {headline.title.raw.replace(
-                                        /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                        "",
-                                    )}
-                                </span>
-                            </div>
-
-                            {#if headline.content && headline.content.trim()}
-                                <div
-                                    class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1"
-                                >
-                                    {headline.content.trim().split("\n")[0]}
                                 </div>
-                            {/if}
-                        </TableCell>
 
-                        <TableCell>
-                            <div class="flex flex-wrap gap-1">
-                                {#each headline.title.tags as tag}
-                                    <Badge variant="secondary" class="text-xs">
-                                        {tag}
+                                {#if headline.content && headline.content.trim()}
+                                    <div
+                                        class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1"
+                                    >
+                                        {headline.content.trim().split("\n")[0]}
+                                    </div>
+                                {/if}
+                            </TableCell>
+
+                            <TableCell>
+                                {#await Promise.all([fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)]) then [title, colorClass]}
+                                    <Badge
+                                        variant="outline"
+                                        class={`text-xs ${colorClass}`}
+                                    >
+                                        {title}
                                     </Badge>
-                                {/each}
-                            </div>
-                        </TableCell>
+                                {:catch}
+                                    <Badge
+                                        variant="outline"
+                                        class="text-xs text-gray-600 border-gray-200 bg-gray-50"
+                                    >
+                                        Unknown Document
+                                    </Badge>
+                                {/await}
+                            </TableCell>
 
-                        <TableCell>
-                            <span class={getDateColorClass(headline)}>
-                                {formatDateInfo(headline)}
-                            </span>
-                        </TableCell>
-                    </TableRow>
-                {/each}
-            </TableBody>
-        </Table>
+                            <TableCell>
+                                <div class="flex flex-wrap gap-1">
+                                    {#each headline.title.tags as tag}
+                                        <Badge variant="secondary" class="text-xs">
+                                            {tag}
+                                        </Badge>
+                                    {/each}
+                                </div>
+                            </TableCell>
+
+                            <TableCell>
+                                <span class={getDateColorClass(headline)}>
+                                    {formatDateInfo(headline)}
+                                </span>
+                            </TableCell>
+                        </TableRow>
+                    {/each}
+                </TableBody>
+            </Table>
+        </div>
     {/if}
 </div>

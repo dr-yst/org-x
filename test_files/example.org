@@ -1,0 +1,40 @@
+#+TITLE: Example Org Document
+#+AUTHOR: Org-X Team
+#+DATE: 2023-08-15
+
+* Introduction
+This is an example org-mode document for testing the file monitoring functionality.
+It contains various elements that can be parsed by Org-X.
+
+* TODO Tasks
+** TODO Write documentation for file monitoring
+DEADLINE: <2023-09-01 Fri>
+
+** TODO Implement file pattern filtering
+SCHEDULED: <2023-08-25 Fri>
+
+** DONE Create basic monitoring structure
+CLOSED: [2023-08-10 Thu]
+
+* Development Notes
+** File Monitoring Requirements
+- Watch individual files and directories
+- Support recursive monitoring
+- Filter by file patterns
+- Debounce file changes
+
+** Implementation Ideas
+- Use the notify crate for cross-platform support
+- Implement an async event handler
+- Create a simple API for frontend interaction
+
+* References
+- [[https://docs.rs/notify/latest/notify/][Notify Crate Documentation]]
+- [[https://orgmode.org/][Org Mode Website]]
+
+* Tags
+Some headlines with tags for testing:
+
+** TODO Review code :review:code:
+** Meeting notes from yesterday :meeting:notes:
+** Ideas for future releases :brainstorm:feature:

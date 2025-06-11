@@ -1,0 +1,134 @@
+#+TITLE: Personal Tasks
+#+AUTHOR: User
+#+DATE: 2024-01-15
+#+CATEGORY: Personal
+#+FILETAGS: personal tasks
+
+* Personal Development
+** TODO Read "Clean Code" book
+DEADLINE: <2024-02-15 Thu>
+:PROPERTIES:
+:Priority: B
+:Effort: 8:00
+:END:
+
+Need to improve coding practices and learn best practices for writing maintainable code.
+
+** TODO Complete online course on Rust programming
+SCHEDULED: <2024-01-20 Sat>
+:PROPERTIES:
+:Priority: A
+:Effort: 20:00
+:END:
+
+Focus on advanced concepts like lifetimes, ownership, and async programming.
+
+** DONE Set up home office workspace
+CLOSED: [2024-01-10 Wed]
+:PROPERTIES:
+:Priority: C
+:END:
+
+Finally organized the desk and set up proper lighting for productive work.
+
+* Health & Fitness
+** TODO Schedule annual health checkup
+DEADLINE: <2024-01-30 Tue>
+:PROPERTIES:
+:Priority: A
+:END:
+
+Book appointment with primary care physician for routine examination.
+
+** TODO Start morning exercise routine
+SCHEDULED: <2024-01-16 Tue>
+:PROPERTIES:
+:Priority: B
+:Effort: 0:30
+:END:
+
+Begin with 30 minutes of cardio three times per week.
+
+** TODO Meal prep for the week
+SCHEDULED: <2024-01-21 Sun>
+:PROPERTIES:
+:Priority: B
+:Effort: 2:00
+:END:
+
+Prepare healthy meals for the upcoming work week.
+
+* Household Management
+** TODO Fix leaky faucet in kitchen
+DEADLINE: <2024-01-25 Thu>
+:PROPERTIES:
+:Priority: B
+:END:
+
+Call plumber or attempt DIY repair using YouTube tutorials.
+
+** TODO Organize garage storage
+:PROPERTIES:
+:Priority: C
+:Effort: 4:00
+:END:
+
+Sort through boxes and create better organization system.
+
+** WAITING Pay quarterly taxes
+DEADLINE: <2024-03-15 Fri>
+:PROPERTIES:
+:Priority: A
+:END:
+
+Waiting for all tax documents to arrive before filing.
+
+* Learning & Hobbies
+** TODO Learn to play guitar
+:PROPERTIES:
+:Priority: C
+:Effort: 1:00
+:END:
+
+Practice basic chords and simple songs for 30 minutes daily.
+
+** TODO Photography project - street photography
+:PROPERTIES:
+:Priority: C
+:Tags: creative photography
+:END:
+
+Explore local neighborhoods and capture interesting street scenes.
+
+** DONE Research vacation destinations
+CLOSED: [2024-01-08 Mon]
+:PROPERTIES:
+:Priority: C
+:END:
+
+Narrowed down options to three potential locations for summer vacation.
+
+* Financial Planning
+** TODO Review investment portfolio
+DEADLINE: <2024-02-01 Thu>
+:PROPERTIES:
+:Priority: A
+:END:
+
+Analyze current investments and rebalance if necessary.
+
+** TODO Update budget spreadsheet
+SCHEDULED: <2024-01-31 Wed>
+:PROPERTIES:
+:Priority: B
+:Effort: 1:00
+:END:
+
+Review last month's expenses and adjust budget categories.
+
+** TODO Research retirement savings options
+:PROPERTIES:
+:Priority: B
+:END:
+
+Compare different retirement account types and contribution limits.

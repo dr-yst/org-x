@@ -672,11 +672,11 @@ Content 2
         assert_eq!(doc.filetags, vec!["demo".to_string(), "sample".to_string()]);
 
         // Check number of headlines
-        assert_eq!(doc.headlines.len(), 2);
+        assert_eq!(doc.headlines.len(), 3);
 
         // Check first headline
         let h1 = &doc.headlines[0];
-        assert_eq!(h1.title, "Shopping List [0/3]");
+        assert_eq!(h1.title, "Shopping Lists [0/3]");
         assert_eq!(h1.title.todo_keyword, Some("TODO".to_string()));
         assert_eq!(h1.title.tags.len(), 2);
         assert!(h1.title.tags.contains(&"shopping".to_string()));
@@ -713,6 +713,14 @@ Content 2
         assert_eq!(h2_2.title.todo_keyword, Some("TODO".to_string()));
         assert!(h2_2.title.tags.is_empty());
         assert!(h2_2.is_task());
+
+        // Check third headline
+        let h3 = &doc.headlines[2];
+        assert_eq!(h3.title, "Follow-up Tasks");
+        assert_eq!(h3.title.todo_keyword, Some("TODO".to_string()));
+        assert!(h3.title.tags.is_empty());
+        assert!(h3.is_task());
+        assert_eq!(h3.children.len(), 0);
     }
 
     #[test]

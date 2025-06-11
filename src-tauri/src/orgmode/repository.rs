@@ -1,7 +1,10 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
+use crate::orgmode::parser::{parse_org_document};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 
 // Document repository
 pub struct OrgDocumentRepository {
@@ -38,6 +41,33 @@ impl OrgDocumentRepository {
     pub fn remove(&mut self, id: &str) -> Option<OrgDocument> {
         self.last_updated.remove(id);
         self.documents.remove(id)
+    }
+    
+    // Parse a file and add it to the repository
+    pub fn parse_file(&mut self, path: &Path) -> Result<String, String> {
+        // Read the file
+        let content = fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file {}: {}", path.display(), e))?;
+            
+        // Get file name for document ID
+        let file_name = path.file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
+            
+        // Parse the document
+        let mut document = parse_org_document(&content, path.to_str())
+            .map_err(|e| format!("Failed to parse document: {}", e))?;
+            
+        // Use file name as document ID if not set
+        if document.id.is_empty() {
+            document.id = file_name.to_string();
+        }
+        
+        // Add to repository
+        let doc_id = document.id.clone();
+        self.upsert(document);
+        
+        Ok(doc_id)
     }
 
     // Get document for headline
@@ -78,6 +108,53 @@ impl OrgDocumentRepository {
             }
         }
         None
+    }
+
+    /// Get display title by document ID
+    /// Returns the document title if available, otherwise falls back to filename or "Untitled"
+    pub fn get_title_by_id(&self, id: &str) -> Option<String> {
+        self.get(id).map(|doc| {
+            if !doc.title.is_empty() {
+                doc.title.clone()
+            } else {
+                std::path::Path::new(&doc.file_path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("Untitled")
+                    .to_string()
+            }
+        })
+    }
+
+    /// Get file path by document ID
+    pub fn get_path_by_id(&self, id: &str) -> Option<String> {
+        self.get(id).map(|doc| doc.file_path.clone())
+    }
+
+    /// Prune documents that are no longer covered by the given settings
+    /// This removes any documents whose file paths are not covered by UserSettings.is_file_covered
+    pub fn prune_uncovered_documents<F>(&mut self, is_file_covered: F) -> Vec<String>
+    where
+        F: Fn(&str) -> bool,
+    {
+        let mut removed_doc_ids = Vec::new();
+        
+        // Collect document IDs that should be removed
+        let doc_ids_to_remove: Vec<String> = self
+            .documents
+            .values()
+            .filter(|doc| !is_file_covered(&doc.file_path))
+            .map(|doc| doc.id.clone())
+            .collect();
+        
+        // Remove the documents
+        for doc_id in doc_ids_to_remove {
+            if self.remove(&doc_id).is_some() {
+                removed_doc_ids.push(doc_id);
+            }
+        }
+        
+        removed_doc_ids
     }
 }
 
@@ -227,5 +304,286 @@ mod tests {
 
         // Test finding non-existent headline
         assert!(repo.get_document_for_headline("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_document_lookup_helper_methods() {
+        let mut repo = OrgDocumentRepository::new();
+
+        // Create test documents with different scenarios
+        let doc1 = OrgDocument {
+            id: "doc1".to_string(),
+            title: "Test Document 1".to_string(),
+            content: "Content 1".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/path/to/test1.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag1".to_string(),
+            todo_config: None,
+        };
+
+        // Document with empty title (should fall back to filename)
+        let doc2 = OrgDocument {
+            id: "doc2".to_string(),
+            title: "".to_string(),
+            content: "Content 2".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/path/to/test2.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag2".to_string(),
+            todo_config: None,
+        };
+
+        // Document with invalid path that has no filename (should fall back to "Untitled")
+        let doc3 = OrgDocument {
+            id: "doc3".to_string(),
+            title: "".to_string(),
+            content: "Content 3".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag3".to_string(),
+            todo_config: None,
+        };
+
+        repo.upsert(doc1);
+        repo.upsert(doc2);
+        repo.upsert(doc3);
+
+        // Test get_title_by_id with document that has title
+        let title1 = repo.get_title_by_id("doc1").unwrap();
+        assert_eq!(title1, "Test Document 1");
+
+        // Test get_title_by_id with document that has empty title (should use filename)
+        let title2 = repo.get_title_by_id("doc2").unwrap();
+        assert_eq!(title2, "test2.org");
+
+        // Test get_title_by_id with document that has empty path (should use "Untitled")
+        let title3 = repo.get_title_by_id("doc3").unwrap();
+        assert_eq!(title3, "Untitled");
+
+        // Test get_title_by_id with non-existent document
+        assert!(repo.get_title_by_id("nonexistent").is_none());
+
+        // Test get_path_by_id
+        let path1 = repo.get_path_by_id("doc1").unwrap();
+        assert_eq!(path1, "/path/to/test1.org");
+
+        let path2 = repo.get_path_by_id("doc2").unwrap();
+        assert_eq!(path2, "/path/to/test2.org");
+
+        // Test get_path_by_id with non-existent document
+        assert!(repo.get_path_by_id("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_prune_uncovered_documents() {
+        let mut repo = OrgDocumentRepository::new();
+
+        // Create test documents
+        let doc1 = OrgDocument {
+            id: "doc1".to_string(),
+            title: "Document 1".to_string(),
+            content: "Content 1".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/monitored/file1.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag1".to_string(),
+            todo_config: None,
+        };
+
+        let doc2 = OrgDocument {
+            id: "doc2".to_string(),
+            title: "Document 2".to_string(),
+            content: "Content 2".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/unmonitored/file2.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag2".to_string(),
+            todo_config: None,
+        };
+
+        let doc3 = OrgDocument {
+            id: "doc3".to_string(),
+            title: "Document 3".to_string(),
+            content: "Content 3".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/monitored/subdir/file3.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag3".to_string(),
+            todo_config: None,
+        };
+
+        // Add documents to repository
+        repo.upsert(doc1);
+        repo.upsert(doc2);
+        repo.upsert(doc3);
+
+        assert_eq!(repo.list().len(), 3);
+
+        // Define a coverage function that only covers files in /monitored
+        let is_file_covered = |file_path: &str| {
+            file_path.starts_with("/monitored")
+        };
+
+        // Prune uncovered documents
+        let removed_ids = repo.prune_uncovered_documents(is_file_covered);
+
+        // Should have removed doc2 (in /unmonitored)
+        assert_eq!(removed_ids.len(), 1);
+        assert!(removed_ids.contains(&"doc2".to_string()));
+
+        // Repository should now have 2 documents
+        assert_eq!(repo.list().len(), 2);
+
+        // Check that the correct documents remain
+        assert!(repo.get("doc1").is_some());
+        assert!(repo.get("doc2").is_none());
+        assert!(repo.get("doc3").is_some());
+    }
+
+    #[test]
+    fn test_prune_uncovered_documents_empty_repository() {
+        let mut repo = OrgDocumentRepository::new();
+
+        let is_file_covered = |_file_path: &str| false;
+
+        // Pruning empty repository should return empty list
+        let removed_ids = repo.prune_uncovered_documents(is_file_covered);
+        assert!(removed_ids.is_empty());
+        assert_eq!(repo.list().len(), 0);
+    }
+
+    #[test]
+    fn test_prune_uncovered_documents_all_covered() {
+        let mut repo = OrgDocumentRepository::new();
+
+        let doc1 = OrgDocument {
+            id: "doc1".to_string(),
+            title: "Document 1".to_string(),
+            content: "Content 1".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/path/file1.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag1".to_string(),
+            todo_config: None,
+        };
+
+        repo.upsert(doc1);
+
+        // All files are covered
+        let is_file_covered = |_file_path: &str| true;
+
+        let removed_ids = repo.prune_uncovered_documents(is_file_covered);
+        assert!(removed_ids.is_empty());
+        assert_eq!(repo.list().len(), 1);
+    }
+
+    #[test]
+    fn test_issue_16_monitoring_path_changes_not_reflected() {
+        // This test simulates the exact scenario described in Issue #16:
+        // When monitored paths are removed or parsing is disabled, the corresponding
+        // documents should be removed from the repository
+        
+        let mut repo = OrgDocumentRepository::new();
+
+        // Setup: Add documents that would be monitored under different configurations
+        let monitored_doc = OrgDocument {
+            id: "monitored_doc".to_string(),
+            title: "Monitored Document".to_string(),
+            content: "Content".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/monitored/path/file.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag1".to_string(),
+            todo_config: None,
+        };
+
+        let unmonitored_doc = OrgDocument {
+            id: "unmonitored_doc".to_string(),
+            title: "Unmonitored Document".to_string(),
+            content: "Content".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/unmonitored/path/file.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag2".to_string(),
+            todo_config: None,
+        };
+
+        let disabled_doc = OrgDocument {
+            id: "disabled_doc".to_string(),
+            title: "Disabled Document".to_string(),
+            content: "Content".to_string(),
+            headlines: Vec::new(),
+            filetags: Vec::new(),
+            parsed_at: Utc::now(),
+            file_path: "/disabled/path/file.org".to_string(),
+            properties: HashMap::new(),
+            category: "Test".to_string(),
+            etag: "etag3".to_string(),
+            todo_config: None,
+        };
+
+        // Initially, all documents are in the repository
+        repo.upsert(monitored_doc);
+        repo.upsert(unmonitored_doc);
+        repo.upsert(disabled_doc);
+        assert_eq!(repo.list().len(), 3);
+
+        // Scenario 1: All paths are monitored with parsing enabled
+        let all_covered = |_file_path: &str| true;
+        let removed_ids = repo.prune_uncovered_documents(all_covered);
+        assert!(removed_ids.is_empty());
+        assert_eq!(repo.list().len(), 3);
+
+        // Scenario 2: Only /monitored path is covered (simulate removing other paths)
+        let only_monitored_covered = |file_path: &str| {
+            file_path.starts_with("/monitored")
+        };
+        let removed_ids = repo.prune_uncovered_documents(only_monitored_covered);
+        assert_eq!(removed_ids.len(), 2);
+        assert!(removed_ids.contains(&"unmonitored_doc".to_string()));
+        assert!(removed_ids.contains(&"disabled_doc".to_string()));
+        assert_eq!(repo.list().len(), 1);
+        assert!(repo.get("monitored_doc").is_some());
+        assert!(repo.get("unmonitored_doc").is_none());
+        assert!(repo.get("disabled_doc").is_none());
+
+        // Scenario 3: No paths are covered (simulate removing all monitored paths)
+        let none_covered = |_file_path: &str| false;
+        let removed_ids = repo.prune_uncovered_documents(none_covered);
+        assert_eq!(removed_ids.len(), 1);
+        assert!(removed_ids.contains(&"monitored_doc".to_string()));
+        assert_eq!(repo.list().len(), 0);
+
+        // This test verifies that the repository correctly reflects the current
+        // monitoring configuration and doesn't retain stale documents
     }
 }

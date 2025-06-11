@@ -30,6 +30,215 @@ export const commands = {
   async runDatetimeTest(): Promise<string> {
     return await TAURI_INVOKE("run_datetime_test");
   },
+  /**
+   * Start monitoring files based on user settings
+   */
+  async startFileMonitoring(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("start_file_monitoring"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Stop file monitoring
+   */
+  async stopFileMonitoring(): Promise<Result<string, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("stop_file_monitoring") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get all documents from the repository
+   */
+  async getAllDocuments(): Promise<Result<OrgDocument[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_all_documents") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get document by ID
+   */
+  async getOrgDocumentById(
+    documentId: string,
+  ): Promise<Result<OrgDocument | null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_by_id", { documentId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get document display title by ID
+   */
+  async getOrgDocumentDisplayTitleById(
+    documentId: string,
+  ): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_display_title_by_id", {
+          documentId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get document file path by ID
+   */
+  async getOrgDocumentPathById(
+    documentId: string,
+  ): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_org_document_path_by_id", { documentId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Load user settings
+   */
+  async loadUserSettings(): Promise<Result<UserSettings, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("load_user_settings") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Save user settings
+   */
+  async saveUserSettings(
+    settings: UserSettings,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("save_user_settings", { settings }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add a monitored path to settings
+   */
+  async addMonitoredPath(
+    path: MonitoredPath,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_monitored_path", { path }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove a monitored path from settings
+   */
+  async removeMonitoredPath(
+    path: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_monitored_path", { path }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update a monitored path in settings
+   */
+  async updateMonitoredPath(
+    oldPath: string,
+    newPath: MonitoredPath,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_monitored_path", { oldPath, newPath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set whether parsing is enabled for a monitored path
+   */
+  async setPathParseEnabled(
+    path: string,
+    parseEnabled: boolean,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_path_parse_enabled", {
+          path,
+          parseEnabled,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Clear all settings
+   */
+  async clearUserSettings(): Promise<Result<null, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("clear_user_settings") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Check if a file path is covered by current monitoring configuration
+   */
+  async checkPathMonitoringStatus(
+    filePath: string,
+  ): Promise<Result<boolean, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("check_path_monitoring_status", { filePath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -38,6 +247,23 @@ export const commands = {
 
 /** user-defined types **/
 
+/**
+ * Structure to represent a monitored path
+ */
+export type MonitoredPath = {
+  /**
+   * The path to monitor (file or directory)
+   */
+  path: string;
+  /**
+   * Type of the path (file or directory)
+   */
+  path_type: PathType;
+  /**
+   * Whether this path should be parsed for org-mode content
+   */
+  parse_enabled: boolean;
+};
 /**
  * OrgDatetime represents a date/time in an org-mode file
  * This is similar to Orgize's Datetime but designed to be owned and serializable
@@ -128,6 +354,10 @@ export type OrgTitle = {
   properties: Partial<{ [key in string]: string }>;
   planning: OrgPlanning | null;
 };
+/**
+ * Type of path being monitored
+ */
+export type PathType = "File" | "Directory";
 export type StateType = "Active" | "Closed";
 export type TodoConfiguration = {
   sequences: TodoSequence[];
@@ -139,6 +369,15 @@ export type TodoStatus = {
   state_type: StateType;
   order: number;
   color: string | null;
+};
+/**
+ * Main user settings structure
+ */
+export type UserSettings = {
+  /**
+   * List of monitored paths
+   */
+  monitored_paths: MonitoredPath[];
 };
 
 /** tauri-specta globals **/

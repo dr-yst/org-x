@@ -1,14 +1,19 @@
 <script lang="ts">
-  import ListView from "$lib/components/ListView.svelte";
+    import ListView from "$lib/components/ListView.svelte";
+    import MonitoringSidebar from "$lib/components/monitoring/MonitoringSidebar.svelte";
+    import * as Sidebar from "$lib/components/ui/sidebar";
+
+    let sidebarOpen = $state(true);
 </script>
 
-<div class="container mx-auto py-8 px-4">
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold mb-2">Org-X</h1>
-    <p class="text-gray-600">A modern viewer for your org-mode files</p>
-  </div>
+<Sidebar.Provider bind:open={sidebarOpen}>
+    <MonitoringSidebar />
 
-  <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <ListView />
-  </div>
-</div>
+    <Sidebar.Inset>
+        <div class="flex-1 min-w-0 overflow-hidden">
+            <div class="h-full bg-white">
+                <ListView />
+            </div>
+        </div>
+    </Sidebar.Inset>
+</Sidebar.Provider>

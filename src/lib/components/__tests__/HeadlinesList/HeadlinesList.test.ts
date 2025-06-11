@@ -9,6 +9,22 @@ import type {
   OrgDatetime,
 } from "$lib/bindings";
 
+// Mock the commands from bindings
+vi.mock("$lib/bindings", () => ({
+  commands: {
+    getOrgDocumentDisplayTitleById: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: "Test Document"
+    }),
+    getOrgDocumentPathById: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: "/test/path/test.org"
+    }),
+  },
+}));
+
+
+
 // Helper to create test OrgDatetime
 function createDatetime(
   year: number,
@@ -170,18 +186,10 @@ describe("HeadlinesList Component", () => {
     expect(screen.getByText("Date")).toBeInTheDocument();
   });
 
-  it("shows loading state correctly", () => {
-    render(HeadlinesList, { headlines: [], loading: true });
-
-    // Should show loading spinner
-    const spinner = document.querySelector(".animate-spin");
-    expect(spinner).toBeInTheDocument();
-  });
-
   it("shows empty state correctly", () => {
     render(HeadlinesList, { headlines: [] });
 
-    // Should show empty message
+    // Should show empty state message
     expect(screen.getByText("No headlines found.")).toBeInTheDocument();
   });
 
@@ -224,8 +232,8 @@ describe("HeadlinesList Component", () => {
   it("displays tags correctly", () => {
     render(HeadlinesList, { headlines: testHeadlines });
 
-    // Check tags are displayed
-    expect(screen.getByText("work")).toBeInTheDocument();
+    // Check tags are displayed - use getAllByText for tags that appear multiple times
+    expect(screen.getAllByText("work")).toHaveLength(2); // appears in 2 headlines
     expect(screen.getByText("personal")).toBeInTheDocument();
     expect(screen.getByText("project")).toBeInTheDocument();
     expect(screen.getByText("note")).toBeInTheDocument();

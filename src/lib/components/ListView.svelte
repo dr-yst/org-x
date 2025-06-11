@@ -1,7 +1,36 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { commands } from "../bindings";
-    import type { OrgDocument, OrgHeadline } from "../bindings";
+    import {
+        documents,
+        loading,
+        error,
+        hasMonitoredPaths,
+        focusedIndex,
+        activeFilterIndex,
+        showQuickActions,
+        selectedHeadline,
+        showDetailView,
+        showQuickLook,
+        filteredHeadlines,
+        documentCount,
+        headlineCount,
+        filterOptions,
+        refresh,
+        setFilter,
+        setFocus,
+        cycleFilter,
+        moveFocusDown,
+        moveFocusUp,
+        toggleQuickActions,
+        hideQuickActions,
+        openDetailView,
+        closeDetailView,
+        toggleQuickLook,
+        closeQuickLook,
+        handleQuickAction,
+        exposeGlobalRefresh
+    } from "$lib/viewmodels/listview.store";
+    import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";
     import { Button } from "$lib/components/ui/button";
@@ -15,6 +44,13 @@
         DropdownMenuShortcut,
         DropdownMenuTrigger,
     } from "$lib/components/ui/dropdown-menu";
+    import {
+        Drawer,
+        DrawerContent,
+        DrawerHeader,
+        DrawerTitle,
+        DrawerClose,
+    } from "$lib/components/ui/drawer";
 
     import File from "@lucide/svelte/icons/file";
     import Tag from "@lucide/svelte/icons/tag";
@@ -25,366 +61,238 @@
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
     import X from "@lucide/svelte/icons/x";
 
-    // Svelte 5 state management with runes
-    let document = $state<OrgDocument | null>(null);
-    let loading = $state(true);
-    let error = $state<string | null>(null);
-
-    // Keyboard navigation state
-    let focusedIndex = $state<number>(-1); // -1 means no focus
-    let filteredHeadlines = $state<OrgHeadline[]>([]);
-    const filterOptions = ["all", "today", "week", "overdue"];
-    let activeFilterIndex = $state(0); // Default to 'all'
-    let showQuickActions = $state(false);
-    let selectedHeadline = $state<OrgHeadline | null>(null);
-    let showDetailView = $state(false);
-
-    onMount(() => {
-        const loadDocument = async () => {
-            try {
-                // Load sample document
-                document = await commands.getSampleOrg();
-                loading = false;
-            } catch (err) {
-                error = String(err);
-                loading = false;
-            }
-        };
-
-        loadDocument();
-
-        // Add keyboard event listener
-        window.addEventListener("keydown", handleKeyDown);
-
-        // Cleanup on component unmount
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    });
+    // Now using direct store imports
 
     // Handle keyboard navigation
     function handleKeyDown(event: KeyboardEvent) {
-        // Only handle keyboard events when document is loaded
-        if (!document || loading) return;
+        // Only handle keyboard events when documents are loaded
+        if ($documentCount === 0 || $loading) return;
 
         if (event.key === "j" || event.key === "ArrowDown") {
             // Move focus down
             event.preventDefault();
-            if (filteredHeadlines.length > 0) {
-                focusedIndex = Math.min(
-                    focusedIndex + 1,
-                    filteredHeadlines.length - 1,
-                );
-                showQuickActions = false;
-            }
+            moveFocusDown();
         } else if (event.key === "k" || event.key === "ArrowUp") {
             // Move focus up
             event.preventDefault();
-            focusedIndex = Math.max(focusedIndex - 1, -1);
-            showQuickActions = false;
+            moveFocusUp();
         } else if (event.key === "f") {
             // Cycle through filter options
             event.preventDefault();
-            activeFilterIndex = (activeFilterIndex + 1) % filterOptions.length;
+            cycleFilter();
         } else if (event.key === ".") {
             // Show quick actions menu
             event.preventDefault();
-            if (focusedIndex >= 0) {
-                showQuickActions = !showQuickActions;
+            if ($focusedIndex >= 0) {
+                toggleQuickActions();
             }
         } else if (event.key === "Escape") {
             // Close quick actions menu or detail view
             event.preventDefault();
-            if (showQuickActions) {
-                showQuickActions = false;
-            } else if (showDetailView) {
-                showDetailView = false;
-                selectedHeadline = null;
+            if ($showQuickActions) {
+                hideQuickActions();
+            } else if ($showDetailView) {
+                closeDetailView();
+            } else if ($showQuickLook) {
+                closeQuickLook();
             }
         } else if (event.key === "Enter" || event.key === "o") {
             // Open detail view for the selected headline
             event.preventDefault();
-            if (focusedIndex >= 0 && focusedIndex < filteredHeadlines.length) {
-                selectedHeadline = filteredHeadlines[focusedIndex];
-                showDetailView = true;
-                showQuickActions = false;
+            if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+                const headline = $filteredHeadlines[$focusedIndex];
+                openDetailView(headline);
             }
-        } else if (event.key === "e" && showQuickActions) {
+        } else if (event.key == " ") {
+            // Toggle quick look view with spacebar
+            event.preventDefault();
+            if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+                const headline = $filteredHeadlines[$focusedIndex];
+                toggleQuickLook(headline);
+            }
+        } else if (event.key === "e" && $showQuickActions) {
             // Open in external editor
             event.preventDefault();
             handleQuickAction("open-editor");
-        } else if (event.key === "d" && showQuickActions) {
+        } else if (event.key === "d" && $showQuickActions) {
             // Mark as done
             event.preventDefault();
             handleQuickAction("mark-done");
-        } else if (event.key === "+" && showQuickActions) {
+        } else if (event.key === "+" && $showQuickActions) {
             // Increase priority
             event.preventDefault();
             handleQuickAction("priority-up");
-        } else if (event.key === "-" && showQuickActions) {
+        } else if (event.key === "-" && $showQuickActions) {
             // Decrease priority
             event.preventDefault();
             handleQuickAction("priority-down");
         }
     }
 
-    // Handle quick action selection
-    function handleQuickAction(action: string) {
-        if (focusedIndex < 0 || focusedIndex >= filteredHeadlines.length)
-            return;
-
-        const headline = filteredHeadlines[focusedIndex];
-
-        switch (action) {
-            case "view":
-                selectedHeadline = headline;
-                showDetailView = true;
-                break;
-            case "mark-done":
-                console.log("Mark as done:", headline.id);
-                break;
-            case "priority-up":
-                console.log("Increase priority:", headline.id);
-                break;
-            case "priority-down":
-                console.log("Decrease priority:", headline.id);
-                break;
-            case "open-editor":
-                // Open the file in external editor
-                const document_path = document?.file_path;
-                if (document_path) {
-                    console.log(
-                        "Opening file in external editor:",
-                        document_path,
-                    );
-                    // In a real implementation, we would use the tauri-plugin-opener
-                    // For this demo, we'll just log the intention
-                } else {
-                    console.error("No file path available");
-                }
-                break;
-        }
-
-        showQuickActions = false;
-    }
+    onMount(() => {
+        console.log("🚀 ListView onMount called");
+        refresh();
+        exposeGlobalRefresh();
+        
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    });
 </script>
 
-<div class="w-full h-full p-4 {showDetailView ? 'grid grid-cols-2 gap-4' : ''}">
-    {#if error}
-        <div
-            class="p-4 border border-red-500 bg-red-50 text-red-700 rounded mb-4"
-        >
-            Error: {error}
-        </div>
-    {:else if loading}
+<div class="w-full h-full p-4">
+    {#if $error}
         <div class="w-full h-64 flex items-center justify-center">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"
-            ></div>
+            <div class="text-center text-red-600">Error: {$error}</div>
         </div>
-    {:else if document}
-        {#if !showDetailView}
+    {:else if $loading && $hasMonitoredPaths}
+        <div class="w-full h-64 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+    {:else if !$hasMonitoredPaths}
+        <div class="w-full h-64 flex items-center justify-center text-center">
+            <div>
+                <p class="text-gray-600">No monitored paths configured.</p>
+                <br />
+                <p class="text-sm text-gray-500">Please add a file or directory in the sidebar to get started.</p>
+            </div>
+        </div>
+    {:else if $documentCount > 0}
+        {#if !$showDetailView}
             <div class="mb-6">
-                <h2 class="text-2xl font-semibold mb-2">{document.title}</h2>
-
+                <h2 class="text-2xl font-semibold mb-2">
+                    Task List ({$headlineCount} items)
+                </h2>
+                
                 <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                    {#if document.file_path}
-                        <div class="flex items-center gap-1">
-                            <File class="h-4 w-4" />
-                            <span>{document.file_path}</span>
-                        </div>
-                    {/if}
-
-                    {#if document.category}
-                        <div class="flex items-center gap-1">
-                            <Tag class="h-4 w-4" />
-                            <span
-                                >Category: <span class="font-medium"
-                                    >{document.category}</span
-                                ></span
-                            >
-                        </div>
-                    {/if}
-                </div>
-
-                {#if document.filetags && document.filetags.length > 0}
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        {#each document.filetags as tag}
-                            <Badge variant="secondary" class="text-xs">
-                                {tag}
-                            </Badge>
-                        {/each}
+                    <div class="flex items-center gap-1">
+                        <File class="h-4 w-4" />
+                        <span>
+                            {$documentCount} document{$documentCount === 1 ? "" : "s"}
+                        </span>
                     </div>
-                {/if}
-
-                {#if Object.keys(document.properties || {}).length > 0}
-                    <div class="p-3 bg-gray-50 rounded-md mb-4 text-sm">
-                        <h3 class="font-medium text-gray-700 mb-2">
-                            Properties
-                        </h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            {#each Object.entries(document.properties || {}) as [key, value]}
-                                <div class="text-gray-500 font-medium">
-                                    {key}
-                                </div>
-                                <div class="text-gray-800">{value}</div>
+                    <div class="flex items-center gap-1">
+                        <Tag class="h-4 w-4" />
+                        <span>{$headlineCount} headlines</span>
+                    </div>
+                </div>
+                
+                {#if $documentCount > 1}
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Documents:</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {#each $documents as doc}
+                                <Badge variant="outline" class="text-xs">
+                                    {doc.title}
+                                </Badge>
                             {/each}
                         </div>
                     </div>
                 {/if}
             </div>
         {/if}
-
-        <div class={showDetailView ? "" : "w-full"}>
-            {#if !showDetailView}
+        
+        <div class={$showDetailView ? "" : "w-full min-w-0 flex-1"}>
+            {#if !$showDetailView}
                 <div class="mb-4 flex flex-col gap-2">
-                    <h3 class="text-xl font-semibold text-gray-800">
-                        Task List
-                    </h3>
+                    <h3 class="text-xl font-semibold text-gray-800">Keyboard Shortcuts</h3>
                     <p class="text-sm text-gray-600">
-                        Keyboard shortcuts: <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >j/↓</kbd
-                        >
-                        Next item,
-                        <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >k/↑</kbd
-                        >
-                        Previous item,
-                        <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >f</kbd
-                        >
-                        Change filter,
-                        <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >.</kbd
-                        >
-                        Quick actions,
-                        <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >Enter</kbd
-                        >
-                        View details,
-                        <kbd
-                            class="px-1.5 py-0.5 bg-gray-100 border rounded text-xs"
-                            >e</kbd
-                        > Open in editor
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">j/↓</kbd> Move down • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">k/↑</kbd> Move up • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">f</kbd> Filter • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">.</kbd> Actions • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">Enter/o</kbd> Open • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">Space</kbd> Quick Look • 
+                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">Esc</kbd> Close
                     </p>
                 </div>
             {/if}
-
+            
             <div class="relative">
-                {#if !showDetailView}
+                {#if !$showDetailView}
                     <HeadlinesList
-                        headlines={document.headlines}
-                        {document}
-                        {focusedIndex}
-                        on:rowClick={(e) => {
-                            selectedHeadline = e.detail;
-                            showDetailView = true;
-                            showQuickActions = false;
-                        }}
-                        on:update={(e) => (filteredHeadlines = e.detail)}
+                        headlines={$filteredHeadlines}
+                        focusedIndex={$focusedIndex}
+                        activeFilter={filterOptions[$activeFilterIndex]}
+                        on:focusChanged={(e) => setFocus(e.detail)}
+                        on:filterChanged={(e) => setFilter(e.detail)}
+                        on:headlineSelected={(e) => openDetailView(e.detail)}
                     />
-
-                    {#if focusedIndex >= 0 && focusedIndex < filteredHeadlines.length}
-                        <DropdownMenu
-                            open={showQuickActions}
-                            onOpenChange={(open) => (showQuickActions = open)}
-                        >
+                    
+                    {#if $focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length}
+                        <DropdownMenu open={$showQuickActions}>
                             <DropdownMenuTrigger class="hidden">
                                 <Button variant="ghost">Actions</Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent class="w-56" align="end">
-                                <DropdownMenuLabel
-                                    >Quick Actions</DropdownMenuLabel
-                                >
+                                <DropdownMenuLabel>
+                                    Quick Actions
+                                </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                    onclick={() => handleQuickAction("view")}
+                                    on:click={() => handleQuickAction("view")}
                                 >
                                     <Eye class="h-4 w-4 mr-2" />
                                     View Details
-                                    <DropdownMenuShortcut
-                                        >Enter</DropdownMenuShortcut
-                                    >
+                                    <DropdownMenuShortcut>Enter</DropdownMenuShortcut>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onclick={() =>
-                                        handleQuickAction("open-editor")}
+                                    on:click={() => handleQuickAction("open-editor")}
                                 >
                                     <FileEdit class="h-4 w-4 mr-2" />
-                                    Open in External Editor
-                                    <DropdownMenuShortcut
-                                        >E</DropdownMenuShortcut
-                                    >
+                                    Open in Editor
+                                    <DropdownMenuShortcut>e</DropdownMenuShortcut>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                    onclick={() =>
-                                        handleQuickAction("mark-done")}
+                                    on:click={() => handleQuickAction("mark-done")}
                                 >
                                     <Check class="h-4 w-4 mr-2" />
                                     Mark as Done
-                                    <DropdownMenuShortcut
-                                        >D</DropdownMenuShortcut
-                                    >
+                                    <DropdownMenuShortcut>d</DropdownMenuShortcut>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onclick={() =>
-                                        handleQuickAction("priority-up")}
+                                    on:click={() => handleQuickAction("priority-up")}
                                 >
                                     <ChevronUp class="h-4 w-4 mr-2" />
                                     Increase Priority
-                                    <DropdownMenuShortcut
-                                        >+</DropdownMenuShortcut
-                                    >
+                                    <DropdownMenuShortcut>+</DropdownMenuShortcut>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onclick={() =>
-                                        handleQuickAction("priority-down")}
+                                    on:click={() => handleQuickAction("priority-down")}
                                 >
                                     <ChevronDown class="h-4 w-4 mr-2" />
                                     Decrease Priority
-                                    <DropdownMenuShortcut
-                                        >-</DropdownMenuShortcut
-                                    >
+                                    <DropdownMenuShortcut>-</DropdownMenuShortcut>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     {/if}
                 {/if}
             </div>
-
-            {#if showDetailView}
-                <div class="w-full">
-                    <div class="mb-4 flex justify-between items-center">
-                        <h3 class="text-xl font-semibold text-gray-800">
-                            Task Details
-                        </h3>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onclick={() => {
-                                showDetailView = false;
-                                selectedHeadline = null;
-                            }}
-                        >
-                            <X class="h-4 w-4" />
-                            Close
-                        </Button>
-                    </div>
-                    <DetailView headline={selectedHeadline} />
-                </div>
-            {/if}
         </div>
+        
+        <Drawer open={$showQuickLook}>
+            <DrawerContent class="max-h-[80vh] overflow-y-auto">
+                <DrawerHeader>
+                    <DrawerTitle>
+                        {$selectedHeadline ? $selectedHeadline.title.raw : "Quick Look"}
+                    </DrawerTitle>
+                    <DrawerClose>
+                        <Button variant="ghost" size="sm" on:click={() => closeQuickLook()}>
+                            <X class="h-4 w-4" />
+                        </Button>
+                    </DrawerClose>
+                </DrawerHeader>
+                <div class="p-4">
+                    <DetailView headline={$selectedHeadline} />
+                </div>
+            </DrawerContent>
+        </Drawer>
     {:else}
-        <div
-            class="p-4 border border-yellow-500 bg-yellow-50 text-yellow-700 rounded"
-        >
-            No document loaded.
+        <div class="w-full h-64 flex items-center justify-center">
+            <div class="text-center text-gray-600">No documents found</div>
         </div>
     {/if}
 </div>

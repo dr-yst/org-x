@@ -131,7 +131,7 @@
     }
 </script>
 
-<div class="w-full h-full bg-white rounded-lg shadow-md p-4">
+<div class="w-full h-full">
     {#if headline}
         <div class="mb-4">
             <h2 class="text-xl font-semibold mb-2 flex items-center gap-2">
@@ -221,7 +221,9 @@
         {#if headline.content && headline.content.trim()}
             <div class="mb-4">
                 <h3 class="text-md font-medium mb-2 text-gray-700">Content</h3>
-                <div class="prose prose-sm max-w-none p-3 bg-gray-50 rounded">
+                <div
+                    class="prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
+                >
                     {@html formatContent(headline.content)}
                 </div>
             </div>
@@ -261,7 +263,7 @@
         {/if}
     {:else}
         <div
-            class="flex flex-col items-center justify-center h-64 text-gray-500"
+            class="flex flex-col items-center justify-center py-12 text-gray-500"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
