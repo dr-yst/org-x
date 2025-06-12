@@ -60,9 +60,8 @@
     import Check from "@lucide/svelte/icons/check";
     import ChevronUp from "@lucide/svelte/icons/chevron-up";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
+    import ChevronLeft from "@lucide/svelte/icons/chevron-left";
     import X from "@lucide/svelte/icons/x";
-
-    // Now using direct store imports
 
     // Handle keyboard navigation
     function handleKeyDown(event: KeyboardEvent) {
@@ -323,6 +322,31 @@
                             </DropdownMenuContent>
                         </DropdownMenu>
                     {/if}
+                {:else}
+                    <!-- Main DetailView when showDetailView is true -->
+                    <div class="space-y-4">
+                        <!-- Back button -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                on:click={closeDetailView}
+                                class="flex items-center gap-2"
+                            >
+                                <ChevronLeft class="h-4 w-4" />
+                                Back to {$displayMode === "task-list"
+                                    ? "Task List"
+                                    : "Headline List"}
+                            </Button>
+                        </div>
+
+                        <!-- DetailView component -->
+                        <DetailView
+                            headline={$selectedHeadline}
+                            parentChain={[]}
+                            onBreadcrumbClick={null}
+                        />
+                    </div>
                 {/if}
             </div>
         </div>
