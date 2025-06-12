@@ -1,6 +1,6 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
-use crate::orgmode::parser::{parse_org_document};
+use crate::orgmode::parser::parse_org_document;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::fs;
@@ -42,31 +42,32 @@ impl OrgDocumentRepository {
         self.last_updated.remove(id);
         self.documents.remove(id)
     }
-    
+
     // Parse a file and add it to the repository
     pub fn parse_file(&mut self, path: &Path) -> Result<String, String> {
         // Read the file
         let content = fs::read_to_string(path)
             .map_err(|e| format!("Failed to read file {}: {}", path.display(), e))?;
-            
+
         // Get file name for document ID
-        let file_name = path.file_name()
+        let file_name = path
+            .file_name()
             .and_then(|name| name.to_str())
             .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
-            
+
         // Parse the document
         let mut document = parse_org_document(&content, path.to_str())
             .map_err(|e| format!("Failed to parse document: {}", e))?;
-            
+
         // Use file name as document ID if not set
         if document.id.is_empty() {
             document.id = file_name.to_string();
         }
-        
+
         // Add to repository
         let doc_id = document.id.clone();
         self.upsert(document);
-        
+
         Ok(doc_id)
     }
 
@@ -138,7 +139,7 @@ impl OrgDocumentRepository {
         F: Fn(&str) -> bool,
     {
         let mut removed_doc_ids = Vec::new();
-        
+
         // Collect document IDs that should be removed
         let doc_ids_to_remove: Vec<String> = self
             .documents
@@ -146,14 +147,14 @@ impl OrgDocumentRepository {
             .filter(|doc| !is_file_covered(&doc.file_path))
             .map(|doc| doc.id.clone())
             .collect();
-        
+
         // Remove the documents
         for doc_id in doc_ids_to_remove {
             if self.remove(&doc_id).is_some() {
                 removed_doc_ids.push(doc_id);
             }
         }
-        
+
         removed_doc_ids
     }
 }
@@ -222,14 +223,8 @@ mod tests {
         let mut repo = OrgDocumentRepository::new();
 
         // Create a document with headlines
-        let title1 = OrgTitle::new(
-            "Headline 1".to_string(),
-            1,
-            None,
-            Vec::new(),
-            None,
-        );
-        
+        let title1 = OrgTitle::new("Headline 1".to_string(), 1, None, Vec::new(), None);
+
         let headline1 = OrgHeadline::new(
             "h1".to_string(),
             "doc1".to_string(),
@@ -237,14 +232,8 @@ mod tests {
             "Content 1".to_string(),
         );
 
-        let title2 = OrgTitle::new(
-            "Headline 2".to_string(),
-            1,
-            None,
-            Vec::new(),
-            None,
-        );
-        
+        let title2 = OrgTitle::new("Headline 2".to_string(), 1, None, Vec::new(), None);
+
         let headline2 = OrgHeadline::new(
             "h2".to_string(),
             "doc1".to_string(),
@@ -252,31 +241,25 @@ mod tests {
             "Content 2".to_string(),
         );
 
-        let title3 = OrgTitle::new(
-            "Headline 3".to_string(),
-            2,
-            None,
-            Vec::new(),
-            None,
-        );
-        
+        let title3 = OrgTitle::new("Headline 3".to_string(), 2, None, Vec::new(), None);
+
         let headline3 = OrgHeadline::new(
             "h3".to_string(),
             "doc1".to_string(),
             title3,
             "Content 3".to_string(),
         );
-        
+
         // Set etags for the headlines
         let mut headline1_copy = headline1.clone();
         headline1_copy.etag = "etag1".to_string();
-        
+
         let mut headline2_copy = headline2.clone();
         headline2_copy.etag = "etag2".to_string();
-        
+
         let mut headline3_copy = headline3.clone();
         headline3_copy.etag = "etag3".to_string();
-        
+
         headline2_copy.children = vec![headline3_copy];
 
         let doc = OrgDocument {
@@ -440,9 +423,7 @@ mod tests {
         assert_eq!(repo.list().len(), 3);
 
         // Define a coverage function that only covers files in /monitored
-        let is_file_covered = |file_path: &str| {
-            file_path.starts_with("/monitored")
-        };
+        let is_file_covered = |file_path: &str| file_path.starts_with("/monitored");
 
         // Prune uncovered documents
         let removed_ids = repo.prune_uncovered_documents(is_file_covered);
@@ -505,7 +486,7 @@ mod tests {
         // This test simulates the exact scenario described in Issue #16:
         // When monitored paths are removed or parsing is disabled, the corresponding
         // documents should be removed from the repository
-        
+
         let mut repo = OrgDocumentRepository::new();
 
         // Setup: Add documents that would be monitored under different configurations
@@ -564,9 +545,7 @@ mod tests {
         assert_eq!(repo.list().len(), 3);
 
         // Scenario 2: Only /monitored path is covered (simulate removing other paths)
-        let only_monitored_covered = |file_path: &str| {
-            file_path.starts_with("/monitored")
-        };
+        let only_monitored_covered = |file_path: &str| file_path.starts_with("/monitored");
         let removed_ids = repo.prune_uncovered_documents(only_monitored_covered);
         assert_eq!(removed_ids.len(), 2);
         assert!(removed_ids.contains(&"unmonitored_doc".to_string()));
