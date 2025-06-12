@@ -15,6 +15,7 @@
         documentCount,
         headlineCount,
         filterOptions,
+        displayMode,
         refresh,
         setFilter,
         setFocus,
@@ -147,7 +148,7 @@
     });
 </script>
 
-<div class="w-full h-full p-4">
+<div class="w-full h-full">
     {#if $error}
         <div class="w-full h-64 flex items-center justify-center">
             <div class="text-center text-red-600">Error: {$error}</div>
@@ -173,7 +174,9 @@
         {#if !$showDetailView}
             <div class="mb-6">
                 <h2 class="text-2xl font-semibold mb-2">
-                    Task List ({$headlineCount} items)
+                    {$displayMode === "task-list"
+                        ? "Task List"
+                        : "Headline List"} ({$headlineCount} items)
                 </h2>
 
                 <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
@@ -336,7 +339,7 @@
                         <Button
                             variant="ghost"
                             size="sm"
-                            on:click={() => closeQuickLook()}
+                            on:click={closeQuickLook}
                         >
                             <X class="h-4 w-4" />
                         </Button>

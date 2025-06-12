@@ -1,6 +1,6 @@
-import { writable, derived } from 'svelte/store';
-import { commands } from '$lib/bindings';
-import type { OrgDocument, OrgHeadline } from '$lib/bindings';
+import { writable, derived } from "svelte/store";
+import { commands } from "$lib/bindings";
+import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
 // Core state stores
 export const documents = writable<OrgDocument[]>([]);
@@ -17,97 +17,128 @@ export const showDetailView = writable(false);
 export const showQuickLook = writable(false);
 export const refreshTrigger = writable(0);
 
+// Display mode state
+export type DisplayMode = "task-list" | "headline-list";
+export const displayMode = writable<DisplayMode>("task-list");
+
 // Filter options constant
 export const filterOptions = ["all", "today", "week", "overdue"];
 
 // Derived state
-export const documentMap = derived(documents, ($docs) => 
-  new Map($docs.map((doc) => [doc.id, doc]))
+export const documentMap = derived(
+  documents,
+  ($docs) => new Map($docs.map((doc) => [doc.id, doc])),
 );
 
-export const allHeadlines = derived(documents, ($docs) => 
-  $docs.flatMap((doc) => doc.headlines)
+export const allHeadlines = derived(documents, ($docs) =>
+  $docs.flatMap((doc) => doc.headlines),
+);
+
+// Display mode filtered headlines
+export const displayModeFilteredHeadlines = derived(
+  [allHeadlines, displayMode],
+  ([$headlines, $mode]) => {
+    switch ($mode) {
+      case "task-list":
+        // Show all headlines with TODO keywords (tasks)
+        return $headlines.filter(
+          (headline) => headline.title.todo_keyword !== null,
+        );
+
+      case "headline-list":
+        // Show only first-level headlines
+        return $headlines.filter((headline) => headline.title.level === 1);
+
+      default:
+        return $headlines;
+    }
+  },
 );
 
 export const filteredHeadlines = derived(
-  [allHeadlines, activeFilterIndex],
+  [displayModeFilteredHeadlines, activeFilterIndex],
   ([$headlines, $filterIndex]) => {
     const filterType = filterOptions[$filterIndex];
-    
+
     switch (filterType) {
       case "today":
         return $headlines.filter((headline) => {
           const scheduled = headline.title.planning?.scheduled;
           if (!scheduled) return false;
-          
+
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
-          if ('Active' in scheduled) {
+
+          if ("Active" in scheduled) {
             const schedDate = new Date(
               scheduled.Active.start.year,
               scheduled.Active.start.month - 1,
-              scheduled.Active.start.day
+              scheduled.Active.start.day,
             );
             schedDate.setHours(0, 0, 0, 0);
             return schedDate.getTime() === today.getTime();
           }
-          
+
           return false;
         });
-        
+
       case "week":
         return $headlines.filter((headline) => {
           const scheduled = headline.title.planning?.scheduled;
           if (!scheduled) return false;
-          
+
           const today = new Date();
-          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const weekFromNow = new Date(
+            today.getTime() + 7 * 24 * 60 * 60 * 1000,
+          );
           today.setHours(0, 0, 0, 0);
           weekFromNow.setHours(23, 59, 59, 999);
-          
-          if ('Active' in scheduled) {
+
+          if ("Active" in scheduled) {
             const schedDate = new Date(
               scheduled.Active.start.year,
               scheduled.Active.start.month - 1,
-              scheduled.Active.start.day
+              scheduled.Active.start.day,
             );
             return schedDate >= today && schedDate <= weekFromNow;
           }
-          
+
           return false;
         });
-        
+
       case "overdue":
         return $headlines.filter((headline) => {
           const deadline = headline.title.planning?.deadline;
           if (!deadline) return false;
-          
+
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
-          if ('Active' in deadline) {
+
+          if ("Active" in deadline) {
             const deadlineDate = new Date(
               deadline.Active.start.year,
               deadline.Active.start.month - 1,
-              deadline.Active.start.day
+              deadline.Active.start.day,
             );
             deadlineDate.setHours(23, 59, 59, 999);
             return deadlineDate < today;
           }
-          
+
           return false;
         });
-        
+
       default: // "all"
         return $headlines;
     }
-  }
+  },
 );
 
 // Statistics derived stores
 export const documentCount = derived(documents, ($docs) => $docs.length);
-export const headlineCount = derived(allHeadlines, ($headlines) => $headlines.length);
+export const headlineCount = derived(
+  filteredHeadlines,
+  ($headlines) => $headlines.length,
+);
 
 // Action functions
 export async function refresh(): Promise<void> {
@@ -127,15 +158,17 @@ export async function refresh(): Promise<void> {
       return;
     } else if (settingsResult.status === "ok") {
       hasMonitoredPaths.set(true);
-      
+
       // Check if any monitored paths have parsing enabled
       const hasParsingEnabled = settingsResult.data.monitored_paths.some(
-        path => path.parse_enabled
+        (path) => path.parse_enabled,
       );
-      
+
       if (!hasParsingEnabled) {
         // No parsing enabled for any paths - skip loading and show empty state immediately
-        console.log("📚 No parsing enabled for any monitored paths - skipping document loading");
+        console.log(
+          "📚 No parsing enabled for any monitored paths - skipping document loading",
+        );
         loading.set(false);
         documents.set([]);
         return;
@@ -176,10 +209,7 @@ export async function refresh(): Promise<void> {
       const docsResult = await commands.getAllDocuments();
 
       if (docsResult.status === "error") {
-        console.warn(
-          `Attempt ${retryCount + 1} failed:`,
-          docsResult.error,
-        );
+        console.warn(`Attempt ${retryCount + 1} failed:`, docsResult.error);
         retryCount++;
         if (retryCount >= maxRetries) {
           error.set(docsResult.error);
@@ -212,7 +242,7 @@ export async function refresh(): Promise<void> {
 
     documents.set(docs);
     console.log(
-      `✅ Loaded ${docs.length} documents, ${docs.flatMap(doc => doc.headlines).length} headlines`,
+      `✅ Loaded ${docs.length} documents, ${docs.flatMap((doc) => doc.headlines).length} headlines`,
     );
     loading.set(false);
   } catch (err) {
@@ -230,8 +260,14 @@ export function setFilter(filterIndex: number): void {
 }
 
 export function cycleFilter(): void {
-  activeFilterIndex.update(index => (index + 1) % filterOptions.length);
+  activeFilterIndex.update((index) => (index + 1) % filterOptions.length);
   focusedIndex.set(-1); // Reset focus when filter changes
+}
+
+export function setDisplayMode(mode: DisplayMode): void {
+  displayMode.set(mode);
+  focusedIndex.set(-1); // Reset focus when display mode changes
+  showQuickActions.set(false);
 }
 
 export function setFocus(index: number): void {
@@ -241,10 +277,12 @@ export function setFocus(index: number): void {
 
 export function moveFocusDown(): void {
   let currentFiltered: OrgHeadline[] = [];
-  const unsubscribe = filteredHeadlines.subscribe(value => { currentFiltered = value; });
+  const unsubscribe = filteredHeadlines.subscribe((value) => {
+    currentFiltered = value;
+  });
   unsubscribe();
-  
-  focusedIndex.update(current => {
+
+  focusedIndex.update((current) => {
     if (currentFiltered.length > 0) {
       return Math.min(current + 1, currentFiltered.length - 1);
     }
@@ -254,12 +292,12 @@ export function moveFocusDown(): void {
 }
 
 export function moveFocusUp(): void {
-  focusedIndex.update(current => Math.max(current - 1, -1));
+  focusedIndex.update((current) => Math.max(current - 1, -1));
   showQuickActions.set(false);
 }
 
 export function toggleQuickActions(): void {
-  showQuickActions.update(show => !show);
+  showQuickActions.update((show) => !show);
 }
 
 export function hideQuickActions(): void {
@@ -280,7 +318,7 @@ export function closeDetailView(): void {
 }
 
 export function toggleQuickLook(headline?: OrgHeadline): void {
-  showQuickLook.update(show => {
+  showQuickLook.update((show) => {
     if (!show && headline) {
       selectedHeadline.set(headline);
       showDetailView.set(false);
@@ -299,20 +337,29 @@ export function closeQuickLook(): void {
 }
 
 export async function handleQuickAction(
-  action: "view" | "mark-done" | "priority-up" | "priority-down" | "open-editor", 
-  headline?: OrgHeadline
+  action:
+    | "view"
+    | "mark-done"
+    | "priority-up"
+    | "priority-down"
+    | "open-editor",
+  headline?: OrgHeadline,
 ): Promise<void> {
   let headlineValue: OrgHeadline | null = headline || null;
-  
+
   if (!headline) {
-    const unsubscribe = selectedHeadline.subscribe(value => { headlineValue = value; });
+    const unsubscribe = selectedHeadline.subscribe((value) => {
+      headlineValue = value;
+    });
     unsubscribe();
   }
 
   if (!headlineValue) return;
 
   let documentsValue: OrgDocument[] = [];
-  const unsubscribe = documents.subscribe(value => { documentsValue = value; });
+  const unsubscribe = documents.subscribe((value) => {
+    documentsValue = value;
+  });
   unsubscribe();
 
   switch (action) {
@@ -358,7 +405,7 @@ export function exposeGlobalRefresh(): void {
 }
 
 export function triggerRefresh(): void {
-  refreshTrigger.update(n => n + 1);
+  refreshTrigger.update((n) => n + 1);
 }
 
 // Export store object for backwards compatibility
@@ -376,13 +423,18 @@ const listViewStore = {
   refreshTrigger: { subscribe: refreshTrigger.subscribe },
   documentMap: { subscribe: documentMap.subscribe },
   allHeadlines: { subscribe: allHeadlines.subscribe },
+  displayModeFilteredHeadlines: {
+    subscribe: displayModeFilteredHeadlines.subscribe,
+  },
   filteredHeadlines: { subscribe: filteredHeadlines.subscribe },
   documentCount: { subscribe: documentCount.subscribe },
   headlineCount: { subscribe: headlineCount.subscribe },
+  displayMode: { subscribe: displayMode.subscribe },
   filterOptions,
   refresh,
   setFilter,
   cycleFilter,
+  setDisplayMode,
   setFocus,
   moveFocusDown,
   moveFocusUp,
@@ -394,7 +446,7 @@ const listViewStore = {
   closeQuickLook,
   handleQuickAction,
   exposeGlobalRefresh,
-  triggerRefresh
+  triggerRefresh,
 };
 
 export default listViewStore;

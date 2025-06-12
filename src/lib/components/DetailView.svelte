@@ -2,10 +2,29 @@
     import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
     import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
+    import {
+        Breadcrumb,
+        BreadcrumbItem,
+        BreadcrumbLink,
+        BreadcrumbList,
+        BreadcrumbPage,
+        BreadcrumbSeparator,
+    } from "$lib/components/ui/breadcrumb";
     import { cn } from "$lib/utils";
 
-    // Props definition using Svelte 5 runes
-    const { headline = null } = $props<{ headline: OrgHeadline | null }>();
+    // Enhanced props definition using Svelte 5 runes - supports recursive navigation
+    const {
+        headline = null,
+        parentChain = [],
+        onBreadcrumbClick = null,
+    } = $props<{
+        headline: OrgHeadline | null;
+        parentChain?: OrgHeadline[]; // For breadcrumb navigation
+        onBreadcrumbClick?: ((index: number) => void) | null; // Callback for breadcrumb navigation
+    }>();
+
+    // State for recursive navigation
+    let selectedChild: OrgHeadline | null = $state(null);
 
     // Helper function to format OrgTimestamp
     function formatTimestamp(timestamp: OrgTimestamp | null): string {
@@ -57,15 +76,8 @@
     // Format the content for display
     function formatContent(content: string): string {
         if (!content) return "";
-
         // Replace newlines with <br> for HTML display
         return content.replace(/\n/g, "<br>");
-    }
-
-    // Get priority display
-    function getPriority(priority: string | null): string {
-        if (!priority) return "None";
-        return priority;
     }
 
     // Get priority color class
@@ -74,13 +86,13 @@
 
         switch (priority) {
             case "A":
-                return "text-red-600";
+                return "bg-red-100 text-red-700";
             case "B":
-                return "text-orange-500";
+                return "bg-orange-100 text-orange-700";
             case "C":
-                return "text-yellow-500";
+                return "bg-yellow-100 text-yellow-700";
             default:
-                return "text-gray-500";
+                return "bg-gray-100 text-gray-700";
         }
     }
 
@@ -92,176 +104,47 @@
             "bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 border-orange-200",
         cancelled:
             "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600 border-gray-200",
+        "in-progress":
+            "bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 border-purple-200",
     };
 
     // Get badge class for TODO status
     function getTodoBadgeClass(todoKeyword: string | null): string {
         if (!todoKeyword) return "";
 
-        switch (todoKeyword.toUpperCase()) {
-            case "TODO":
-                return todoBadgeClasses.todo;
-            case "DONE":
-                return todoBadgeClasses.done;
-            case "WAITING":
-                return todoBadgeClasses.waiting;
-            case "CANCELLED":
-                return todoBadgeClasses.cancelled;
-            default:
-                return todoBadgeClasses.todo;
+        const normalized = todoKeyword.toLowerCase().replace("_", "-");
+        return (
+            todoBadgeClasses[normalized as keyof typeof todoBadgeClasses] ||
+            todoBadgeClasses.todo
+        );
+    }
+
+    // Clean title text by removing org-mode formatting
+    function cleanTitle(title: string): string {
+        return title.replace(/^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/, "");
+    }
+
+    // Handle breadcrumb navigation
+    function handleBreadcrumbClick(index: number) {
+        selectedChild = null;
+        if (onBreadcrumbClick) {
+            onBreadcrumbClick(index);
         }
     }
 
-    // Get TODO status color (kept for other usages)
-    function getTodoColorClass(todoKeyword: string | null): string {
-        if (!todoKeyword) return "";
+    // Handle child headline selection for recursive navigation
+    function handleChildView(child: OrgHeadline) {
+        selectedChild = child;
+    }
 
-        switch (todoKeyword) {
-            case "TODO":
-                return "text-blue-600";
-            case "DONE":
-                return "text-green-600";
-            case "WAITING":
-                return "text-orange-500";
-            case "CANCELLED":
-                return "text-gray-500";
-            default:
-                return "text-blue-600";
-        }
+    // Handle back navigation from recursive view
+    function handleBackFromChild() {
+        selectedChild = null;
     }
 </script>
 
 <div class="w-full h-full">
-    {#if headline}
-        <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2 flex items-center gap-2">
-                {#if headline.title.todo_keyword}
-                    <Badge
-                        class={cn(
-                            getTodoBadgeClass(headline.title.todo_keyword),
-                            headline.title.todo_keyword === "CANCELLED" &&
-                                "line-through",
-                            "text-xs font-medium",
-                        )}
-                        variant="secondary"
-                    >
-                        {headline.title.todo_keyword}
-                    </Badge>
-                {/if}
-
-                {#if headline.title.priority}
-                    <span
-                        class="px-1.5 py-0.5 font-mono rounded {getPriorityColorClass(
-                            headline.title.priority,
-                        )}"
-                    >
-                        [#{headline.title.priority}]
-                    </span>
-                {/if}
-
-                <span>
-                    {headline.title.raw.replace(
-                        /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                        "",
-                    )}
-                </span>
-            </h2>
-
-            {#if headline.title.tags && headline.title.tags.length > 0}
-                <div class="flex flex-wrap gap-1 mb-3">
-                    {#each headline.title.tags as tag}
-                        <Badge variant="secondary" class="text-xs">
-                            {tag}
-                        </Badge>
-                    {/each}
-                </div>
-            {/if}
-        </div>
-
-        {#if headline.title.planning}
-            <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
-                <h3 class="font-medium text-gray-700 mb-2">Planning</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    {#if headline.title.planning.scheduled}
-                        <div class="text-gray-500 font-medium">SCHEDULED:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.scheduled)}
-                        </div>
-                    {/if}
-
-                    {#if headline.title.planning.deadline}
-                        <div class="text-gray-500 font-medium">DEADLINE:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.deadline)}
-                        </div>
-                    {/if}
-
-                    {#if headline.title.planning.closed}
-                        <div class="text-gray-500 font-medium">CLOSED:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.closed)}
-                        </div>
-                    {/if}
-                </div>
-            </div>
-        {/if}
-
-        {#if Object.keys(headline.title.properties).length > 0}
-            <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
-                <h3 class="font-medium text-gray-700 mb-2">Properties</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    {#each Object.entries(headline.title.properties) as [key, value]}
-                        <div class="text-gray-500 font-medium">{key}:</div>
-                        <div class="text-gray-800 col-span-2">{value}</div>
-                    {/each}
-                </div>
-            </div>
-        {/if}
-
-        {#if headline.content && headline.content.trim()}
-            <div class="mb-4">
-                <h3 class="text-md font-medium mb-2 text-gray-700">Content</h3>
-                <div
-                    class="prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
-                >
-                    {@html formatContent(headline.content)}
-                </div>
-            </div>
-        {/if}
-
-        {#if headline.children && headline.children.length > 0}
-            <div>
-                <h3 class="text-md font-medium mb-2 text-gray-700">
-                    Subtasks ({headline.children.length})
-                </h3>
-                <ul class="list-disc pl-5 space-y-2">
-                    {#each headline.children as child}
-                        <li class="text-sm">
-                            {#if child.title.todo_keyword}
-                                <Badge
-                                    class={cn(
-                                        getTodoBadgeClass(
-                                            child.title.todo_keyword,
-                                        ),
-                                        child.title.todo_keyword ===
-                                            "CANCELLED" && "line-through",
-                                        "text-xs font-medium",
-                                    )}
-                                    variant="secondary"
-                                >
-                                    {child.title.todo_keyword}
-                                </Badge>
-                            {/if}
-                            {child.title.raw.replace(
-                                /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                "",
-                            )}
-                        </li>
-                    {/each}
-                </ul>
-            </div>
-        {/if}
-    {:else}
+    {#if !headline}
         <div
             class="flex flex-col items-center justify-center py-12 text-gray-500"
         >
@@ -279,7 +162,264 @@
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
             </svg>
-            <p>Select a task to view details</p>
+            <p class="text-gray-400 text-center">
+                Select a task/headline to view details
+            </p>
+        </div>
+    {:else if selectedChild}
+        <!-- Recursive DetailView for selected child -->
+        <svelte:self
+            headline={selectedChild}
+            parentChain={[...parentChain, headline]}
+            onBreadcrumbClick={(index: number) => {
+                if (index === parentChain.length) {
+                    // Clicked on current headline, go back to main view
+                    handleBackFromChild();
+                } else {
+                    // Clicked on parent breadcrumb, propagate up
+                    handleBreadcrumbClick(index);
+                }
+            }}
+        />
+    {:else}
+        <!-- Main detail view -->
+        <div class="space-y-4">
+            <!-- Breadcrumb Navigation -->
+            {#if parentChain.length > 0}
+                <Breadcrumb class="mb-4">
+                    <BreadcrumbList>
+                        {#each parentChain as parent, i}
+                            <BreadcrumbItem>
+                                <BreadcrumbLink
+                                    href="#"
+                                    onclick={(e) => {
+                                        e.preventDefault();
+                                        handleBreadcrumbClick(i);
+                                    }}
+                                    class="hover:text-blue-600"
+                                >
+                                    {cleanTitle(parent.title.raw)}
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                        {/each}
+                        <BreadcrumbItem>
+                            <BreadcrumbPage class="font-medium">
+                                {cleanTitle(headline.title.raw)}
+                            </BreadcrumbPage>
+                        </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            {/if}
+
+            <!-- Headline Title, Status, Priority, Tags -->
+            <div class="flex items-center gap-2 mb-2">
+                {#if headline.title.todo_keyword}
+                    <Badge
+                        class={cn(
+                            getTodoBadgeClass(headline.title.todo_keyword),
+                            headline.title.todo_keyword === "CANCELLED" &&
+                                "line-through",
+                            "text-xs font-medium",
+                        )}
+                        variant="secondary"
+                    >
+                        {headline.title.todo_keyword}
+                    </Badge>
+                {/if}
+
+                {#if headline.title.priority}
+                    <span
+                        class="px-1.5 py-0.5 font-mono rounded text-xs {getPriorityColorClass(
+                            headline.title.priority,
+                        )}"
+                    >
+                        [#{headline.title.priority}]
+                    </span>
+                {/if}
+
+                <span class="font-semibold text-lg">
+                    {cleanTitle(headline.title.raw)}
+                </span>
+
+                {#if headline.title.tags && headline.title.tags.length > 0}
+                    <span class="flex gap-1">
+                        {#each headline.title.tags as tag}
+                            <Badge variant="default" class="text-xs">
+                                {tag}
+                            </Badge>
+                        {/each}
+                    </span>
+                {/if}
+            </div>
+
+            <!-- Properties -->
+            {#if Object.keys(headline.title.properties).length > 0}
+                <div class="mb-2 grid grid-cols-3 gap-2">
+                    {#each Object.entries(headline.title.properties) as [key, value]}
+                        <div class="text-gray-500 font-medium">{key}:</div>
+                        <div class="text-gray-800 col-span-2">{value}</div>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- Planning Information -->
+            {#if headline.title.planning}
+                <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
+                    <h3 class="font-medium text-gray-700 mb-2">Planning</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        {#if headline.title.planning.scheduled}
+                            <div class="text-gray-500 font-medium">
+                                SCHEDULED:
+                            </div>
+                            <div class="text-gray-800 col-span-2">
+                                {formatTimestamp(
+                                    headline.title.planning.scheduled,
+                                )}
+                            </div>
+                        {/if}
+
+                        {#if headline.title.planning.deadline}
+                            <div class="text-gray-500 font-medium">
+                                DEADLINE:
+                            </div>
+                            <div class="text-gray-800 col-span-2">
+                                {formatTimestamp(
+                                    headline.title.planning.deadline,
+                                )}
+                            </div>
+                        {/if}
+
+                        {#if headline.title.planning.closed}
+                            <div class="text-gray-500 font-medium">CLOSED:</div>
+                            <div class="text-gray-800 col-span-2">
+                                {formatTimestamp(
+                                    headline.title.planning.closed,
+                                )}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Content (displayed above child headlines table as per requirements) -->
+            {#if headline.content && headline.content.trim()}
+                <div
+                    class="mb-4 prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
+                >
+                    {@html formatContent(headline.content)}
+                </div>
+            {/if}
+
+            <!-- Table of Child Headlines (if any) -->
+            {#if headline.children && headline.children.length > 0}
+                <div class="mt-6">
+                    <h3 class="mb-2 font-medium text-gray-700">
+                        Subtasks / Child Headlines ({headline.children.length})
+                    </h3>
+                    <div class="border rounded-md">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 border-b">
+                                    <th class="text-left p-3 font-medium"
+                                        >Title</th
+                                    >
+                                    <th class="text-left p-3 font-medium"
+                                        >Status</th
+                                    >
+                                    <th class="text-left p-3 font-medium"
+                                        >Priority</th
+                                    >
+                                    <th class="text-left p-3 font-medium"
+                                        >Action</th
+                                    >
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {#each headline.children as child, index}
+                                    <tr
+                                        class="border-b last:border-b-0 hover:bg-gray-50"
+                                    >
+                                        <td class="p-3">
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
+                                                <span class="font-medium">
+                                                    {cleanTitle(
+                                                        child.title.raw,
+                                                    )}
+                                                </span>
+                                                {#if child.title.tags && child.title.tags.length > 0}
+                                                    <span class="flex gap-1">
+                                                        {#each child.title.tags as tag}
+                                                            <Badge
+                                                                variant="outline"
+                                                                class="text-xs"
+                                                            >
+                                                                {tag}
+                                                            </Badge>
+                                                        {/each}
+                                                    </span>
+                                                {/if}
+                                            </div>
+                                        </td>
+                                        <td class="p-3">
+                                            {#if child.title.todo_keyword}
+                                                <Badge
+                                                    class={cn(
+                                                        getTodoBadgeClass(
+                                                            child.title
+                                                                .todo_keyword,
+                                                        ),
+                                                        child.title
+                                                            .todo_keyword ===
+                                                            "CANCELLED" &&
+                                                            "line-through",
+                                                        "text-xs",
+                                                    )}
+                                                    variant="secondary"
+                                                >
+                                                    {child.title.todo_keyword}
+                                                </Badge>
+                                            {:else}
+                                                <span class="text-gray-400"
+                                                    >—</span
+                                                >
+                                            {/if}
+                                        </td>
+                                        <td class="p-3">
+                                            {#if child.title.priority}
+                                                <span
+                                                    class="px-1.5 py-0.5 font-mono rounded text-xs {getPriorityColorClass(
+                                                        child.title.priority,
+                                                    )}"
+                                                >
+                                                    [#{child.title.priority}]
+                                                </span>
+                                            {:else}
+                                                <span class="text-gray-400"
+                                                    >—</span
+                                                >
+                                            {/if}
+                                        </td>
+                                        <td class="p-3">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                class="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                onclick={() =>
+                                                    handleChildView(child)}
+                                            >
+                                                View
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {/if}
         </div>
     {/if}
 </div>
