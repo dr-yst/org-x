@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { get } from 'svelte/store';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { get } from "svelte/store";
 import {
   documents,
   loading,
@@ -12,13 +12,16 @@ import {
   showDetailView,
   showQuickLook,
   filteredHeadlines,
+  displayModeFilteredHeadlines,
   documentCount,
   headlineCount,
   filterOptions,
+  displayMode,
+  setDisplayMode,
   refresh,
   setFilter,
-  cycleFilter,
   setFocus,
+  cycleFilter,
   moveFocusDown,
   moveFocusUp,
   toggleQuickActions,
@@ -30,51 +33,83 @@ import {
   handleQuickAction,
   exposeGlobalRefresh,
   triggerRefresh,
-  refreshTrigger
-} from '../listview.store';
-import type { OrgDocument, OrgHeadline } from '$lib/bindings';
+  refreshTrigger,
+} from "../listview.store";
+import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
 // Mock the commands module
-vi.mock('$lib/bindings', () => ({
+vi.mock("$lib/bindings", () => ({
   commands: {
     loadUserSettings: vi.fn(),
     startFileMonitoring: vi.fn(),
-    getAllDocuments: vi.fn()
-  }
+    getAllDocuments: vi.fn(),
+  },
 }));
 
 // Mock data
 const mockDocument: OrgDocument = {
-  id: 'doc-1',
-  title: 'Test Document',
-  content: 'Test content',
+  id: "doc-1",
+  title: "Test Document",
+  content: "Test content",
   headlines: [
     {
-      id: 'headline-1',
-      document_id: 'doc-1',
+      id: "headline-1",
+      document_id: "doc-1",
       title: {
-        raw: 'Test Headline',
+        raw: "Test Headline",
         level: 1,
         priority: null,
         tags: [],
-        todo_keyword: 'TODO',
+        todo_keyword: "TODO",
         properties: {},
-        planning: null
+        planning: null,
       },
-      content: 'Test headline content',
+      content: "Test headline content",
       children: [],
-      etag: 'test-etag'
-    }
+      etag: "test-etag",
+    },
+    {
+      id: "headline-2",
+      document_id: "doc-1",
+      title: {
+        raw: "Level 2 Headline",
+        level: 2,
+        priority: null,
+        tags: [],
+        todo_keyword: null,
+        properties: {},
+        planning: null,
+      },
+      content: "Level 2 content",
+      children: [],
+      etag: "test-etag-2",
+    },
+    {
+      id: "headline-3",
+      document_id: "doc-1",
+      title: {
+        raw: "Another Task",
+        level: 1,
+        priority: null,
+        tags: [],
+        todo_keyword: "DONE",
+        properties: {},
+        planning: null,
+      },
+      content: "Completed task content",
+      children: [],
+      etag: "test-etag-3",
+    },
   ],
   filetags: [],
-  file_path: '/test/path.org',
+  file_path: "/test/path.org",
   properties: {},
-  category: 'test',
-  etag: 'doc-etag',
-  todo_config: null
+  category: "test",
+  etag: "doc-etag",
+  todo_config: null,
 };
 
-describe('ListView Store', () => {
+describe("ListView Store", () => {
   beforeEach(() => {
     // Reset store state before each test
     documents.set([]);
@@ -89,8 +124,8 @@ describe('ListView Store', () => {
     showQuickLook.set(false);
   });
 
-  describe('Store State', () => {
-    it('should have initial state', () => {
+  describe("Store State", () => {
+    it("should have initial state", () => {
       expect(get(documents)).toEqual([]);
       expect(get(loading)).toBe(true);
       expect(get(error)).toBe(null);
@@ -103,26 +138,26 @@ describe('ListView Store', () => {
       expect(get(showQuickLook)).toBe(false);
     });
 
-    it('should skip loading when all parsing is disabled', async () => {
-      const { commands } = await import('$lib/bindings');
-      
+    it("should skip loading when all parsing is disabled", async () => {
+      const { commands } = await import("$lib/bindings");
+
       // Mock settings with monitored paths but all parsing disabled
       vi.mocked(commands.loadUserSettings).mockResolvedValue({
-        status: 'ok',
+        status: "ok",
         data: {
           monitored_paths: [
             {
-              path: '/test/path1.org',
-              path_type: 'File',
-              parse_enabled: false
+              path: "/test/path1.org",
+              path_type: "File",
+              parse_enabled: false,
             },
             {
-              path: '/test/path2',
-              path_type: 'Directory', 
-              parse_enabled: false
-            }
-          ]
-        }
+              path: "/test/path2",
+              path_type: "Directory",
+              parse_enabled: false,
+            },
+          ],
+        },
       });
 
       await refresh();
@@ -131,78 +166,137 @@ describe('ListView Store', () => {
       expect(get(loading)).toBe(false);
       expect(get(documents)).toEqual([]);
       expect(get(hasMonitoredPaths)).toBe(true);
-      
+
       // Should not have called document loading commands
       expect(commands.startFileMonitoring).not.toHaveBeenCalled();
       expect(commands.getAllDocuments).not.toHaveBeenCalled();
     });
 
-    it('should update documents and derived state', () => {
+    it("should update documents and derived state", () => {
       documents.set([mockDocument]);
-      
+
       expect(get(documents)).toEqual([mockDocument]);
       expect(get(documentCount)).toBe(1);
-      expect(get(headlineCount)).toBe(1);
+      expect(get(headlineCount)).toBe(2); // Should count filtered headlines
     });
 
-    it('should filter headlines correctly', () => {
+    it("should filter headlines correctly", () => {
       documents.set([mockDocument]);
-      
-      // Test "all" filter
+
+      // Test "all" filter with default task-list mode (should show only headlines with TODO keywords)
       activeFilterIndex.set(0);
-      expect(get(filteredHeadlines)).toEqual(mockDocument.headlines);
-      
+      expect(get(filteredHeadlines)).toHaveLength(2); // Both TODO and DONE headlines
+      expect(get(filteredHeadlines)[0].title.todo_keyword).toBe("TODO");
+      expect(get(filteredHeadlines)[1].title.todo_keyword).toBe("DONE");
+
       // Test other filters (they should filter out our mock headline since it doesn't have proper dates)
       activeFilterIndex.set(1); // today
       expect(get(filteredHeadlines)).toEqual([]);
     });
   });
 
-  describe('Filter Actions', () => {
-    it('should set filter correctly', () => {
+  describe("Display Mode", () => {
+    beforeEach(() => {
+      documents.set([mockDocument]);
+    });
+
+    it("should have default display mode as task-list", () => {
+      expect(get(displayMode)).toBe("task-list");
+    });
+
+    it("should set display mode correctly", () => {
+      setDisplayMode("headline-list");
+      expect(get(displayMode)).toBe("headline-list");
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+      expect(get(showQuickActions)).toBe(false);
+    });
+
+    it("should filter headlines by display mode - task-list", () => {
+      // Task list mode should show only headlines with TODO keywords
+      setDisplayMode("task-list");
+      const filtered = get(displayModeFilteredHeadlines);
+      expect(filtered).toHaveLength(2);
+      expect(filtered.every((h) => h.title.todo_keyword !== null)).toBe(true);
+      expect(filtered[0].title.todo_keyword).toBe("TODO");
+      expect(filtered[1].title.todo_keyword).toBe("DONE");
+    });
+
+    it("should filter headlines by display mode - headline-list", () => {
+      // Headline list mode should show only level 1 headlines
+      setDisplayMode("headline-list");
+      const filtered = get(displayModeFilteredHeadlines);
+      expect(filtered).toHaveLength(2);
+      expect(filtered.every((h) => h.title.level === 1)).toBe(true);
+      expect(filtered[0].title.raw).toBe("Test Headline");
+      expect(filtered[1].title.raw).toBe("Another Task");
+    });
+
+    it("should apply both display mode and date filtering", () => {
+      // Set to headline-list mode
+      setDisplayMode("headline-list");
+
+      // Set to "today" filter (should filter out our mock headlines since they don't have proper dates)
+      activeFilterIndex.set(1);
+      const filtered = get(filteredHeadlines);
+      expect(filtered).toHaveLength(0);
+    });
+
+    it("should update headline count based on filtered results", () => {
+      // Task list mode
+      setDisplayMode("task-list");
+      expect(get(headlineCount)).toBe(2); // Only headlines with TODO keywords
+
+      // Headline list mode
+      setDisplayMode("headline-list");
+      expect(get(headlineCount)).toBe(2); // Only level 1 headlines
+    });
+  });
+
+  describe("Filter Actions", () => {
+    it("should set filter correctly", () => {
       setFilter(2);
       expect(get(activeFilterIndex)).toBe(2);
       expect(get(focusedIndex)).toBe(-1); // Should reset focus
     });
 
-    it('should cycle filter correctly', () => {
+    it("should cycle filter correctly", () => {
       activeFilterIndex.set(0);
       cycleFilter();
       expect(get(activeFilterIndex)).toBe(1);
-      
+
       activeFilterIndex.set(3);
       cycleFilter();
       expect(get(activeFilterIndex)).toBe(0); // Should wrap around
     });
 
-    it('should not set invalid filter index', () => {
+    it("should not set invalid filter index", () => {
       setFilter(-1);
       expect(get(activeFilterIndex)).toBe(0); // Should remain unchanged
-      
+
       setFilter(10);
       expect(get(activeFilterIndex)).toBe(0); // Should remain unchanged
     });
   });
 
-  describe('Focus Actions', () => {
+  describe("Focus Actions", () => {
     beforeEach(() => {
       documents.set([mockDocument]);
     });
 
-    it('should set focus correctly', () => {
+    it("should set focus correctly", () => {
       setFocus(0);
       expect(get(focusedIndex)).toBe(0);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should move focus down', () => {
+    it("should move focus down", () => {
       focusedIndex.set(-1);
       moveFocusDown();
       expect(get(focusedIndex)).toBe(0);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should move focus up', () => {
+    it("should move focus up", () => {
       focusedIndex.set(0);
       moveFocusUp();
       expect(get(focusedIndex)).toBe(-1);
@@ -210,130 +304,136 @@ describe('ListView Store', () => {
     });
   });
 
-  describe('Quick Actions', () => {
-    it('should toggle quick actions', () => {
+  describe("Quick Actions", () => {
+    it("should toggle quick actions", () => {
       toggleQuickActions();
       expect(get(showQuickActions)).toBe(true);
-      
+
       toggleQuickActions();
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should hide quick actions', () => {
+    it("should hide quick actions", () => {
       showQuickActions.set(true);
       hideQuickActions();
       expect(get(showQuickActions)).toBe(false);
     });
   });
 
-  describe('Detail View Actions', () => {
-    it('should open detail view', () => {
+  describe("Detail View Actions", () => {
+    it("should open detail view", () => {
       const headline = mockDocument.headlines[0];
       openDetailView(headline);
-      
+
       expect(get(selectedHeadline)).toBe(headline);
       expect(get(showDetailView)).toBe(true);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should close detail view', () => {
+    it("should close detail view", () => {
       selectedHeadline.set(mockDocument.headlines[0]);
       showDetailView.set(true);
-      
+
       closeDetailView();
-      
+
       expect(get(selectedHeadline)).toBe(null);
       expect(get(showDetailView)).toBe(false);
     });
   });
 
-  describe('Quick Look Actions', () => {
-    it('should toggle quick look', () => {
+  describe("Quick Look Actions", () => {
+    it("should toggle quick look", () => {
       const headline = mockDocument.headlines[0];
       toggleQuickLook(headline);
-      
+
       expect(get(selectedHeadline)).toBe(headline);
       expect(get(showQuickLook)).toBe(true);
       expect(get(showDetailView)).toBe(false);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should close quick look', () => {
+    it("should close quick look", () => {
       selectedHeadline.set(mockDocument.headlines[0]);
       showQuickLook.set(true);
-      
+
       closeQuickLook();
-      
+
       expect(get(selectedHeadline)).toBe(null);
       expect(get(showQuickLook)).toBe(false);
     });
   });
 
-  describe('Constants', () => {
-    it('should have correct filter options', () => {
-      expect(filterOptions).toEqual(['all', 'today', 'week', 'overdue']);
+  describe("Constants", () => {
+    it("should have correct filter options", () => {
+      expect(filterOptions).toEqual(["all", "today", "week", "overdue"]);
     });
   });
 
-  describe('Global Functions', () => {
-    it('should expose global refresh function', () => {
+  describe("Global Functions", () => {
+    it("should expose global refresh function", () => {
       const mockWindow = { refreshListView: undefined };
       global.window = mockWindow as any;
-      
+
       exposeGlobalRefresh();
-      
+
       expect(mockWindow.refreshListView).toBe(refresh);
     });
 
-    it('should trigger refresh', () => {
+    it("should trigger refresh", () => {
       const initialValue = get(refreshTrigger);
       triggerRefresh();
       expect(get(refreshTrigger)).toBe(initialValue + 1);
     });
   });
 
-  describe('Handle Quick Action', () => {
+  describe("Handle Quick Action", () => {
     beforeEach(() => {
       documents.set([mockDocument]);
       selectedHeadline.set(mockDocument.headlines[0]);
     });
 
-    it('should handle view action', async () => {
-      await handleQuickAction('view');
-      
+    it("should handle view action", async () => {
+      await handleQuickAction("view");
+
       expect(get(showDetailView)).toBe(true);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should handle mark-done action', async () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-      
-      await handleQuickAction('mark-done');
-      
-      expect(consoleSpy).toHaveBeenCalledWith('Mark as done:', 'headline-1');
+    it("should handle mark-done action", async () => {
+      const consoleSpy = vi.spyOn(console, "log");
+
+      await handleQuickAction("mark-done");
+
+      expect(consoleSpy).toHaveBeenCalledWith("Mark as done:", "headline-1");
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it('should handle priority actions', async () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-      
-      await handleQuickAction('priority-up');
-      expect(consoleSpy).toHaveBeenCalledWith('Increase priority:', 'headline-1');
-      
-      await handleQuickAction('priority-down');
-      expect(consoleSpy).toHaveBeenCalledWith('Decrease priority:', 'headline-1');
-      
-      expect(get(showQuickActions)).toBe(false);
-    });
+    it("should handle priority actions", async () => {
+      const consoleSpy = vi.spyOn(console, "log");
 
-    it('should handle open-editor action', async () => {
-      const consoleSpy = vi.spyOn(console, 'log');
-      
-      await handleQuickAction('open-editor');
-      
+      await handleQuickAction("priority-up");
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Opening file in external editor:',
-        '/test/path.org'
+        "Increase priority:",
+        "headline-1",
+      );
+
+      await handleQuickAction("priority-down");
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Decrease priority:",
+        "headline-1",
+      );
+
+      expect(get(showQuickActions)).toBe(false);
+    });
+
+    it("should handle open-editor action", async () => {
+      const consoleSpy = vi.spyOn(console, "log");
+
+      await handleQuickAction("open-editor");
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Opening file in external editor:",
+        "/test/path.org",
       );
       expect(get(showQuickActions)).toBe(false);
     });
