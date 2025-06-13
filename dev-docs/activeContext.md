@@ -19,6 +19,19 @@ The project is focused on developing the MVP centered around the task list view 
   - Table Interaction and Keyboard Navigation (Issue #6)
   - Filter Controls (Issue #7)
   - Backend Connection and Data Integration (Issue #8)
+
+### Recently Completed
+- ✅ **COMPLETED Issue #25: Shared Recursive Detail View for Headlines and Tasks**
+  - ✅ Phase 1: Backend TODO Keywords API with hardcoded keywords and state type distinction
+  - ✅ Phase 2: Enhanced DetailView.svelte with recursive navigation support
+  - ✅ Phase 3: Display Mode Integration with shadcn-svelte Tabs (Task List & Headline List)
+  - ✅ Breadcrumb navigation using shadcn-svelte components
+  - ✅ Infinite recursion support with parent chain tracking
+  - ✅ Content displayed above child headlines table as required
+  - ✅ Professional table format replaced with HeadlinesList component for consistency
+  - ✅ Visual consistency between main list and detail view child tables
+  - ✅ Fixed back button functionality and recursive navigation
+  - ✅ All acceptance criteria met: infinite hierarchy, both display modes, intuitive navigation
 - ✅ **COMPLETED Issue #20: MVVM Refactor of ListView**
   - ✅ Created `src/lib/viewmodels/listview.store.ts` with complete business logic separation
   - ✅ Moved all Tauri command calls (getAllDocuments, loadUserSettings, startFileMonitoring) to store
