@@ -148,7 +148,32 @@
 </script>
 
 <div class="w-full h-full">
-    {#if $error}
+    {#if $showDetailView}
+        <!-- Main DetailView when showDetailView is true -->
+        <div class="space-y-4 p-4">
+            <!-- Back button -->
+            <div class="flex items-center gap-2 mb-4">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onclick={() => closeDetailView()}
+                    class="flex items-center gap-2"
+                >
+                    <ChevronLeft class="h-4 w-4" />
+                    Back to {$displayMode === "task-list"
+                        ? "Task List"
+                        : "Headline List"}
+                </Button>
+            </div>
+
+            <!-- DetailView component -->
+            <DetailView
+                headline={$selectedHeadline}
+                parentChain={[]}
+                onBreadcrumbClick={null}
+            />
+        </div>
+    {:else if $error}
         <div class="w-full h-64 flex items-center justify-center">
             <div class="text-center text-red-600">Error: {$error}</div>
         </div>
@@ -170,183 +195,131 @@
             </div>
         </div>
     {:else if $documentCount > 0}
-        {#if !$showDetailView}
-            <div class="mb-6">
-                <h2 class="text-2xl font-semibold mb-2">
-                    {$displayMode === "task-list"
-                        ? "Task List"
-                        : "Headline List"} ({$headlineCount} items)
-                </h2>
+        <div class="mb-6">
+            <h2 class="text-2xl font-semibold mb-2">
+                {$displayMode === "task-list" ? "Task List" : "Headline List"} ({$headlineCount}
+                items)
+            </h2>
 
-                <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                    <div class="flex items-center gap-1">
-                        <File class="h-4 w-4" />
-                        <span>
-                            {$documentCount} document{$documentCount === 1
-                                ? ""
-                                : "s"}
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <Tag class="h-4 w-4" />
-                        <span>{$headlineCount} headlines</span>
-                    </div>
+            <div class="flex items-center gap-4 mb-4 text-sm text-gray-600">
+                <div class="flex items-center gap-1">
+                    <File class="h-4 w-4" />
+                    <span>
+                        {$documentCount} document{$documentCount === 1
+                            ? ""
+                            : "s"}
+                    </span>
                 </div>
-
-                {#if $documentCount > 1}
-                    <div class="mb-4">
-                        <h3 class="text-sm font-medium text-gray-700 mb-2">
-                            Documents:
-                        </h3>
-                        <div class="flex flex-wrap gap-2">
-                            {#each $documents as doc}
-                                <Badge variant="outline" class="text-xs">
-                                    {doc.title}
-                                </Badge>
-                            {/each}
-                        </div>
-                    </div>
-                {/if}
+                <div class="flex items-center gap-1">
+                    <Tag class="h-4 w-4" />
+                    <span>{$headlineCount} headlines</span>
+                </div>
             </div>
-        {/if}
 
-        <div class={$showDetailView ? "" : "w-full min-w-0 flex-1"}>
-            {#if !$showDetailView}
-                <div class="mb-4 flex flex-col gap-2">
-                    <h3 class="text-xl font-semibold text-gray-800">
-                        Keyboard Shortcuts
+            {#if $documentCount > 1}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">
+                        Documents:
                     </h3>
-                    <p class="text-sm text-gray-600">
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >j/↓</kbd
-                        >
-                        Move down •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >k/↑</kbd
-                        >
-                        Move up •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >f</kbd
-                        >
-                        Filter •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >.</kbd
-                        >
-                        Actions •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >Enter/o</kbd
-                        >
-                        Open •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >Space</kbd
-                        >
-                        Quick Look •
-                        <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
-                            >Esc</kbd
-                        > Close
-                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        {#each $documents as doc}
+                            <Badge variant="outline" class="text-xs">
+                                {doc.title}
+                            </Badge>
+                        {/each}
+                    </div>
                 </div>
             {/if}
+        </div>
+
+        <div class="w-full min-w-0 flex-1">
+            <div class="mb-4 flex flex-col gap-2">
+                <h3 class="text-xl font-semibold text-gray-800">
+                    Keyboard Shortcuts
+                </h3>
+                <p class="text-sm text-gray-600">
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">j/↓</kbd>
+                    Move down •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">k/↑</kbd>
+                    Move up •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">f</kbd>
+                    Filter •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">.</kbd>
+                    Actions •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
+                        >Enter/o</kbd
+                    >
+                    Open •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
+                        >Space</kbd
+                    >
+                    Quick Look •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">Esc</kbd>
+                    Close
+                </p>
+            </div>
 
             <div class="relative">
-                {#if !$showDetailView}
-                    <HeadlinesList
-                        headlines={$filteredHeadlines}
-                        focusedIndex={$focusedIndex}
-                        activeFilter={filterOptions[$activeFilterIndex]}
-                        on:focusChanged={(e) => setFocus(e.detail)}
-                        on:filterChanged={(e) => setFilter(e.detail)}
-                        on:headlineSelected={(e) => openDetailView(e.detail)}
-                    />
+                <HeadlinesList
+                    headlines={$filteredHeadlines}
+                    focusedIndex={$focusedIndex}
+                    activeFilter={filterOptions[$activeFilterIndex]}
+                    on:focusChanged={(e) => setFocus(e.detail)}
+                    on:filterChanged={(e) => setFilter(e.detail)}
+                    on:headlineSelected={(e) => openDetailView(e.detail)}
+                />
 
-                    {#if $focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length}
-                        <DropdownMenu open={$showQuickActions}>
-                            <DropdownMenuTrigger class="hidden">
-                                <Button variant="ghost">Actions</Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent class="w-56" align="end">
-                                <DropdownMenuLabel>
-                                    Quick Actions
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    on:click={() => handleQuickAction("view")}
-                                >
-                                    <Eye class="h-4 w-4 mr-2" />
-                                    View Details
-                                    <DropdownMenuShortcut
-                                        >Enter</DropdownMenuShortcut
-                                    >
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    on:click={() =>
-                                        handleQuickAction("open-editor")}
-                                >
-                                    <FileEdit class="h-4 w-4 mr-2" />
-                                    Open in Editor
-                                    <DropdownMenuShortcut
-                                        >e</DropdownMenuShortcut
-                                    >
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    on:click={() =>
-                                        handleQuickAction("mark-done")}
-                                >
-                                    <Check class="h-4 w-4 mr-2" />
-                                    Mark as Done
-                                    <DropdownMenuShortcut
-                                        >d</DropdownMenuShortcut
-                                    >
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    on:click={() =>
-                                        handleQuickAction("priority-up")}
-                                >
-                                    <ChevronUp class="h-4 w-4 mr-2" />
-                                    Increase Priority
-                                    <DropdownMenuShortcut
-                                        >+</DropdownMenuShortcut
-                                    >
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    on:click={() =>
-                                        handleQuickAction("priority-down")}
-                                >
-                                    <ChevronDown class="h-4 w-4 mr-2" />
-                                    Decrease Priority
-                                    <DropdownMenuShortcut
-                                        >-</DropdownMenuShortcut
-                                    >
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    {/if}
-                {:else}
-                    <!-- Main DetailView when showDetailView is true -->
-                    <div class="space-y-4">
-                        <!-- Back button -->
-                        <div class="flex items-center gap-2 mb-4">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                on:click={closeDetailView}
-                                class="flex items-center gap-2"
+                {#if $focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length}
+                    <DropdownMenu open={$showQuickActions}>
+                        <DropdownMenuTrigger class="hidden">
+                            <Button variant="ghost">Actions</Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent class="w-56" align="end">
+                            <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                on:click={() => handleQuickAction("view")}
                             >
-                                <ChevronLeft class="h-4 w-4" />
-                                Back to {$displayMode === "task-list"
-                                    ? "Task List"
-                                    : "Headline List"}
-                            </Button>
-                        </div>
-
-                        <!-- DetailView component -->
-                        <DetailView
-                            headline={$selectedHeadline}
-                            parentChain={[]}
-                            onBreadcrumbClick={null}
-                        />
-                    </div>
+                                <Eye class="h-4 w-4 mr-2" />
+                                View Details
+                                <DropdownMenuShortcut
+                                    >Enter</DropdownMenuShortcut
+                                >
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                on:click={() =>
+                                    handleQuickAction("open-editor")}
+                            >
+                                <FileEdit class="h-4 w-4 mr-2" />
+                                Open in Editor
+                                <DropdownMenuShortcut>e</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                on:click={() => handleQuickAction("mark-done")}
+                            >
+                                <Check class="h-4 w-4 mr-2" />
+                                Mark as Done
+                                <DropdownMenuShortcut>d</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                on:click={() =>
+                                    handleQuickAction("priority-up")}
+                            >
+                                <ChevronUp class="h-4 w-4 mr-2" />
+                                Increase Priority
+                                <DropdownMenuShortcut>+</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                on:click={() =>
+                                    handleQuickAction("priority-down")}
+                            >
+                                <ChevronDown class="h-4 w-4 mr-2" />
+                                Decrease Priority
+                                <DropdownMenuShortcut>-</DropdownMenuShortcut>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 {/if}
             </div>
         </div>
