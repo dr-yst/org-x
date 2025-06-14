@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
-import ListView from "../../ListView.svelte";
+import HomeView from "../../HomeView.svelte";
 import {
   displayMode,
   documents,
@@ -105,7 +105,7 @@ const mockDocument = {
   todo_config: null,
 };
 
-describe("ListView DetailView Integration", () => {
+describe("HomeView DetailView Integration", () => {
   beforeEach(() => {
     // Reset store state
     documents.set([]);
@@ -122,7 +122,7 @@ describe("ListView DetailView Integration", () => {
     hasMonitoredPaths.set(true);
     showDetailView.set(false);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show the task list with headlines
     expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -134,10 +134,10 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
-    // Should show the DetailView with back button
-    expect(screen.getByText("Back to Task List")).toBeInTheDocument();
+    // Should show the DetailView with Home breadcrumb
+    expect(screen.getByText("Home")).toBeInTheDocument();
 
     // Should show the headline content in DetailView
     expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show the content
     expect(
@@ -165,7 +165,7 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show child headlines section
     expect(screen.getByText("Subtasks / Child Headlines")).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show properties
     expect(screen.getByText("project:")).toBeInTheDocument();
@@ -193,32 +193,32 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show tags
     expect(screen.getByText("urgent")).toBeInTheDocument();
     expect(screen.getByText("work")).toBeInTheDocument();
   });
 
-  it("should allow clicking back button to return to list view", async () => {
+  it("should allow clicking Home breadcrumb to return to list view", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
     showDetailView.set(true);
     selectedHeadline.set(mockHeadlines[0]);
 
-    render(ListView);
+    render(HomeView);
 
-    const backButton = screen.getByText("Back to Task List");
-    expect(backButton).toBeInTheDocument();
+    const homeLink = screen.getByText("Home");
+    expect(homeLink).toBeInTheDocument();
 
-    // Click the back button
-    await fireEvent.click(backButton);
+    // Click the Home breadcrumb
+    await fireEvent.click(homeLink);
 
     // Should close detail view (though we can't test store changes directly in this test)
-    expect(backButton).toBeInTheDocument();
+    expect(homeLink).toBeInTheDocument();
   });
 
-  it("should show correct back button text for different display modes", async () => {
+  it("should show Home breadcrumb for different display modes", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
     showDetailView.set(true);
@@ -227,9 +227,9 @@ describe("ListView DetailView Integration", () => {
     // Test headline-list mode
     displayMode.set("headline-list");
 
-    render(ListView);
+    render(HomeView);
 
-    expect(screen.getByText("Back to Headline List")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
   });
 
   it("should handle empty content gracefully", async () => {
@@ -243,7 +243,7 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(headlineWithoutContent);
 
-    render(ListView);
+    render(HomeView);
 
     // Should still show the headline title and other elements
     expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -260,7 +260,7 @@ describe("ListView DetailView Integration", () => {
     showDetailView.set(true);
     selectedHeadline.set(headlineWithoutChildren);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show the headline but not the children section
     expect(screen.getByText("Regular Headline")).toBeInTheDocument();

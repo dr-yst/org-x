@@ -1,10 +1,10 @@
-# ADR-006: MVVM Refactoring of ListView Component
+# ADR-006: MVVM Refactoring of HomeView Component (formerly ListView)
 
 ## Status
 Accepted and Implemented (2025-01-28)
 
 ## Context
-The ListView component had grown complex with tightly coupled business logic and view rendering. The component contained:
+The HomeView component (formerly ListView) had grown complex with tightly coupled business logic and view rendering. The component contained:
 - Direct Tauri backend command calls
 - Complex state management and data transformation logic
 - Filtering and derived state calculations
@@ -14,14 +14,14 @@ The ListView component had grown complex with tightly coupled business logic and
 This violated separation of concerns principles and made the component difficult to test, maintain, and extend.
 
 ## Decision
-Implement the MVVM (Model-View-ViewModel) pattern for the ListView component to achieve better separation of concerns and improved maintainability.
+Implement the MVVM (Model-View-ViewModel) pattern for the HomeView component to achieve better separation of concerns and improved maintainability.
 
 ### Architecture Design
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │     Model       │    │   ViewModel     │    │      View       │
 │                 │    │                 │    │                 │
-│ • OrgDocument   │◄──►│ listview.store  │◄──►│ ListView.svelte │
+│ • OrgDocument   │◄──►│ listview.store  │◄──►│ HomeView.svelte │
 │ • OrgHeadline   │    │                 │    │ HeadlinesList   │
 │ • UserSettings  │    │ • State Mgmt    │    │                 │
 │ • Tauri Types   │    │ • Business Logic│    │ • Presentation  │
@@ -31,7 +31,7 @@ Implement the MVVM (Model-View-ViewModel) pattern for the ListView component to 
 
 ### Implementation Strategy
 1. **Create ViewModel Store**: Extract all business logic to `src/lib/viewmodels/listview.store.ts`
-2. **Refactor View Components**: Make ListView.svelte and HeadlinesList.svelte purely presentational
+2. **Refactor View Components**: Make HomeView.svelte and HeadlinesList.svelte purely presentational
 3. **Maintain Functionality**: Ensure all existing features continue to work
 4. **Add Test Coverage**: Comprehensive test suite for store functionality
 
@@ -54,11 +54,12 @@ Implement the MVVM (Model-View-ViewModel) pattern for the ListView component to 
   - openDetailView, toggleQuickLook, handleQuickAction
 
 ### View Layer Refactoring
-- **ListView.svelte**: 
+- **HomeView.svelte**: 
   - Removed all business logic and backend calls
   - Now subscribes to store state reactively
   - Dispatches user interactions as store actions
   - Reduced from ~540 lines to ~290 lines
+  - Serves as the universal entry point for both task list and headline list modes
 - **HeadlinesList.svelte**:
   - Removed internal filtering logic
   - Receives pre-filtered data from store
@@ -123,4 +124,4 @@ Implement the MVVM (Model-View-ViewModel) pattern for the ListView component to 
 
 ---
 
-**This ADR documents the successful implementation of MVVM architecture for the ListView component, establishing a foundation for scalable frontend architecture in the Org-X project.**
+**This ADR documents the successful implementation of MVVM architecture for the HomeView component (formerly ListView), establishing a foundation for scalable frontend architecture in the Org-X project.**

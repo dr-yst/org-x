@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
 import { get } from "svelte/store";
-import ListView from "../../ListView.svelte";
+import HomeView from "../../HomeView.svelte";
 import {
   displayMode,
   documents,
@@ -57,7 +57,7 @@ const mockHeadline = {
   etag: "test-etag",
 };
 
-describe("ListView Manual Test - Back Button", () => {
+describe("HomeView Manual Test - Home Breadcrumb", () => {
   beforeEach(() => {
     // Reset store state
     documents.set([]);
@@ -69,45 +69,45 @@ describe("ListView Manual Test - Back Button", () => {
     selectedHeadline.set(null);
   });
 
-  it("should show DetailView and allow back navigation", async () => {
+  it("should show DetailView and allow home navigation", async () => {
     // Step 1: Set up DetailView state manually
     showDetailView.set(true);
     selectedHeadline.set(mockHeadline);
 
-    // Step 2: Render ListView
-    render(ListView);
+    // Step 2: Render HomeView
+    render(HomeView);
 
     // Step 3: Verify DetailView is showing
-    expect(screen.getByText("Back to Task List")).toBeInTheDocument();
+    expect(screen.getByText("Home")).toBeInTheDocument();
     expect(screen.getByText("Test Task")).toBeInTheDocument();
 
     // Step 4: Verify initial store state
     expect(get(showDetailView)).toBe(true);
     expect(get(selectedHeadline)).toBe(mockHeadline);
 
-    // Step 5: Click the back button
-    const backButton = screen.getByText("Back to Task List");
-    await fireEvent.click(backButton);
+    // Step 4: Click Home breadcrumb
+    const homeLink = screen.getByText("Home");
+    await fireEvent.click(homeLink);
 
     // Step 6: Check if store state changed
     expect(get(showDetailView)).toBe(false);
     expect(get(selectedHeadline)).toBe(null);
   });
 
-  it("should handle headline list mode back button", async () => {
+  it("should handle headline list mode home breadcrumb", async () => {
     // Set up headline list mode
     displayMode.set("headline-list");
     showDetailView.set(true);
     selectedHeadline.set(mockHeadline);
 
-    render(ListView);
+    render(HomeView);
 
-    // Should show correct back button text
-    expect(screen.getByText("Back to Headline List")).toBeInTheDocument();
+    // Should show Home breadcrumb regardless of mode
+    expect(screen.getByText("Home")).toBeInTheDocument();
 
-    // Click back button
-    const backButton = screen.getByText("Back to Headline List");
-    await fireEvent.click(backButton);
+    // Click Home breadcrumb
+    const homeLink = screen.getByText("Home");
+    await fireEvent.click(homeLink);
 
     // Verify state changed
     expect(get(showDetailView)).toBe(false);
@@ -118,7 +118,7 @@ describe("ListView Manual Test - Back Button", () => {
     showDetailView.set(true);
     selectedHeadline.set(mockHeadline);
 
-    render(ListView);
+    render(HomeView);
 
     // Should show headline details
     expect(screen.getByText("Test Task")).toBeInTheDocument();
@@ -134,36 +134,36 @@ describe("ListView Manual Test - Back Button", () => {
     showDetailView.set(false);
     selectedHeadline.set(null);
 
-    render(ListView);
+    render(HomeView);
 
     // Should not show DetailView elements
-    expect(screen.queryByText("Back to Task List")).not.toBeInTheDocument();
-    expect(screen.queryByText("Back to Headline List")).not.toBeInTheDocument();
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
   it("should handle state transitions correctly", async () => {
     // Start with DetailView off
     showDetailView.set(false);
 
-    const { rerender } = render(ListView);
+    const { rerender } = render(HomeView);
 
-    // Should not show back button
-    expect(screen.queryByText("Back to Task List")).not.toBeInTheDocument();
+    // Should not show Home breadcrumb
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
 
     // Turn on DetailView
     showDetailView.set(true);
     selectedHeadline.set(mockHeadline);
     await rerender({});
 
-    // Should now show back button
-    expect(screen.getByText("Back to Task List")).toBeInTheDocument();
+    // Should now show Home breadcrumb
+    expect(screen.getByText("Home")).toBeInTheDocument();
 
-    // Click back button
-    const backButton = screen.getByText("Back to Task List");
-    await fireEvent.click(backButton);
+    // Click Home breadcrumb
+    const homeLink = screen.getByText("Home");
+    await fireEvent.click(homeLink);
 
-    // Verify state changed
+    // Should close DetailView
     expect(get(showDetailView)).toBe(false);
+    expect(get(selectedHeadline)).toBe(null);
 
     // Re-render and verify UI updated
     await rerender({});

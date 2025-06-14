@@ -44,15 +44,16 @@
 
 ### Frontend Components
 - **Core UI Components**: Document viewers, headline hierarchy, content renderers
-- **Task List View**: HeadlinesList component with shadcn-svelte Table integration
+- **Home View**: HomeView component (formerly ListView) - main entry point with HeadlinesList and shadcn-svelte Table integration
 - **ViewModel Layer**: Store-based state management with business logic separation (MVVM pattern)
-- **View Components**: List, Kanban, Timeline implementations (Kanban and Timeline deferred to post-MVP)
+- **View Components**: Home, Kanban, Timeline implementations (Kanban and Timeline deferred to post-MVP)
 - **Interaction Components**: Keyboard shortcuts, command palette
 - **Filtering and Organization**: Tag filtering, category management, date-based filtering
 
 ## UI Patterns
 
-### Task List View Pattern
+### Home View Pattern
+- HomeView serves as universal entry point for both task list and headline list modes
 - shadcn-svelte Table as the primary display for tasks
 - Collapsible headline hierarchy with proper indentation
 - Table columns for TODO status, title, tags, and dates
@@ -136,7 +137,7 @@
 - **Benefits**: Reduced data transfer, better performance, lower browser memory usage
 - **Future Considerations**: Partial loading, virtualization, pagination, caching
 
-## Task List View Architecture (MVVM Implementation)
+## Home View Architecture (MVVM Implementation)
 - **MVVM Structure**:
   - **Model**: OrgDocument, OrgHeadline types from backend via tauri-specta
   - **ViewModel**: `listview.store.ts` containing all business logic and state management
@@ -145,9 +146,9 @@
     - Focus management and keyboard navigation state
     - Quick actions and UI state (detail view, quick look, etc.)
     - Derived state: filteredHeadlines, documentCount, headlineCount
-  - **View**: ListView.svelte and HeadlinesList.svelte as pure presentation layers
+  - **View**: HomeView.svelte and HeadlinesList.svelte as pure presentation layers
 - **Component Structure**:
-  - ListView.svelte: Main presentational component subscribing to store state
+  - HomeView.svelte: Main presentational component serving as universal entry point, subscribing to store state
   - HeadlinesList.svelte: Table component receiving filtered data from store
   - shadcn-svelte Table: Core UI component for displaying tasks
   - Filter controls: Button-based filtering interface dispatching to store
