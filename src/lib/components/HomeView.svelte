@@ -60,7 +60,7 @@
     import Check from "@lucide/svelte/icons/check";
     import ChevronUp from "@lucide/svelte/icons/chevron-up";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
-    import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+
     import X from "@lucide/svelte/icons/x";
 
     // Handle keyboard navigation
@@ -151,21 +151,6 @@
     {#if $showDetailView}
         <!-- Main DetailView when showDetailView is true -->
         <div class="space-y-4 p-4">
-            <!-- Back button -->
-            <div class="flex items-center gap-2 mb-4">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={() => closeDetailView()}
-                    class="flex items-center gap-2"
-                >
-                    <ChevronLeft class="h-4 w-4" />
-                    Back to {$displayMode === "task-list"
-                        ? "Task List"
-                        : "Headline List"}
-                </Button>
-            </div>
-
             <!-- DetailView component -->
             <DetailView
                 headline={$selectedHeadline}

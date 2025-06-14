@@ -12,6 +12,8 @@
     } from "$lib/components/ui/breadcrumb";
     import { cn } from "$lib/utils";
     import HeadlinesList from "$lib/components/HeadlinesList.svelte";
+    import { closeDetailView } from "$lib/viewmodels/listview.store";
+    import Home from "@lucide/svelte/icons/home";
 
     // Enhanced props definition using Svelte 5 runes - supports recursive navigation
     const {
@@ -133,6 +135,12 @@
         }
     }
 
+    // Handle Home navigation - always goes back to main ListView
+    function handleHomeClick() {
+        selectedChild = null;
+        closeDetailView();
+    }
+
     // Handle child headline selection for recursive navigation
     function handleChildSelected(event: CustomEvent<OrgHeadline>) {
         selectedChild = event.detail;
@@ -186,9 +194,23 @@
         <!-- Main detail view -->
         <div class="space-y-4">
             <!-- Breadcrumb Navigation -->
-            {#if parentChain.length > 0}
-                <Breadcrumb class="mb-4">
-                    <BreadcrumbList>
+            <Breadcrumb class="mb-4">
+                <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbLink
+                            href="#"
+                            onclick={(e) => {
+                                e.preventDefault();
+                                handleHomeClick();
+                            }}
+                            class="hover:text-blue-600 flex items-center gap-1"
+                        >
+                            <Home class="h-4 w-4" />
+                            Home
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    {#if parentChain.length > 0}
+                        <BreadcrumbSeparator />
                         {#each parentChain as parent, i}
                             <BreadcrumbItem>
                                 <BreadcrumbLink
@@ -204,14 +226,14 @@
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
                         {/each}
-                        <BreadcrumbItem>
-                            <BreadcrumbPage class="font-medium">
-                                {cleanTitle(headline.title.raw)}
-                            </BreadcrumbPage>
-                        </BreadcrumbItem>
-                    </BreadcrumbList>
-                </Breadcrumb>
-            {/if}
+                    {/if}
+                    <BreadcrumbItem>
+                        <BreadcrumbPage class="font-medium">
+                            {cleanTitle(headline.title.raw)}
+                        </BreadcrumbPage>
+                    </BreadcrumbItem>
+                </BreadcrumbList>
+            </Breadcrumb>
 
             <!-- Headline Title, Status, Priority, Tags -->
             <div class="flex items-center gap-2 mb-2">

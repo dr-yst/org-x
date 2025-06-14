@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ListView from "$lib/components/ListView.svelte";
+    import HomeView from "$lib/components/HomeView.svelte";
     import * as Tabs from "$lib/components/ui/tabs";
     import {
         displayMode,
@@ -20,11 +20,11 @@
         </Tabs.List>
 
         <Tabs.Content value="task-list">
-            <ListView />
+            <HomeView />
         </Tabs.Content>
 
         <Tabs.Content value="headline-list">
-            <ListView />
+            <HomeView />
         </Tabs.Content>
     </Tabs.Root>
 </div>
