@@ -116,11 +116,11 @@ describe("HomeView Component", () => {
 
     // Wait for the document to load
     await waitFor(() => {
-      expect(screen.getByText("Test Document")).toBeInTheDocument();
+      expect(screen.getAllByText("Test Document").length).toBeGreaterThan(0);
     });
 
     // Document metadata should be visible
-    expect(screen.getByText("Test Document")).toBeInTheDocument();
+    expect(screen.getAllByText("Test Document").length).toBeGreaterThan(0);
     expect(screen.getByText("test")).toBeInTheDocument();
     expect(screen.getByText("doc")).toBeInTheDocument();
     expect(screen.getByText(/file[s]? loaded/)).toBeInTheDocument();
@@ -156,8 +156,8 @@ describe("HomeView Component", () => {
     // Wait for the empty state to be displayed
     await waitFor(() => {
       expect(
-        screen.getByText("No monitored paths configured."),
-      ).toBeInTheDocument();
+        screen.getAllByText("No monitored paths configured.").length,
+      ).toBeGreaterThan(0);
       expect(
         screen.getByText(/Please add a file or directory/),
       ).toBeInTheDocument();

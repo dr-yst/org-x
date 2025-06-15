@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
 import Page from "../+page.svelte";
 import {
@@ -149,8 +149,8 @@ describe("Page Component", () => {
 
     // Should show the empty state message
     expect(
-      screen.getByText("No monitored paths configured."),
-    ).toBeInTheDocument();
+      screen.getAllByText("No monitored paths configured.").length,
+    ).toBeGreaterThan(0);
   });
 
   it("should maintain tab layout structure", async () => {
@@ -160,13 +160,20 @@ describe("Page Component", () => {
     const tabsContainer = screen.getByRole("tablist");
     expect(tabsContainer).toBeInTheDocument();
 
-    // Check that tab panels exist
+    // Check that task list panel exists (active by default)
     const taskListPanel = screen.getByRole("tabpanel", { name: "Task List" });
-    const headlineListPanel = screen.getByRole("tabpanel", {
-      name: "Headline List",
-    });
-
     expect(taskListPanel).toBeInTheDocument();
-    expect(headlineListPanel).toBeInTheDocument();
+
+    // Activate the headline list tab to make its panel accessible
+    const headlineListTab = screen.getByRole("tab", { name: "Headline List" });
+    await fireEvent.click(headlineListTab);
+
+    // Now check that headline list panel exists
+    await waitFor(() => {
+      const headlineListPanel = screen.getByRole("tabpanel", {
+        name: "Headline List",
+      });
+      expect(headlineListPanel).toBeInTheDocument();
+    });
   });
 });

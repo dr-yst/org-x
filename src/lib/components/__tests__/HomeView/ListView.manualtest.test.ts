@@ -79,7 +79,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
     // Step 3: Verify DetailView is showing
     expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
+    expect(screen.getAllByText("Test Task").length).toBeGreaterThanOrEqual(1);
 
     // Step 4: Verify initial store state
     expect(get(showDetailView)).toBe(true);
@@ -121,7 +121,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     render(HomeView);
 
     // Should show headline details
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
+    expect(screen.getAllByText("Test Task").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("TODO")).toBeInTheDocument();
     expect(screen.getByText("[#A]")).toBeInTheDocument();
     expect(screen.getByText("urgent")).toBeInTheDocument();

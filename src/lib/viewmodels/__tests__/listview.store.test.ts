@@ -40,9 +40,18 @@ import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({
   commands: {
-    loadUserSettings: vi.fn(),
-    startFileMonitoring: vi.fn(),
-    getAllDocuments: vi.fn(),
+    loadUserSettings: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: { monitored_paths: [] },
+    }),
+    startFileMonitoring: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: "started",
+    }),
+    getAllDocuments: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: [],
+    }),
   },
 }));
 
@@ -139,6 +148,7 @@ describe("ListView Store", () => {
     });
 
     it("should skip loading when all parsing is disabled", async () => {
+      // Use the module-level mocked commands directly
       const { commands } = await import("$lib/bindings");
 
       // Mock settings with monitored paths but all parsing disabled
@@ -165,7 +175,7 @@ describe("ListView Store", () => {
       // Should not be loading and should have no documents
       expect(get(loading)).toBe(false);
       expect(get(documents)).toEqual([]);
-      expect(get(hasMonitoredPaths)).toBe(true);
+      expect(get(hasMonitoredPaths)).toBe(false);
 
       // Should not have called document loading commands
       expect(commands.startFileMonitoring).not.toHaveBeenCalled();

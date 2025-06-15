@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
 import { get } from "svelte/store";
 import HomeView from "../../HomeView.svelte";
@@ -12,6 +12,7 @@ import {
   showDetailView,
   selectedHeadline,
   closeDetailView,
+  documentCount,
 } from "$lib/viewmodels/listview.store";
 
 // Mock the commands module
@@ -189,15 +190,17 @@ describe("HomeView Breadcrumb Home Navigation", () => {
     // Verify we're in DetailView
     expect(screen.getByText("Home")).toBeInTheDocument();
 
-    // Simulate escape key press
-    await fireEvent.keyDown(document, { key: "Escape" });
+    // Ensure loading is false so keyboard handler will process events
+    loading.set(false);
 
-    // Wait a tick for the event to be processed
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Simulate escape key press on window
+    fireEvent.keyDown(window, { key: "Escape" });
 
-    // Check if the store state was updated
-    expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    // Use waitFor to check the store state after the event
+    await waitFor(() => {
+      expect(get(showDetailView)).toBe(false);
+      expect(get(selectedHeadline)).toBe(null);
+    });
   });
 
   it("should handle breadcrumb reactivity properly", async () => {

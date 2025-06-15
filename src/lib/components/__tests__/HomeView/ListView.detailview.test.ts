@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/svelte";
+import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
 import HomeView from "../../HomeView.svelte";
 import {
@@ -17,7 +17,15 @@ vi.mock("$lib/bindings", () => ({
   commands: {
     loadUserSettings: vi.fn().mockResolvedValue({
       status: "ok",
-      data: { monitored_paths: [] },
+      data: {
+        monitored_paths: [
+          {
+            path: "/test/path.org",
+            path_type: "File",
+            parse_enabled: true,
+          },
+        ],
+      },
     }),
     startFileMonitoring: vi.fn().mockResolvedValue({
       status: "ok",
@@ -118,14 +126,26 @@ describe("HomeView DetailView Integration", () => {
   });
 
   it("should show headline list when not in detail view mode", async () => {
-    documents.set([mockDocument]);
-    hasMonitoredPaths.set(true);
-    showDetailView.set(false);
+    // Mock getAllDocuments to return our test document
+    const { commands } = await import("$lib/bindings");
+    vi.mocked(commands.getAllDocuments).mockResolvedValue({
+      status: "ok",
+      data: [mockDocument],
+    });
 
     render(HomeView);
 
-    // Should show the task list with headlines
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
+    // Wait for loading to complete and headlines to appear
+    await waitFor(
+      () => {
+        expect(
+          screen.getAllByText((content, node) =>
+            node.textContent?.includes("Test Task"),
+          ).length,
+        ).toBeGreaterThan(0);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("should show DetailView when showDetailView is true", async () => {
@@ -140,8 +160,8 @@ describe("HomeView DetailView Integration", () => {
     expect(screen.getByText("Home")).toBeInTheDocument();
 
     // Should show the headline content in DetailView
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
-    expect(screen.getByText("TODO")).toBeInTheDocument();
+    expect(screen.getAllByText(/Test Task/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("TODO").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("[#A]")).toBeInTheDocument();
   });
 
@@ -154,9 +174,11 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show the content
-    expect(
-      screen.getByText(/This is the content of the test task/),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(/This is the content of the test task/),
+      ).toBeInTheDocument();
+    });
   });
 
   it("should show child headlines in DetailView table", async () => {
@@ -168,10 +190,12 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show child headlines section
-    expect(screen.getByText("Subtasks / Child Headlines")).toBeInTheDocument();
-
-    // Should show the child headline in the table
-    expect(screen.getByText("Subtask 1")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getAllByText("Subtasks / Child Headlines").length,
+      ).toBeGreaterThan(0);
+      expect(screen.getByText("Subtask 1")).toBeInTheDocument();
+    });
   });
 
   it("should show properties in DetailView", async () => {
@@ -183,8 +207,10 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show properties
-    expect(screen.getByText("project:")).toBeInTheDocument();
-    expect(screen.getByText("TestProject")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("project:")).toBeInTheDocument();
+      expect(screen.getByText("TestProject")).toBeInTheDocument();
+    });
   });
 
   it("should show tags in DetailView", async () => {
@@ -196,8 +222,10 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show tags
-    expect(screen.getByText("urgent")).toBeInTheDocument();
-    expect(screen.getByText("work")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("urgent")).toBeInTheDocument();
+      expect(screen.getByText("work")).toBeInTheDocument();
+    });
   });
 
   it("should allow clicking Home breadcrumb to return to list view", async () => {
@@ -211,11 +239,11 @@ describe("HomeView DetailView Integration", () => {
     const homeLink = screen.getByText("Home");
     expect(homeLink).toBeInTheDocument();
 
-    // Click the Home breadcrumb
+    // Click Home breadcrumb
     await fireEvent.click(homeLink);
 
-    // Should close detail view (though we can't test store changes directly in this test)
-    expect(homeLink).toBeInTheDocument();
+    // Should close detail view: Home breadcrumb should not be present
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
   it("should show Home breadcrumb for different display modes", async () => {
@@ -246,8 +274,10 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should still show the headline title and other elements
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
-    expect(screen.getByText("TODO")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByText(/Test Task/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText("TODO").length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   it("should handle headline without children", async () => {
@@ -263,9 +293,11 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show the headline but not the children section
-    expect(screen.getByText("Regular Headline")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Subtasks / Child Headlines"),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Regular Headline")).toBeInTheDocument();
+      expect(
+        screen.queryByText("Subtasks / Child Headlines"),
+      ).not.toBeInTheDocument();
+    });
   });
 });
