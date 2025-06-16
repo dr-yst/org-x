@@ -1,7 +1,11 @@
+// DEPRECATED: This store is deprecated in favor of prop-driven DetailView
+// New implementations should use the stateless DetailView component with props
+// This file is maintained only for backward compatibility with existing tests
+
 import { writable, derived } from "svelte/store";
 import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
 
-// Core state stores
+// Core state stores - DEPRECATED
 export const currentHeadline = writable<OrgHeadline | null>(null);
 export const parentChain = writable<OrgHeadline[]>([]);
 export const selectedChild = writable<OrgHeadline | null>(null);
@@ -10,7 +14,7 @@ export const onBreadcrumbClick = writable<((index: number) => void) | null>(
   null,
 );
 
-// Derived state for formatted content
+// Derived state for formatted content - DEPRECATED
 export const formattedPlanning = derived(currentHeadline, ($headline) => {
   if (!$headline?.title?.planning) return null;
 
@@ -63,7 +67,7 @@ export const hasContent = derived(currentHeadline, ($headline) => {
   return Boolean($headline?.content && $headline.content.trim().length > 0);
 });
 
-// Helper functions for formatting (moved from component)
+// Helper functions for formatting
 function formatTimestamp(timestamp: OrgTimestamp | null): string {
   if (!timestamp) return "";
 
@@ -105,7 +109,6 @@ function formatDateFromOrgDatetime(datetime: any): string {
 
 function formatContent(content: string): string {
   if (!content) return "";
-  // Replace newlines with <br> for HTML display
   return content.replace(/\n/g, "<br>");
 }
 
@@ -146,7 +149,6 @@ function getTodoBadgeClass(todoKeyword: string | null): string {
 }
 
 function cleanTitle(title: string): string {
-  // Remove org-mode formatting: stars, TODO keywords, priorities, and tags
   let cleaned = title;
 
   // First remove leading stars and whitespace
@@ -167,7 +169,7 @@ function cleanTitle(title: string): string {
   return cleaned.trim();
 }
 
-// Action functions
+// Action functions - DEPRECATED
 export function openDetailView(
   headline: OrgHeadline,
   parentChainValue: OrgHeadline[] = [],
@@ -188,7 +190,7 @@ export function closeDetailView(): void {
   onBreadcrumbClick.set(null);
 }
 
-export function selectChild(child: OrgHeadline): void {
+export function selectChild(child: OrgHeadline | null): void {
   selectedChild.set(child);
 }
 
@@ -201,7 +203,7 @@ export function handleBreadcrumbClick(index: number): void {
   });
   unsubscribe();
 
-  if (callback) {
+  if (callback && typeof callback === "function") {
     callback(index);
   }
 }
@@ -223,15 +225,13 @@ export function handleChildBreadcrumbClick(index: number): void {
   unsubscribeParentChain();
 
   if (index === currentParentChain.length) {
-    // Clicked on current headline, go back to main view
     handleBackFromChild();
   } else {
-    // Clicked on parent breadcrumb, propagate up
     handleBreadcrumbClick(index);
   }
 }
 
-// Export store object for consistency with homeview.store pattern
+// Export store object for consistency with homeview.store pattern - DEPRECATED
 const detailViewStore = {
   currentHeadline: { subscribe: currentHeadline.subscribe },
   parentChain: { subscribe: parentChain.subscribe },

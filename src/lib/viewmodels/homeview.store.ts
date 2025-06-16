@@ -329,6 +329,7 @@ export async function handleQuickAction(
     | "priority-down"
     | "open-editor",
   headline?: OrgHeadline,
+  onViewAction?: (headline: OrgHeadline) => void,
 ): Promise<void> {
   let headlineValue: OrgHeadline | null = headline || null;
 
@@ -364,9 +365,10 @@ export async function handleQuickAction(
 
   switch (action) {
     case "view":
-      // Import and use DetailView store's openDetailView
-      const { openDetailView } = await import("./detailview.store");
-      openDetailView(headlineValue);
+      // Use callback if provided, otherwise do nothing
+      if (onViewAction) {
+        onViewAction(headlineValue);
+      }
       break;
     case "mark-done":
       console.log("Mark as done:", headlineValue.id);

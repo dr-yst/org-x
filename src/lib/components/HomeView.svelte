@@ -28,11 +28,7 @@
         handleQuickAction,
         exposeGlobalRefresh,
     } from "$lib/viewmodels/homeview.store";
-    import {
-        showDetailView,
-        openDetailView,
-        closeDetailView,
-    } from "$lib/viewmodels/detailview.store";
+
     import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";
@@ -65,6 +61,52 @@
 
     import X from "@lucide/svelte/icons/x";
 
+    // Local state for DetailView navigation
+    let showDetailView = $state(false);
+    let currentDetailHeadline = $state<OrgHeadline | null>(null);
+    let detailParentChain = $state<OrgHeadline[]>([]);
+    let detailSelectedChild = $state<OrgHeadline | null>(null);
+
+    // DetailView navigation handlers
+    function openDetailView(
+        headline: OrgHeadline,
+        parentChain: OrgHeadline[] = [],
+    ) {
+        currentDetailHeadline = headline;
+        detailParentChain = parentChain;
+        detailSelectedChild = null;
+        showDetailView = true;
+    }
+
+    function closeDetailView() {
+        showDetailView = false;
+        currentDetailHeadline = null;
+        detailParentChain = [];
+        detailSelectedChild = null;
+    }
+
+    function handleDetailHeadlineSelected(headline: OrgHeadline) {
+        detailSelectedChild = headline;
+    }
+
+    function handleDetailBreadcrumbClick(index: number) {
+        if (index < 0) {
+            // Home clicked
+            closeDetailView();
+        } else if (index < detailParentChain.length) {
+            // Navigate to parent at index
+            const newParentChain = detailParentChain.slice(0, index);
+            const newHeadline = detailParentChain[index];
+            currentDetailHeadline = newHeadline;
+            detailParentChain = newParentChain;
+            detailSelectedChild = null;
+        }
+    }
+
+    function handleDetailHomeClick() {
+        closeDetailView();
+    }
+
     // Handle keyboard navigation
     function handleKeyDown(event: KeyboardEvent) {
         // Only handle keyboard events when documents are loaded
@@ -93,7 +135,7 @@
             event.preventDefault();
             if ($showQuickActions) {
                 hideQuickActions();
-            } else if ($showDetailView) {
+            } else if (showDetailView) {
                 closeDetailView();
             } else if ($showQuickLook) {
                 closeQuickLook();
@@ -121,19 +163,19 @@
         } else if (event.key === "e" && $showQuickActions) {
             // Open in external editor
             event.preventDefault();
-            handleQuickAction("open-editor");
+            handleQuickAction("open-editor", undefined, openDetailView);
         } else if (event.key === "d" && $showQuickActions) {
             // Mark as done
             event.preventDefault();
-            handleQuickAction("mark-done");
+            handleQuickAction("mark-done", undefined, openDetailView);
         } else if (event.key === "+" && $showQuickActions) {
             // Increase priority
             event.preventDefault();
-            handleQuickAction("priority-up");
+            handleQuickAction("priority-up", undefined, openDetailView);
         } else if (event.key === "-" && $showQuickActions) {
             // Decrease priority
             event.preventDefault();
-            handleQuickAction("priority-down");
+            handleQuickAction("priority-down", undefined, openDetailView);
         }
     }
 
@@ -150,11 +192,18 @@
 </script>
 
 <div class="w-full h-full">
-    {#if $showDetailView}
+    {#if showDetailView}
         <!-- Main DetailView when showDetailView is true -->
         <div class="space-y-4 p-4">
             <!-- DetailView component -->
-            <DetailView />
+            <DetailView
+                headline={currentDetailHeadline}
+                parentChain={detailParentChain}
+                selectedChild={detailSelectedChild}
+                onHeadlineSelected={handleDetailHeadlineSelected}
+                onBreadcrumbClick={handleDetailBreadcrumbClick}
+                onHomeClick={handleDetailHomeClick}
+            />
         </div>
     {:else if $error}
         <div class="w-full h-64 flex items-center justify-center">
@@ -261,7 +310,12 @@
                             <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                on:click={() => handleQuickAction("view")}
+                                on:click={() =>
+                                    handleQuickAction(
+                                        "view",
+                                        undefined,
+                                        openDetailView,
+                                    )}
                             >
                                 <Eye class="h-4 w-4 mr-2" />
                                 View Details
@@ -271,7 +325,11 @@
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 on:click={() =>
-                                    handleQuickAction("open-editor")}
+                                    handleQuickAction(
+                                        "open-editor",
+                                        undefined,
+                                        openDetailView,
+                                    )}
                             >
                                 <FileEdit class="h-4 w-4 mr-2" />
                                 Open in Editor
@@ -279,7 +337,12 @@
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                on:click={() => handleQuickAction("mark-done")}
+                                on:click={() =>
+                                    handleQuickAction(
+                                        "mark-done",
+                                        undefined,
+                                        openDetailView,
+                                    )}
                             >
                                 <Check class="h-4 w-4 mr-2" />
                                 Mark as Done
@@ -287,7 +350,11 @@
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 on:click={() =>
-                                    handleQuickAction("priority-up")}
+                                    handleQuickAction(
+                                        "priority-up",
+                                        undefined,
+                                        openDetailView,
+                                    )}
                             >
                                 <ChevronUp class="h-4 w-4 mr-2" />
                                 Increase Priority
@@ -295,7 +362,11 @@
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 on:click={() =>
-                                    handleQuickAction("priority-down")}
+                                    handleQuickAction(
+                                        "priority-down",
+                                        undefined,
+                                        openDetailView,
+                                    )}
                             >
                                 <ChevronDown class="h-4 w-4 mr-2" />
                                 Decrease Priority

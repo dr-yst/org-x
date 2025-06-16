@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { OrgHeadline } from "$lib/bindings";
-    import { Button } from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
     import {
         Breadcrumb,
@@ -10,72 +9,203 @@
         BreadcrumbPage,
         BreadcrumbSeparator,
     } from "$lib/components/ui/breadcrumb";
-    import { cn } from "$lib/utils";
     import HeadlinesList from "$lib/components/HeadlinesList.svelte";
-    import {
-        currentHeadline,
-        parentChain,
-        selectedChild,
-        formattedPlanning,
-        formattedContent,
-        cleanedTitle,
-        priorityColorClass,
-        todoBadgeClass,
-        hasChildren,
-        hasProperties,
-        hasContent,
-        selectChild,
-        handleBreadcrumbClick,
-        handleHomeClick,
-        handleChildBreadcrumbClick,
-    } from "$lib/viewmodels/detailview.store";
     import Home from "@lucide/svelte/icons/home";
 
-    // Enhanced props definition using Svelte 5 runes - supports recursive navigation
+    // Pure, stateless props interface for recursive navigation support
     const {
         headline = null,
-        parentChain: propsParentChain = [],
+        parentChain = [],
+        selectedChild = null,
+        onHeadlineSelected = null,
         onBreadcrumbClick = null,
+        onHomeClick = null,
     } = $props<{
         headline: OrgHeadline | null;
-        parentChain?: OrgHeadline[]; // For breadcrumb navigation
-        onBreadcrumbClick?: ((index: number) => void) | null; // Callback for breadcrumb navigation
+        parentChain?: OrgHeadline[];
+        selectedChild?: OrgHeadline | null;
+        onHeadlineSelected?: ((headline: OrgHeadline) => void) | null;
+        onBreadcrumbClick?: ((index: number) => void) | null;
+        onHomeClick?: (() => void) | null;
     }>();
 
-    // Update store when props change
-    $effect(() => {
-        if (headline) {
-            currentHeadline.set(headline);
-            parentChain.set(propsParentChain);
-        }
-    });
+    // Pure formatting functions - no side effects
+    function formatTimestamp(timestamp: any): string {
+        if (!timestamp) return "";
 
-    // Handle child headline selection for recursive navigation
-    function handleChildSelected(event: CustomEvent<OrgHeadline>) {
-        selectChild(event.detail);
+        let dateStr = "";
+
+        if ("Active" in timestamp) {
+            dateStr = formatDateFromOrgDatetime(timestamp.Active.start);
+            return `<${dateStr}${timestamp.Active.repeater ? " " + timestamp.Active.repeater : ""}${timestamp.Active.delay ? " " + timestamp.Active.delay : ""}>`;
+        } else if ("Inactive" in timestamp) {
+            dateStr = formatDateFromOrgDatetime(timestamp.Inactive.start);
+            return `[${dateStr}${timestamp.Inactive.repeater ? " " + timestamp.Inactive.repeater : ""}${timestamp.Inactive.delay ? " " + timestamp.Inactive.delay : ""}]`;
+        } else if ("ActiveRange" in timestamp) {
+            const startStr = formatDateFromOrgDatetime(
+                timestamp.ActiveRange.start,
+            );
+            const endStr = formatDateFromOrgDatetime(timestamp.ActiveRange.end);
+            return `<${startStr}--${endStr}${timestamp.ActiveRange.repeater ? " " + timestamp.ActiveRange.repeater : ""}${timestamp.ActiveRange.delay ? " " + timestamp.ActiveRange.delay : ""}>`;
+        } else if ("InactiveRange" in timestamp) {
+            const startStr = formatDateFromOrgDatetime(
+                timestamp.InactiveRange.start,
+            );
+            const endStr = formatDateFromOrgDatetime(
+                timestamp.InactiveRange.end,
+            );
+            return `[${startStr}--${endStr}${timestamp.InactiveRange.repeater ? " " + timestamp.InactiveRange.repeater : ""}${timestamp.InactiveRange.delay ? " " + timestamp.InactiveRange.delay : ""}]`;
+        } else if ("Diary" in timestamp) {
+            return `<%${timestamp.Diary.value}>`;
+        }
+
+        return "";
     }
 
-    // Handle breadcrumb navigation with props callback
+    function formatDateFromOrgDatetime(datetime: any): string {
+        if (!datetime) return "";
+        const { year, month, day, hour, minute } = datetime;
+
+        let dateStr = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+
+        if (hour !== null && minute !== null) {
+            dateStr += ` ${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+        }
+
+        return dateStr;
+    }
+
+    function formatContent(content: string): string {
+        if (!content) return "";
+        return content.replace(/\n/g, "<br>");
+    }
+
+    function getPriorityColorClass(priority: string | null): string {
+        if (!priority) return "";
+
+        switch (priority) {
+            case "A":
+                return "bg-red-100 text-red-700";
+            case "B":
+                return "bg-orange-100 text-orange-700";
+            case "C":
+                return "bg-yellow-100 text-yellow-700";
+            default:
+                return "bg-gray-100 text-gray-700";
+        }
+    }
+
+    function getTodoBadgeClass(todoKeyword: string | null): string {
+        if (!todoKeyword) return "";
+
+        const todoBadgeClasses = {
+            todo: "bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 border-blue-200",
+            done: "bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 border-green-200",
+            waiting:
+                "bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 border-orange-200",
+            cancelled:
+                "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600 border-gray-200",
+            "in-progress":
+                "bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 border-purple-200",
+        };
+
+        const normalized = todoKeyword.toLowerCase().replace("_", "-");
+        return (
+            todoBadgeClasses[normalized as keyof typeof todoBadgeClasses] ||
+            todoBadgeClasses.todo
+        );
+    }
+
+    function cleanTitle(title: string): string {
+        return title
+            .replace(
+                /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?(.+?)(?:\s+:.+:)?$/,
+                "$1",
+            )
+            .trim();
+    }
+
+    function formatPlanningForDisplay(planning: any) {
+        if (!planning) return null;
+
+        const result: { [key: string]: string } = {};
+
+        if (planning.scheduled) {
+            result.scheduled = formatTimestamp(planning.scheduled);
+        }
+        if (planning.deadline) {
+            result.deadline = formatTimestamp(planning.deadline);
+        }
+        if (planning.closed) {
+            result.closed = formatTimestamp(planning.closed);
+        }
+
+        return Object.keys(result).length > 0 ? result : null;
+    }
+
+    // Derived values - computed from props
+    const formattedPlanning = $derived(
+        headline?.title?.planning
+            ? formatPlanningForDisplay(headline.title.planning)
+            : null,
+    );
+    const formattedContent = $derived(
+        headline?.content ? formatContent(headline.content) : "",
+    );
+    const cleanedTitle = $derived(
+        headline?.title?.raw ? cleanTitle(headline.title.raw) : "",
+    );
+    const priorityColorClass = $derived(
+        getPriorityColorClass(headline?.title?.priority || null),
+    );
+    const todoBadgeClass = $derived(
+        getTodoBadgeClass(headline?.title?.todo_keyword || null),
+    );
+    const hasChildren = $derived(
+        Boolean(headline?.children && headline.children.length > 0),
+    );
+    const hasProperties = $derived(
+        Boolean(
+            headline?.title?.properties &&
+                Object.keys(headline.title.properties).length > 0,
+        ),
+    );
+    const hasContent = $derived(
+        Boolean(headline?.content && headline.content.trim().length > 0),
+    );
+
+    // Event handlers - pure functions that call parent callbacks
+    function handleChildSelected(event: CustomEvent<OrgHeadline>) {
+        if (onHeadlineSelected) {
+            onHeadlineSelected(event.detail);
+        }
+    }
+
     function handleBreadcrumbNavigation(index: number) {
         if (onBreadcrumbClick) {
             onBreadcrumbClick(index);
-        } else {
-            handleBreadcrumbClick(index);
+        }
+    }
+
+    function handleHomeNavigation() {
+        if (onHomeClick) {
+            onHomeClick();
         }
     }
 </script>
 
 <div class="w-full h-full">
-    {#if !$currentHeadline}
+    {#if !headline}
+        <!-- Empty state when no headline is provided -->
         <div
-            class="flex flex-col items-center justify-center py-12 text-gray-500"
+            class="w-full h-64 flex flex-col items-center justify-center text-gray-500"
         >
             <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-12 w-12 mb-4"
+                class="w-16 h-16 text-gray-400 mb-4"
                 fill="none"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
             >
                 <path
                     stroke-linecap="round"
@@ -88,12 +218,14 @@
                 Select a task/headline to view details
             </p>
         </div>
-    {:else if $selectedChild}
+    {:else if selectedChild}
         <!-- Recursive DetailView for selected child -->
         <svelte:self
-            headline={$selectedChild}
-            parentChain={[...$parentChain, $currentHeadline]}
-            onBreadcrumbClick={handleChildBreadcrumbClick}
+            headline={selectedChild}
+            parentChain={[...parentChain, headline]}
+            {onHeadlineSelected}
+            {onBreadcrumbClick}
+            {onHomeClick}
         />
     {:else}
         <!-- Main detail view -->
@@ -106,7 +238,7 @@
                             href="#"
                             onclick={(e) => {
                                 e.preventDefault();
-                                handleHomeClick();
+                                handleHomeNavigation();
                             }}
                             class="hover:text-blue-600 flex items-center gap-1"
                         >
@@ -114,9 +246,9 @@
                             Home
                         </BreadcrumbLink>
                     </BreadcrumbItem>
-                    {#if $parentChain.length > 0}
+                    {#if parentChain.length > 0}
                         <BreadcrumbSeparator />
-                        {#each $parentChain as parent, i}
+                        {#each parentChain as parent, i}
                             <BreadcrumbItem>
                                 <BreadcrumbLink
                                     href="#"
@@ -126,10 +258,7 @@
                                     }}
                                     class="hover:text-blue-600"
                                 >
-                                    {parent.title.raw.replace(
-                                        /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                        "",
-                                    )}
+                                    {cleanTitle(parent.title.raw)}
                                 </BreadcrumbLink>
                             </BreadcrumbItem>
                             <BreadcrumbSeparator />
@@ -137,7 +266,7 @@
                     {/if}
                     <BreadcrumbItem>
                         <BreadcrumbPage class="font-medium">
-                            {$cleanedTitle}
+                            {cleanedTitle}
                         </BreadcrumbPage>
                     </BreadcrumbItem>
                 </BreadcrumbList>
@@ -145,35 +274,33 @@
 
             <!-- Headline Title, Status, Priority, Tags -->
             <div class="flex items-center gap-2 mb-2">
-                {#if $currentHeadline.title.todo_keyword}
+                {#if headline.title.todo_keyword}
                     <Badge
-                        class={cn(
-                            $todoBadgeClass,
-                            $currentHeadline.title.todo_keyword ===
-                                "CANCELLED" && "line-through",
-                            "text-xs font-medium",
-                        )}
+                        class="{todoBadgeClass} {headline.title.todo_keyword ===
+                        'CANCELLED'
+                            ? 'line-through'
+                            : ''} text-xs font-medium"
                         variant="secondary"
                     >
-                        {$currentHeadline.title.todo_keyword}
+                        {headline.title.todo_keyword}
                     </Badge>
                 {/if}
 
-                {#if $currentHeadline.title.priority}
+                {#if headline.title.priority}
                     <span
-                        class="px-1.5 py-0.5 font-mono rounded text-xs {$priorityColorClass}"
+                        class="px-1.5 py-0.5 font-mono rounded text-xs {priorityColorClass}"
                     >
-                        [#{$currentHeadline.title.priority}]
+                        [#{headline.title.priority}]
                     </span>
                 {/if}
 
                 <span class="font-semibold text-lg">
-                    {$cleanedTitle}
+                    {cleanedTitle}
                 </span>
 
-                {#if $currentHeadline.title.tags && $currentHeadline.title.tags.length > 0}
+                {#if headline.title.tags && headline.title.tags.length > 0}
                     <span class="flex gap-1">
-                        {#each $currentHeadline.title.tags as tag}
+                        {#each headline.title.tags as tag}
                             <Badge variant="default" class="text-xs">
                                 {tag}
                             </Badge>
@@ -183,9 +310,9 @@
             </div>
 
             <!-- Properties -->
-            {#if $hasProperties}
+            {#if hasProperties}
                 <div class="mb-2 grid grid-cols-3 gap-2">
-                    {#each Object.entries($currentHeadline.title.properties) as [key, value]}
+                    {#each Object.entries(headline.title.properties) as [key, value]}
                         <div class="text-gray-500 font-medium">{key}:</div>
                         <div class="text-gray-800 col-span-2">{value}</div>
                     {/each}
@@ -193,11 +320,11 @@
             {/if}
 
             <!-- Planning Information -->
-            {#if $formattedPlanning}
+            {#if formattedPlanning}
                 <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
                     <h3 class="font-medium text-gray-700 mb-2">Planning</h3>
                     <div class="grid grid-cols-3 gap-2">
-                        {#each Object.entries($formattedPlanning) as [key, value]}
+                        {#each Object.entries(formattedPlanning) as [key, value]}
                             <div class="text-gray-500 font-medium uppercase">
                                 {key}:
                             </div>
@@ -210,23 +337,22 @@
             {/if}
 
             <!-- Content (displayed above child headlines table as per requirements) -->
-            {#if $hasContent}
+            {#if hasContent}
                 <div
                     class="mb-4 prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
                 >
-                    {@html $formattedContent}
+                    {@html formattedContent}
                 </div>
             {/if}
 
             <!-- Table of Child Headlines (if any) -->
-            {#if $hasChildren}
+            {#if hasChildren}
                 <div class="mt-6">
                     <h3 class="mb-2 font-medium text-gray-700">
-                        Subtasks / Child Headlines ({$currentHeadline.children
-                            .length})
+                        Subtasks / Child Headlines ({headline.children.length})
                     </h3>
                     <HeadlinesList
-                        headlines={$currentHeadline.children}
+                        headlines={headline.children}
                         focusedIndex={-1}
                         activeFilter="all"
                         on:headlineSelected={handleChildSelected}
