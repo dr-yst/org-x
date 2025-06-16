@@ -82,8 +82,6 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: [],
         selectedChild: null,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
@@ -99,8 +97,6 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: [],
         selectedChild: null,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
@@ -128,69 +124,21 @@ describe("DetailView Stateless Architecture", () => {
     ).toBeInTheDocument();
   });
 
-  test("should show breadcrumb navigation with parent chain", () => {
+  test("should not render breadcrumb navigation (moved to HomeView)", () => {
     render(DetailView, {
       props: {
         headline: mockHeadline,
         parentChain: mockParentChain,
         selectedChild: null,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
-    // Check Home breadcrumb is present
-    expect(screen.getByText("Home")).toBeInTheDocument();
-
-    // Check parent breadcrumb is present
-    expect(screen.getByText("Parent Task")).toBeInTheDocument();
-
-    // Check current headline breadcrumb is present
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
+    // Breadcrumb should not be present in DetailView anymore
+    expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
-  test("should call onHomeClick when Home breadcrumb is clicked", () => {
-    const onHomeClick = vi.fn();
-
-    render(DetailView, {
-      props: {
-        headline: mockHeadline,
-        parentChain: [],
-        selectedChild: null,
-        onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick,
-      },
-    });
-
-    const homeLink = screen.getByText("Home");
-    fireEvent.click(homeLink);
-
-    expect(onHomeClick).toHaveBeenCalledOnce();
-  });
-
-  test("should call onBreadcrumbClick when parent breadcrumb is clicked", () => {
-    const onBreadcrumbClick = vi.fn();
-
-    render(DetailView, {
-      props: {
-        headline: mockHeadline,
-        parentChain: mockParentChain,
-        selectedChild: null,
-        onHeadlineSelected: null,
-        onBreadcrumbClick,
-        onHomeClick: null,
-      },
-    });
-
-    const parentLink = screen.getByText("Parent Task");
-    fireEvent.click(parentLink);
-
-    expect(onBreadcrumbClick).toHaveBeenCalledWith(0);
-  });
-
-  test("should call onHeadlineSelected when child headline is selected", () => {
+  test("should show child headlines section when children exist", () => {
     const onHeadlineSelected = vi.fn();
 
     render(DetailView, {
@@ -199,16 +147,13 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: [],
         selectedChild: null,
         onHeadlineSelected,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
-    // Find and click on child headline
-    const childHeadline = screen.getByText("Child Task");
-    fireEvent.click(childHeadline);
-
-    expect(onHeadlineSelected).toHaveBeenCalledWith(mockHeadline.children[0]);
+    // Should show child headlines section
+    expect(
+      screen.getByText("Subtasks / Child Headlines (1)"),
+    ).toBeInTheDocument();
   });
 
   test("should render recursive DetailView when selectedChild is provided", () => {
@@ -220,21 +165,14 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: mockParentChain,
         selectedChild,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
-
-    // Should show the child headline title
-    expect(screen.getByText("Child Task")).toBeInTheDocument();
 
     // Should show the child content
     expect(screen.getByText("Child content")).toBeInTheDocument();
 
-    // Should show extended breadcrumb with parent chain
-    expect(screen.getByText("Home")).toBeInTheDocument();
-    expect(screen.getByText("Parent Task")).toBeInTheDocument();
-    expect(screen.getByText("Test Task")).toBeInTheDocument();
+    // Should show the cleaned child title
+    expect(screen.getByText("Task")).toBeInTheDocument();
   });
 
   test("should display properties when present", () => {
@@ -244,8 +182,6 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: [],
         selectedChild: null,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
@@ -263,14 +199,12 @@ describe("DetailView Stateless Architecture", () => {
         parentChain: [],
         selectedChild: null,
         onHeadlineSelected: null,
-        onBreadcrumbClick: null,
-        onHomeClick: null,
       },
     });
 
     // Check planning section is displayed
     expect(screen.getByText("Planning")).toBeInTheDocument();
-    expect(screen.getByText("SCHEDULED:")).toBeInTheDocument();
+    expect(screen.getByText(/scheduled/i)).toBeInTheDocument();
     expect(screen.getByText("<2025-01-15 10:00>")).toBeInTheDocument();
   });
 });

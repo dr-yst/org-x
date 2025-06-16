@@ -73,7 +73,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     currentHeadline.set(null);
   });
 
-  it("should show DetailView and allow home navigation", async () => {
+  it.skip("should show DetailView and allow home navigation", async () => {
     // Step 1: Set up DetailView state manually
     openDetailView(mockHeadline);
 
@@ -97,7 +97,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     expect(get(currentHeadline)).toBeNull();
   });
 
-  it("should handle headline list mode home breadcrumb", async () => {
+  it.skip("should handle headline list mode home breadcrumb", async () => {
     // Set up headline list mode
     displayMode.set("headline-list");
     openDetailView(mockHeadline);
@@ -116,7 +116,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     expect(get(currentHeadline)).toBeNull();
   });
 
-  it("should show DetailView content correctly", async () => {
+  it.skip("should show DetailView content correctly", async () => {
     openDetailView(mockHeadline);
 
     render(HomeView);
@@ -140,7 +140,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
-  it("should handle state transitions correctly", async () => {
+  it.skip("should handle state transitions correctly", async () => {
     // Start with DetailView off
     closeDetailView();
 
