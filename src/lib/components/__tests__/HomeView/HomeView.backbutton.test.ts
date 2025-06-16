@@ -13,7 +13,7 @@ import {
   selectedHeadline,
   closeDetailView,
   documentCount,
-} from "$lib/viewmodels/listview.store";
+} from "$lib/viewmodels/homeview.store";
 
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({

@@ -12,7 +12,7 @@
     } from "$lib/components/ui/breadcrumb";
     import { cn } from "$lib/utils";
     import HeadlinesList from "$lib/components/HeadlinesList.svelte";
-    import { closeDetailView } from "$lib/viewmodels/listview.store";
+    import { closeDetailView } from "$lib/viewmodels/homeview.store";
     import Home from "@lucide/svelte/icons/home";
 
     // Enhanced props definition using Svelte 5 runes - supports recursive navigation

@@ -30,7 +30,7 @@
         closeQuickLook,
         handleQuickAction,
         exposeGlobalRefresh,
-    } from "$lib/viewmodels/listview.store";
+    } from "$lib/viewmodels/homeview.store";
     import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";

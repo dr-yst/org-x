@@ -4,8 +4,8 @@
     import {
         displayMode,
         setDisplayMode,
-    } from "$lib/viewmodels/listview.store";
-    import type { DisplayMode } from "$lib/viewmodels/listview.store";
+    } from "$lib/viewmodels/homeview.store";
+    import type { DisplayMode } from "$lib/viewmodels/homeview.store";
 
     function handleTabChange(value: string) {
         setDisplayMode(value as DisplayMode);

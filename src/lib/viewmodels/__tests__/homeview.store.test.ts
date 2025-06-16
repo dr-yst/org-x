@@ -34,7 +34,7 @@ import {
   exposeGlobalRefresh,
   triggerRefresh,
   refreshTrigger,
-} from "../listview.store";
+} from "../homeview.store";
 import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
 // Mock the commands module

@@ -10,7 +10,7 @@ import {
   hasMonitoredPaths,
   showDetailView,
   selectedHeadline,
-} from "$lib/viewmodels/listview.store";
+} from "$lib/viewmodels/homeview.store";
 
 /**
  * Note: Some tests are skipped due to async document loading coordination being flaky in test environment.
