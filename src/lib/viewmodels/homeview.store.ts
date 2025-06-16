@@ -12,9 +12,8 @@ export const hasMonitoredPaths = writable(true);
 export const focusedIndex = writable<number>(-1);
 export const activeFilterIndex = writable(0);
 export const showQuickActions = writable(false);
-export const selectedHeadline = writable<OrgHeadline | null>(null);
-export const showDetailView = writable(false);
 export const showQuickLook = writable(false);
+export const quickLookHeadline = writable<OrgHeadline | null>(null);
 export const refreshTrigger = writable(0);
 
 // Display mode state
@@ -304,28 +303,14 @@ export function hideQuickActions(): void {
   showQuickActions.set(false);
 }
 
-export function openDetailView(headline?: OrgHeadline): void {
-  if (headline) {
-    selectedHeadline.set(headline);
-  }
-  showDetailView.set(true);
-  showQuickActions.set(false);
-}
-
-export function closeDetailView(): void {
-  showDetailView.set(false);
-  selectedHeadline.set(null);
-}
-
 export function toggleQuickLook(headline?: OrgHeadline): void {
   showQuickLook.update((show) => {
     if (!show && headline) {
-      selectedHeadline.set(headline);
-      showDetailView.set(false);
+      quickLookHeadline.set(headline);
       showQuickActions.set(false);
       return true;
     } else {
-      selectedHeadline.set(null);
+      quickLookHeadline.set(null);
       return false;
     }
   });
@@ -333,7 +318,7 @@ export function toggleQuickLook(headline?: OrgHeadline): void {
 
 export function closeQuickLook(): void {
   showQuickLook.set(false);
-  selectedHeadline.set(null);
+  quickLookHeadline.set(null);
 }
 
 export async function handleQuickAction(
@@ -348,10 +333,25 @@ export async function handleQuickAction(
   let headlineValue: OrgHeadline | null = headline || null;
 
   if (!headline) {
-    const unsubscribe = selectedHeadline.subscribe((value) => {
-      headlineValue = value;
+    // Get the currently focused headline
+    let currentFiltered: OrgHeadline[] = [];
+    const unsubscribe = filteredHeadlines.subscribe((value) => {
+      currentFiltered = value;
     });
     unsubscribe();
+
+    let currentFocusedIndex = -1;
+    const unsubscribeFocus = focusedIndex.subscribe((value) => {
+      currentFocusedIndex = value;
+    });
+    unsubscribeFocus();
+
+    if (
+      currentFocusedIndex >= 0 &&
+      currentFocusedIndex < currentFiltered.length
+    ) {
+      headlineValue = currentFiltered[currentFocusedIndex];
+    }
   }
 
   if (!headlineValue) return;
@@ -364,8 +364,9 @@ export async function handleQuickAction(
 
   switch (action) {
     case "view":
-      selectedHeadline.set(headlineValue);
-      showDetailView.set(true);
+      // Import and use DetailView store's openDetailView
+      const { openDetailView } = await import("./detailview.store");
+      openDetailView(headlineValue);
       break;
     case "mark-done":
       console.log("Mark as done:", headlineValue.id);
@@ -417,9 +418,8 @@ const listViewStore = {
   focusedIndex: { subscribe: focusedIndex.subscribe },
   activeFilterIndex: { subscribe: activeFilterIndex.subscribe },
   showQuickActions: { subscribe: showQuickActions.subscribe },
-  selectedHeadline: { subscribe: selectedHeadline.subscribe },
-  showDetailView: { subscribe: showDetailView.subscribe },
   showQuickLook: { subscribe: showQuickLook.subscribe },
+  quickLookHeadline: { subscribe: quickLookHeadline.subscribe },
   refreshTrigger: { subscribe: refreshTrigger.subscribe },
   documentMap: { subscribe: documentMap.subscribe },
   allHeadlines: { subscribe: allHeadlines.subscribe },
@@ -440,8 +440,6 @@ const listViewStore = {
   moveFocusUp,
   toggleQuickActions,
   hideQuickActions,
-  openDetailView,
-  closeDetailView,
   toggleQuickLook,
   closeQuickLook,
   handleQuickAction,

@@ -8,9 +8,8 @@
         focusedIndex,
         activeFilterIndex,
         showQuickActions,
-        selectedHeadline,
-        showDetailView,
         showQuickLook,
+        quickLookHeadline,
         filteredHeadlines,
         documentCount,
         headlineCount,
@@ -24,13 +23,16 @@
         moveFocusUp,
         toggleQuickActions,
         hideQuickActions,
-        openDetailView,
-        closeDetailView,
         toggleQuickLook,
         closeQuickLook,
         handleQuickAction,
         exposeGlobalRefresh,
     } from "$lib/viewmodels/homeview.store";
+    import {
+        showDetailView,
+        openDetailView,
+        closeDetailView,
+    } from "$lib/viewmodels/detailview.store";
     import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";
@@ -152,11 +154,7 @@
         <!-- Main DetailView when showDetailView is true -->
         <div class="space-y-4 p-4">
             <!-- DetailView component -->
-            <DetailView
-                headline={$selectedHeadline}
-                parentChain={[]}
-                onBreadcrumbClick={null}
-            />
+            <DetailView />
         </div>
     {:else if $error}
         <div class="w-full h-64 flex items-center justify-center">
@@ -313,8 +311,8 @@
             <DrawerContent class="max-h-[80vh] overflow-y-auto">
                 <DrawerHeader>
                     <DrawerTitle>
-                        {$selectedHeadline
-                            ? $selectedHeadline.title.raw
+                        {$quickLookHeadline
+                            ? $quickLookHeadline.title.raw
                             : "Quick Look"}
                     </DrawerTitle>
                     <DrawerClose>
@@ -328,7 +326,11 @@
                     </DrawerClose>
                 </DrawerHeader>
                 <div class="p-4">
-                    <DetailView headline={$selectedHeadline} />
+                    <DetailView
+                        headline={$quickLookHeadline}
+                        parentChain={[]}
+                        onBreadcrumbClick={null}
+                    />
                 </div>
             </DrawerContent>
         </Drawer>
