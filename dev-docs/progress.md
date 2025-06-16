@@ -102,6 +102,20 @@ We've broken down the task list view implementation into smaller, focused issues
   - Loading spinner only appears if monitored paths exist and documents are being loaded.
   - Tests updated to cover all relevant scenarios (no monitored paths, no documents, normal loading, error).
   - Improved UX for new users and clarified empty state messaging.
+- ✅ **COMPLETED Issue #33: DetailView MVVM Refactoring**
+  - Successfully migrated DetailView.svelte to follow MVVM pattern consistent with HomeView architecture
+  - Created dedicated DetailView ViewModel store (`src/lib/viewmodels/detailview.store.ts`) containing all business logic and state management
+  - Moved all formatting functions (timestamp, content, title cleaning, styling) from component to store
+  - Implemented comprehensive derived state for formatted planning, content, cleaned titles, priority/TODO styling classes
+  - Added boolean derived flags (hasChildren, hasProperties, hasContent) for conditional rendering
+  - Refactored DetailView.svelte to be purely presentational with reactive store subscriptions
+  - Updated HomeView integration to use DetailView store instead of local detail view state
+  - Migrated detail view state management from homeview.store to dedicated detailview.store
+  - Maintained all existing functionality including recursive navigation, breadcrumb handling, and child headline display
+  - Added comprehensive test suite for DetailView store with 43 passing tests covering all derived state and actions
+  - Updated existing component tests to work with new store pattern
+  - Enhanced separation of concerns following established MVVM patterns in the codebase
+  - Improved testability with store logic isolated from UI rendering
 
 ## Remaining Tasks
 
