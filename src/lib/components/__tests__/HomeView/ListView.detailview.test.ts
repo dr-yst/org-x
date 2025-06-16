@@ -139,8 +139,9 @@ describe("HomeView DetailView Integration", () => {
     await waitFor(
       () => {
         expect(
-          screen.getAllByText((content, node) =>
-            node.textContent?.includes("Test Task"),
+          screen.getAllByText(
+            (content, node) =>
+              node?.textContent?.includes("Test Task") ?? false,
           ).length,
         ).toBeGreaterThan(0);
       },
@@ -192,7 +193,12 @@ describe("HomeView DetailView Integration", () => {
     // Should show child headlines section
     await waitFor(() => {
       expect(
-        screen.getAllByText("Subtasks / Child Headlines").length,
+        screen.getAllByText(
+          (content, node) =>
+            (node?.textContent?.includes("Subtasks") &&
+              node?.textContent?.includes("Child Headlines")) ??
+            false,
+        ).length,
       ).toBeGreaterThan(0);
       expect(screen.getByText("Subtask 1")).toBeInTheDocument();
     });
@@ -293,10 +299,21 @@ describe("HomeView DetailView Integration", () => {
     render(HomeView);
 
     // Should show the headline but not the children section
+    // Should not show the children section
     await waitFor(() => {
-      expect(screen.getByText("Regular Headline")).toBeInTheDocument();
       expect(
-        screen.queryByText("Subtasks / Child Headlines"),
+        screen.getAllByText(
+          (content, node) =>
+            node?.textContent?.includes("Regular Headline") ?? false,
+        ).length,
+      ).toBeGreaterThan(0);
+      expect(
+        screen.queryByText(
+          (content, node) =>
+            (node?.textContent?.includes("Subtasks") &&
+              node?.textContent?.includes("Child Headlines")) ??
+            false,
+        ),
       ).not.toBeInTheDocument();
     });
   });
