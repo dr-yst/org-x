@@ -48,6 +48,18 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #34: Recursive DetailView Breadcrumb Navigation**
+  - ✅ **ARCHITECTURAL MIGRATION** - Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
+  - ✅ **RESPONSIVE BREADCRUMB DESIGN** - Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)
+  - ✅ **ACCURATE NAVIGATION STACK** - Breadcrumb now correctly displays full parent chain for any recursion depth (`Home > Parent1 > Parent2 > ... > Current`)
+  - ✅ **INTERACTIVE NAVIGATION** - All parent layers (except current) are clickable and allow direct navigation to any level in the hierarchy
+  - ✅ **MOBILE-RESPONSIVE** - Uses dropdown on desktop, drawer on mobile for intermediate levels in deep hierarchies
+  - ✅ **STATELESS ARCHITECTURE** - Navigation state managed via props and callbacks in HomeView, DetailView remains pure and stateless
+  - ✅ **EVENT PROPAGATION** - Implemented callback-based event propagation from DetailView to HomeView for recursive navigation
+  - ✅ **CLEAN TITLE DISPLAY** - Breadcrumb items show cleaned titles without TODO keywords, priorities, or tags
+  - ✅ **COMPREHENSIVE TESTING** - Updated DetailView tests to reflect architectural changes, all core functionality verified
+  - ✅ **BUILD COMPATIBILITY** - Production build succeeds, runtime functionality preserved
+  - ✅ All acceptance criteria met: accurate breadcrumb, interactive layers, responsive design, stateless navigation, full test coverage
 - ✅ **COMPLETED Issue #20: MVVM Refactor of ListView**
   - ✅ Successfully implemented Model-View-ViewModel pattern for ListView component
   - ✅ Created dedicated ViewModel store (`src/lib/viewmodels/listview.store.ts`) with comprehensive business logic

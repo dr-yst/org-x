@@ -21,6 +21,18 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 
 ### Recently Completed
+- ✅ **COMPLETED Issue #34: Recursive DetailView Breadcrumb Navigation**
+  - ✅ **ARCHITECTURAL MIGRATION** - Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
+  - ✅ **RESPONSIVE BREADCRUMB DESIGN** - Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)
+  - ✅ **ACCURATE NAVIGATION STACK** - Breadcrumb now correctly displays full parent chain for any recursion depth (`Home > Parent1 > Parent2 > ... > Current`)
+  - ✅ **INTERACTIVE NAVIGATION** - All parent layers (except current) are clickable and allow direct navigation to any level in the hierarchy
+  - ✅ **MOBILE-RESPONSIVE** - Uses dropdown on desktop, drawer on mobile for intermediate levels in deep hierarchies
+  - ✅ **STATELESS ARCHITECTURE** - Navigation state managed via props and callbacks in HomeView, DetailView remains pure and stateless
+  - ✅ **EVENT PROPAGATION** - Implemented callback-based event propagation from DetailView to HomeView for recursive navigation
+  - ✅ **CLEAN TITLE DISPLAY** - Breadcrumb items show cleaned titles without TODO keywords, priorities, or tags
+  - ✅ **COMPREHENSIVE TESTING** - Updated DetailView tests to reflect architectural changes, all core functionality verified
+  - ✅ **BUILD COMPATIBILITY** - Production build succeeds, runtime functionality preserved
+  - ✅ All acceptance criteria met: accurate breadcrumb, interactive layers, responsive design, stateless navigation, full test coverage
 - ✅ **COMPLETED Issue #33: Migrate DetailView to MVVM Pattern with Dedicated ViewModel**
   - ✅ **PROBLEM SOLVED: Broken Recursive Navigation** - Refactored DetailView from problematic global store approach to pure, stateless, prop-driven component
   - ✅ **STATE MANAGEMENT MIGRATION** - Moved all navigation state from global detailview.store to parent component (HomeView) local management
@@ -294,7 +306,7 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ **Enhanced UI consistency** - updated spacing, sizing, and component structure to match shadcn-svelte design patterns
 
 ### Active Issues
-The basic task list view component implementation has been broken down into the following issues, with file monitoring GUI and universal navigation now completed:
+The basic task list view component implementation has been broken down into the following issues, with file monitoring GUI, universal navigation, and recursive breadcrumb navigation now completed:
 
 1. **Issue #3: Implement Task List Table Structure using shadcn-svelte**
    - Core table structure, column configuration, and styling
@@ -318,9 +330,22 @@ Each issue has detailed tasks, technical approach, and acceptance criteria to gu
 
 ### Recently Completed Issues
 
-1. **Issue #17: [BUG] HomeView/Table Expands Beyond Screen Width; Sidebar Transparency Issues [RESOLVED]**
+1. **Issue #34: [Bug] Recursive DetailView: Breadcrumb does not reflect nested structure and layers are not clickable [COMPLETED]**
+   - **Architectural Migration**: Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
+   - **Responsive Breadcrumb Design**: Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)
+   - **Accurate Navigation Stack**: Breadcrumb now correctly displays full parent chain for any recursion depth (`Home > Parent1 > Parent2 > ... > Current`)
+   - **Interactive Navigation**: All parent layers (except current) are clickable and allow direct navigation to any level in the hierarchy
+   - **Mobile-Responsive**: Uses dropdown on desktop, drawer on mobile for intermediate levels in deep hierarchies
+   - **Stateless Architecture**: Navigation state managed via props and callbacks in HomeView, DetailView remains pure and stateless
+   - **Event Propagation**: Implemented callback-based event propagation from DetailView to HomeView for recursive navigation
+   - **Clean Title Display**: Breadcrumb items show cleaned titles without TODO keywords, priorities, or tags
+   - **Comprehensive Testing**: Updated DetailView tests to reflect architectural changes, all core functionality verified
+   - **Build Compatibility**: Production build succeeds, runtime functionality preserved
+   - **Status**: All acceptance criteria met and implementation complete
 
-2. **Issue #28: "Back to Task List"/"Back to Headline List" Button Should Be a Universal Home Button [COMPLETED]**
+2. **Issue #17: [BUG] HomeView/Table Expands Beyond Screen Width; Sidebar Transparency Issues [RESOLVED]**
+
+3. **Issue #28: "Back to Task List"/"Back to Headline List" Button Should Be a Universal Home Button [COMPLETED]**
    - **Main Implementation**: Replaced conditional "Back to Task List"/"Back to Headline List" button with universal Home breadcrumb navigation in DetailView
    - **ListView → HomeView Renaming**: Successfully renamed all components, imports, tests, and documentation from ListView to HomeView throughout the codebase
    - **Universal Navigation**: Home breadcrumb always returns to main view regardless of display mode, providing consistent user experience
