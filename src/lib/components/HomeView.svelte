@@ -46,10 +46,24 @@
     import {
         Drawer,
         DrawerContent,
+        DrawerDescription,
         DrawerHeader,
         DrawerTitle,
         DrawerClose,
+        DrawerFooter,
+        DrawerTrigger,
     } from "$lib/components/ui/drawer";
+    import {
+        Breadcrumb,
+        BreadcrumbEllipsis,
+        BreadcrumbItem,
+        BreadcrumbLink,
+        BreadcrumbList,
+        BreadcrumbPage,
+        BreadcrumbSeparator,
+    } from "$lib/components/ui/breadcrumb";
+    import { IsMobile } from "$lib/hooks/is-mobile.svelte.js";
+    import { buttonVariants } from "$lib/components/ui/button/index.js";
 
     import File from "@lucide/svelte/icons/file";
     import Tag from "@lucide/svelte/icons/tag";
@@ -58,7 +72,7 @@
     import Check from "@lucide/svelte/icons/check";
     import ChevronUp from "@lucide/svelte/icons/chevron-up";
     import ChevronDown from "@lucide/svelte/icons/chevron-down";
-
+    import Home from "@lucide/svelte/icons/home";
     import X from "@lucide/svelte/icons/x";
 
     // Local state for DetailView navigation
@@ -66,6 +80,11 @@
     let currentDetailHeadline = $state<OrgHeadline | null>(null);
     let detailParentChain = $state<OrgHeadline[]>([]);
     let detailSelectedChild = $state<OrgHeadline | null>(null);
+
+    // Responsive breadcrumb state
+    const isMobile = new IsMobile();
+    const ITEMS_TO_DISPLAY = 3;
+    let breadcrumbEllipsisOpen = $state(false);
 
     // DetailView navigation handlers
     function openDetailView(
@@ -86,7 +105,12 @@
     }
 
     function handleDetailHeadlineSelected(headline: OrgHeadline) {
-        detailSelectedChild = headline;
+        // Add current headline to parent chain and set child as new current headline
+        if (currentDetailHeadline) {
+            detailParentChain = [...detailParentChain, currentDetailHeadline];
+        }
+        currentDetailHeadline = headline;
+        detailSelectedChild = null;
     }
 
     function handleDetailBreadcrumbClick(index: number) {
@@ -102,6 +126,63 @@
             detailSelectedChild = null;
         }
     }
+
+    // Breadcrumb helper functions
+    function cleanTitle(title: string): string {
+        return title
+            .replace(
+                /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?(.+?)(?:\s+:.+:)?$/,
+                "$1",
+            )
+            .trim();
+    }
+
+    function buildBreadcrumbItems() {
+        const items = [];
+
+        // Add Home item
+        items.push({
+            label: "Home",
+            onClick: () => closeDetailView(),
+            isHome: true,
+        });
+
+        // Add parent chain items
+        detailParentChain.forEach((parent, index) => {
+            items.push({
+                label: cleanTitle(parent.title.raw),
+                onClick: () => handleDetailBreadcrumbClick(index),
+                isHome: false,
+            });
+        });
+
+        // Add current headline (no onClick - not clickable)
+        if (currentDetailHeadline) {
+            items.push({
+                label: cleanTitle(currentDetailHeadline.title.raw),
+                onClick: null,
+                isHome: false,
+            });
+        }
+
+        return items;
+    }
+
+    const breadcrumbItems = $derived(buildBreadcrumbItems());
+    const shouldShowEllipsis = $derived(
+        breadcrumbItems.length > ITEMS_TO_DISPLAY,
+    );
+    const visibleItems = $derived(
+        shouldShowEllipsis
+            ? [
+                  breadcrumbItems[0], // Home
+                  ...breadcrumbItems.slice(-2), // Last two items (parent and current)
+              ]
+            : breadcrumbItems,
+    );
+    const ellipsisItems = $derived(
+        shouldShowEllipsis ? breadcrumbItems.slice(1, -2) : [], // Items between Home and last two
+    );
 
     function handleDetailHomeClick() {
         closeDetailView();
@@ -195,14 +276,144 @@
     {#if showDetailView}
         <!-- Main DetailView when showDetailView is true -->
         <div class="space-y-4 p-4">
+            <!-- Breadcrumb Navigation -->
+            <Breadcrumb class="mb-4">
+                <BreadcrumbList>
+                    <!-- Home link -->
+                    <BreadcrumbItem>
+                        <BreadcrumbLink
+                            href="#"
+                            onclick={(e) => {
+                                e.preventDefault();
+                                closeDetailView();
+                            }}
+                            class="hover:text-blue-600 flex items-center gap-1"
+                        >
+                            <Home class="h-4 w-4" />
+                            Home
+                        </BreadcrumbLink>
+                    </BreadcrumbItem>
+
+                    {#if breadcrumbItems.length > 1}
+                        <BreadcrumbSeparator />
+
+                        {#if shouldShowEllipsis}
+                            <!-- Ellipsis for intermediate parents -->
+                            <BreadcrumbItem>
+                                {#if isMobile.current}
+                                    <Drawer bind:open={breadcrumbEllipsisOpen}>
+                                        <DrawerTrigger aria-label="Toggle Menu">
+                                            <BreadcrumbEllipsis
+                                                class="size-4"
+                                            />
+                                        </DrawerTrigger>
+                                        <DrawerContent>
+                                            <DrawerHeader class="text-left">
+                                                <DrawerTitle
+                                                    >Navigate to</DrawerTitle
+                                                >
+                                                <DrawerDescription>
+                                                    Select a page to navigate
+                                                    to.
+                                                </DrawerDescription>
+                                            </DrawerHeader>
+                                            <div class="grid gap-1 px-4">
+                                                {#each ellipsisItems as item, i (i)}
+                                                    <button
+                                                        onclick={() => {
+                                                            if (item.onClick) {
+                                                                item.onClick();
+                                                            }
+                                                            breadcrumbEllipsisOpen = false;
+                                                        }}
+                                                        class="py-1 text-sm text-left hover:bg-gray-100 rounded px-2"
+                                                    >
+                                                        {item.label}
+                                                    </button>
+                                                {/each}
+                                            </div>
+                                            <DrawerFooter class="pt-4">
+                                                <DrawerClose
+                                                    class={buttonVariants({
+                                                        variant: "outline",
+                                                    })}
+                                                >
+                                                    Close
+                                                </DrawerClose>
+                                            </DrawerFooter>
+                                        </DrawerContent>
+                                    </Drawer>
+                                {:else}
+                                    <DropdownMenu
+                                        bind:open={breadcrumbEllipsisOpen}
+                                    >
+                                        <DropdownMenuTrigger
+                                            aria-label="Toggle menu"
+                                        >
+                                            <BreadcrumbEllipsis
+                                                class="size-4"
+                                            />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start">
+                                            {#each ellipsisItems as item, i (i)}
+                                                <DropdownMenuItem>
+                                                    <button
+                                                        onclick={() => {
+                                                            if (item.onClick) {
+                                                                item.onClick();
+                                                            }
+                                                        }}
+                                                        class="w-full text-left"
+                                                    >
+                                                        {item.label}
+                                                    </button>
+                                                </DropdownMenuItem>
+                                            {/each}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                {/if}
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                        {/if}
+
+                        <!-- Last two levels (or all levels if not showing ellipsis) -->
+                        {#each shouldShowEllipsis ? visibleItems.slice(1) : visibleItems.slice(1) as item, i (item.label)}
+                            <BreadcrumbItem>
+                                {#if item.onClick}
+                                    <BreadcrumbLink
+                                        href="#"
+                                        onclick={(e) => {
+                                            e.preventDefault();
+                                            if (item.onClick) {
+                                                item.onClick();
+                                            }
+                                        }}
+                                        class="hover:text-blue-600 max-w-20 truncate md:max-w-none"
+                                    >
+                                        {item.label}
+                                    </BreadcrumbLink>
+                                {:else}
+                                    <BreadcrumbPage
+                                        class="font-medium max-w-20 truncate md:max-w-none"
+                                    >
+                                        {item.label}
+                                    </BreadcrumbPage>
+                                {/if}
+                            </BreadcrumbItem>
+                            {#if item.onClick}
+                                <BreadcrumbSeparator />
+                            {/if}
+                        {/each}
+                    {/if}
+                </BreadcrumbList>
+            </Breadcrumb>
+
             <!-- DetailView component -->
             <DetailView
                 headline={currentDetailHeadline}
                 parentChain={detailParentChain}
                 selectedChild={detailSelectedChild}
                 onHeadlineSelected={handleDetailHeadlineSelected}
-                onBreadcrumbClick={handleDetailBreadcrumbClick}
-                onHomeClick={handleDetailHomeClick}
             />
         </div>
     {:else if $error}
@@ -310,7 +521,7 @@
                             <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                on:click={() =>
+                                onclick={() =>
                                     handleQuickAction(
                                         "view",
                                         undefined,
@@ -324,7 +535,7 @@
                                 >
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                on:click={() =>
+                                onclick={() =>
                                     handleQuickAction(
                                         "open-editor",
                                         undefined,
@@ -337,7 +548,7 @@
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                on:click={() =>
+                                onclick={() =>
                                     handleQuickAction(
                                         "mark-done",
                                         undefined,
@@ -349,7 +560,7 @@
                                 <DropdownMenuShortcut>d</DropdownMenuShortcut>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                on:click={() =>
+                                onclick={() =>
                                     handleQuickAction(
                                         "priority-up",
                                         undefined,
@@ -361,7 +572,7 @@
                                 <DropdownMenuShortcut>+</DropdownMenuShortcut>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                on:click={() =>
+                                onclick={() =>
                                     handleQuickAction(
                                         "priority-down",
                                         undefined,
@@ -390,7 +601,7 @@
                         <Button
                             variant="ghost"
                             size="sm"
-                            on:click={closeQuickLook}
+                            onclick={closeQuickLook}
                         >
                             <X class="h-4 w-4" />
                         </Button>
@@ -400,7 +611,6 @@
                     <DetailView
                         headline={$quickLookHeadline}
                         parentChain={[]}
-                        onBreadcrumbClick={null}
                     />
                 </div>
             </DrawerContent>

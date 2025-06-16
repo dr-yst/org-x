@@ -1,16 +1,8 @@
 <script lang="ts">
     import type { OrgHeadline } from "$lib/bindings";
     import { Badge } from "$lib/components/ui/badge";
-    import {
-        Breadcrumb,
-        BreadcrumbItem,
-        BreadcrumbLink,
-        BreadcrumbList,
-        BreadcrumbPage,
-        BreadcrumbSeparator,
-    } from "$lib/components/ui/breadcrumb";
     import HeadlinesList from "$lib/components/HeadlinesList.svelte";
-    import Home from "@lucide/svelte/icons/home";
+    import DetailView from "./DetailView.svelte";
 
     // Pure, stateless props interface for recursive navigation support
     const {
@@ -18,15 +10,11 @@
         parentChain = [],
         selectedChild = null,
         onHeadlineSelected = null,
-        onBreadcrumbClick = null,
-        onHomeClick = null,
     } = $props<{
         headline: OrgHeadline | null;
         parentChain?: OrgHeadline[];
         selectedChild?: OrgHeadline | null;
         onHeadlineSelected?: ((headline: OrgHeadline) => void) | null;
-        onBreadcrumbClick?: ((index: number) => void) | null;
-        onHomeClick?: (() => void) | null;
     }>();
 
     // Pure formatting functions - no side effects
@@ -180,18 +168,6 @@
             onHeadlineSelected(event.detail);
         }
     }
-
-    function handleBreadcrumbNavigation(index: number) {
-        if (onBreadcrumbClick) {
-            onBreadcrumbClick(index);
-        }
-    }
-
-    function handleHomeNavigation() {
-        if (onHomeClick) {
-            onHomeClick();
-        }
-    }
 </script>
 
 <div class="w-full h-full">
@@ -220,58 +196,14 @@
         </div>
     {:else if selectedChild}
         <!-- Recursive DetailView for selected child -->
-        <svelte:self
+        <DetailView
             headline={selectedChild}
             parentChain={[...parentChain, headline]}
             {onHeadlineSelected}
-            {onBreadcrumbClick}
-            {onHomeClick}
         />
     {:else}
         <!-- Main detail view -->
         <div class="space-y-4">
-            <!-- Breadcrumb Navigation -->
-            <Breadcrumb class="mb-4">
-                <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink
-                            href="#"
-                            onclick={(e) => {
-                                e.preventDefault();
-                                handleHomeNavigation();
-                            }}
-                            class="hover:text-blue-600 flex items-center gap-1"
-                        >
-                            <Home class="h-4 w-4" />
-                            Home
-                        </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    {#if parentChain.length > 0}
-                        <BreadcrumbSeparator />
-                        {#each parentChain as parent, i}
-                            <BreadcrumbItem>
-                                <BreadcrumbLink
-                                    href="#"
-                                    onclick={(e) => {
-                                        e.preventDefault();
-                                        handleBreadcrumbNavigation(i);
-                                    }}
-                                    class="hover:text-blue-600"
-                                >
-                                    {cleanTitle(parent.title.raw)}
-                                </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                        {/each}
-                    {/if}
-                    <BreadcrumbItem>
-                        <BreadcrumbPage class="font-medium">
-                            {cleanedTitle}
-                        </BreadcrumbPage>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
-
             <!-- Headline Title, Status, Priority, Tags -->
             <div class="flex items-center gap-2 mb-2">
                 {#if headline.title.todo_keyword}
