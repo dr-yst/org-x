@@ -9,11 +9,13 @@ import {
   loading,
   error,
   hasMonitoredPaths,
-  showDetailView,
-  selectedHeadline,
-  closeDetailView,
-  documentCount,
 } from "$lib/viewmodels/homeview.store";
+import {
+  showDetailView,
+  currentHeadline,
+  openDetailView,
+  closeDetailView,
+} from "$lib/viewmodels/detailview.store";
 
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({
@@ -81,14 +83,13 @@ describe("HomeView Breadcrumb Home Navigation", () => {
     hasMonitoredPaths.set(true);
     displayMode.set("task-list");
     showDetailView.set(false);
-    selectedHeadline.set(null);
+    currentHeadline.set(null);
   });
 
   it("should render Home breadcrumb when in DetailView mode", async () => {
     // Set up DetailView state
     documents.set([mockDocument]);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     render(HomeView);
 
@@ -100,8 +101,7 @@ describe("HomeView Breadcrumb Home Navigation", () => {
   it("should show Home breadcrumb regardless of display mode", async () => {
     // Test Task List mode
     documents.set([mockDocument]);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
     displayMode.set("task-list");
 
     const { rerender } = render(HomeView);
@@ -116,56 +116,54 @@ describe("HomeView Breadcrumb Home Navigation", () => {
   });
 
   it("should call closeDetailView when Home breadcrumb is clicked", async () => {
-    // Set up DetailView state
     documents.set([mockDocument]);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     render(HomeView);
 
     const homeLink = screen.getByText("Home");
+    expect(homeLink).toBeInTheDocument();
 
     // Click the Home breadcrumb
     await fireEvent.click(homeLink);
 
-    // Check if closeDetailView was called by verifying store state
+    // Should close the detail view
     expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    expect(get(currentHeadline)).toBeNull();
   });
 
   it("should update store state when closeDetailView is called directly", () => {
     // Set up DetailView state
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     // Verify initial state
     expect(get(showDetailView)).toBe(true);
-    expect(get(selectedHeadline)).toBe(mockHeadline);
+    expect(get(currentHeadline)).toBe(mockHeadline);
 
     // Call closeDetailView directly
     closeDetailView();
 
     // Verify state was updated
     expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    expect(get(currentHeadline)).toBeNull();
   });
 
   it("should not show Home breadcrumb when not in DetailView mode", async () => {
     documents.set([mockDocument]);
+    hasMonitoredPaths.set(true);
     showDetailView.set(false);
-    selectedHeadline.set(null);
+    currentHeadline.set(null);
 
     render(HomeView);
 
-    // Should not show the Home breadcrumb
+    // Should not show the DetailView Home breadcrumb when not in detail view
     expect(screen.queryByText("Home")).not.toBeInTheDocument();
   });
 
   it("should switch from DetailView to list view when showDetailView changes", async () => {
     // Start in DetailView mode
     documents.set([mockDocument]);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     const { rerender } = render(HomeView);
 
@@ -173,7 +171,7 @@ describe("HomeView Breadcrumb Home Navigation", () => {
     expect(screen.getByText("Home")).toBeInTheDocument();
 
     // Change to list view
-    showDetailView.set(false);
+    closeDetailView();
     await rerender({});
 
     // Should not show DetailView anymore
@@ -182,8 +180,7 @@ describe("HomeView Breadcrumb Home Navigation", () => {
 
   it("should handle keyboard escape to close DetailView", async () => {
     documents.set([mockDocument]);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     render(HomeView);
 
@@ -199,31 +196,27 @@ describe("HomeView Breadcrumb Home Navigation", () => {
     // Use waitFor to check the store state after the event
     await waitFor(() => {
       expect(get(showDetailView)).toBe(false);
-      expect(get(selectedHeadline)).toBe(null);
+      expect(get(currentHeadline)).toBeNull();
     });
   });
 
   it("should handle breadcrumb reactivity properly", async () => {
     documents.set([mockDocument]);
-    showDetailView.set(false);
-    selectedHeadline.set(null);
 
     const { rerender } = render(HomeView);
 
     // Initially should not show Home breadcrumb
     expect(screen.queryByText("Home")).not.toBeInTheDocument();
 
-    // Switch to DetailView
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    // Set DetailView state
+    openDetailView(mockHeadline);
     await rerender({});
 
     // Now should show Home breadcrumb
     expect(screen.getByText("Home")).toBeInTheDocument();
 
-    // Switch back to list view
-    showDetailView.set(false);
-    selectedHeadline.set(null);
+    // Clear DetailView state
+    closeDetailView();
     await rerender({});
 
     // Should not show Home breadcrumb again

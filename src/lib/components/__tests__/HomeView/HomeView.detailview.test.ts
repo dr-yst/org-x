@@ -8,9 +8,13 @@ import {
   loading,
   error,
   hasMonitoredPaths,
-  showDetailView,
-  selectedHeadline,
 } from "$lib/viewmodels/homeview.store";
+import {
+  showDetailView,
+  currentHeadline,
+  openDetailView,
+  closeDetailView,
+} from "$lib/viewmodels/detailview.store";
 
 /**
  * Note: Some tests are skipped due to async document loading coordination being flaky in test environment.
@@ -128,7 +132,7 @@ describe("HomeView DetailView Integration", () => {
     hasMonitoredPaths.set(true);
     displayMode.set("task-list");
     showDetailView.set(false);
-    selectedHeadline.set(null);
+    currentHeadline.set(null);
   });
 
   it.skip("should show headline list when not in detail view mode", async () => {
@@ -163,8 +167,7 @@ describe("HomeView DetailView Integration", () => {
   it("should show DetailView when showDetailView is true", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -180,8 +183,7 @@ describe("HomeView DetailView Integration", () => {
   it("should display headline content in DetailView", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -196,8 +198,7 @@ describe("HomeView DetailView Integration", () => {
   it("should show child headlines in DetailView table", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -213,8 +214,7 @@ describe("HomeView DetailView Integration", () => {
   it("should show properties in DetailView", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -228,8 +228,7 @@ describe("HomeView DetailView Integration", () => {
   it("should show tags in DetailView", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -243,8 +242,7 @@ describe("HomeView DetailView Integration", () => {
   it("should allow clicking Home breadcrumb to return to list view", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     render(HomeView);
 
@@ -261,8 +259,7 @@ describe("HomeView DetailView Integration", () => {
   it("should show Home breadcrumb for different display modes", async () => {
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadlines[0]);
+    openDetailView(mockHeadlines[0]);
 
     // Test headline-list mode
     displayMode.set("headline-list");
@@ -280,8 +277,7 @@ describe("HomeView DetailView Integration", () => {
 
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(headlineWithoutContent);
+    openDetailView(headlineWithoutContent);
 
     render(HomeView);
 
@@ -299,8 +295,7 @@ describe("HomeView DetailView Integration", () => {
 
     documents.set([mockDocument]);
     hasMonitoredPaths.set(true);
-    showDetailView.set(true);
-    selectedHeadline.set(headlineWithoutChildren);
+    openDetailView(headlineWithoutChildren);
 
     render(HomeView);
 

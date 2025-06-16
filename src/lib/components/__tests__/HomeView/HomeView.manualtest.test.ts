@@ -9,9 +9,13 @@ import {
   loading,
   error,
   hasMonitoredPaths,
-  showDetailView,
-  selectedHeadline,
 } from "$lib/viewmodels/homeview.store";
+import {
+  showDetailView,
+  currentHeadline,
+  openDetailView,
+  closeDetailView,
+} from "$lib/viewmodels/detailview.store";
 
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({
@@ -66,13 +70,12 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     hasMonitoredPaths.set(true);
     displayMode.set("task-list");
     showDetailView.set(false);
-    selectedHeadline.set(null);
+    currentHeadline.set(null);
   });
 
   it("should show DetailView and allow home navigation", async () => {
     // Step 1: Set up DetailView state manually
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     // Step 2: Render HomeView
     render(HomeView);
@@ -83,7 +86,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
     // Step 4: Verify initial store state
     expect(get(showDetailView)).toBe(true);
-    expect(get(selectedHeadline)).toBe(mockHeadline);
+    expect(get(currentHeadline)).toBe(mockHeadline);
 
     // Step 4: Click Home breadcrumb
     const homeLink = screen.getByText("Home");
@@ -91,14 +94,13 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
     // Step 6: Check if store state changed
     expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    expect(get(currentHeadline)).toBeNull();
   });
 
   it("should handle headline list mode home breadcrumb", async () => {
     // Set up headline list mode
     displayMode.set("headline-list");
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     render(HomeView);
 
@@ -111,12 +113,11 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
     // Verify state changed
     expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    expect(get(currentHeadline)).toBeNull();
   });
 
   it("should show DetailView content correctly", async () => {
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
 
     render(HomeView);
 
@@ -131,8 +132,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
   });
 
   it("should not show DetailView when showDetailView is false", async () => {
-    showDetailView.set(false);
-    selectedHeadline.set(null);
+    closeDetailView();
 
     render(HomeView);
 
@@ -142,7 +142,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
   it("should handle state transitions correctly", async () => {
     // Start with DetailView off
-    showDetailView.set(false);
+    closeDetailView();
 
     const { rerender } = render(HomeView);
 
@@ -150,8 +150,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
     expect(screen.queryByText("Home")).not.toBeInTheDocument();
 
     // Turn on DetailView
-    showDetailView.set(true);
-    selectedHeadline.set(mockHeadline);
+    openDetailView(mockHeadline);
     await rerender({});
 
     // Should now show Home breadcrumb
@@ -163,7 +162,7 @@ describe("HomeView Manual Test - Home Breadcrumb", () => {
 
     // Should close DetailView
     expect(get(showDetailView)).toBe(false);
-    expect(get(selectedHeadline)).toBe(null);
+    expect(get(currentHeadline)).toBeNull();
 
     // Re-render and verify UI updated
     await rerender({});

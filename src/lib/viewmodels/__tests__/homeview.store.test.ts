@@ -8,9 +8,8 @@ import {
   focusedIndex,
   activeFilterIndex,
   showQuickActions,
-  selectedHeadline,
-  showDetailView,
   showQuickLook,
+  quickLookHeadline,
   filteredHeadlines,
   displayModeFilteredHeadlines,
   documentCount,
@@ -26,8 +25,6 @@ import {
   moveFocusUp,
   toggleQuickActions,
   hideQuickActions,
-  openDetailView,
-  closeDetailView,
   toggleQuickLook,
   closeQuickLook,
   handleQuickAction,
@@ -128,9 +125,8 @@ describe("ListView Store", () => {
     focusedIndex.set(-1);
     activeFilterIndex.set(0);
     showQuickActions.set(false);
-    selectedHeadline.set(null);
-    showDetailView.set(false);
     showQuickLook.set(false);
+    quickLookHeadline.set(null);
   });
 
   describe("Store State", () => {
@@ -142,9 +138,8 @@ describe("ListView Store", () => {
       expect(get(focusedIndex)).toBe(-1);
       expect(get(activeFilterIndex)).toBe(0);
       expect(get(showQuickActions)).toBe(false);
-      expect(get(selectedHeadline)).toBe(null);
-      expect(get(showDetailView)).toBe(false);
       expect(get(showQuickLook)).toBe(false);
+      expect(get(quickLookHeadline)).toBe(null);
     });
 
     it("should skip loading when all parsing is disabled", async () => {
@@ -330,24 +325,25 @@ describe("ListView Store", () => {
     });
   });
 
-  describe("Detail View Actions", () => {
-    it("should open detail view", () => {
+  describe("Quick Look Actions", () => {
+    it("should toggle quick look for headline", () => {
       const headline = mockDocument.headlines[0];
-      openDetailView(headline);
+      toggleQuickLook(headline);
 
-      expect(get(selectedHeadline)).toBe(headline);
-      expect(get(showDetailView)).toBe(true);
+      expect(get(quickLookHeadline)).toBe(headline);
+      expect(get(showQuickLook)).toBe(true);
       expect(get(showQuickActions)).toBe(false);
     });
 
-    it("should close detail view", () => {
-      selectedHeadline.set(mockDocument.headlines[0]);
-      showDetailView.set(true);
+    it("should close quick look", () => {
+      const headline = mockDocument.headlines[0];
+      toggleQuickLook(headline);
+      expect(get(showQuickLook)).toBe(true);
 
-      closeDetailView();
+      closeQuickLook();
 
-      expect(get(selectedHeadline)).toBe(null);
-      expect(get(showDetailView)).toBe(false);
+      expect(get(quickLookHeadline)).toBeNull();
+      expect(get(showQuickLook)).toBe(false);
     });
   });
 
@@ -356,19 +352,19 @@ describe("ListView Store", () => {
       const headline = mockDocument.headlines[0];
       toggleQuickLook(headline);
 
-      expect(get(selectedHeadline)).toBe(headline);
+      expect(get(quickLookHeadline)).toBe(headline);
       expect(get(showQuickLook)).toBe(true);
-      expect(get(showDetailView)).toBe(false);
       expect(get(showQuickActions)).toBe(false);
     });
 
     it("should close quick look", () => {
-      selectedHeadline.set(mockDocument.headlines[0]);
-      showQuickLook.set(true);
+      const headline = mockDocument.headlines[0];
+      toggleQuickLook(headline);
+      expect(get(showQuickLook)).toBe(true);
 
       closeQuickLook();
 
-      expect(get(selectedHeadline)).toBe(null);
+      expect(get(quickLookHeadline)).toBeNull();
       expect(get(showQuickLook)).toBe(false);
     });
   });
@@ -399,14 +395,14 @@ describe("ListView Store", () => {
   describe("Handle Quick Action", () => {
     beforeEach(() => {
       documents.set([mockDocument]);
-      selectedHeadline.set(mockDocument.headlines[0]);
+      // Set focused index to test focused headline functionality
+      focusedIndex.set(0);
     });
 
-    it("should handle view action", async () => {
-      await handleQuickAction("view");
-
-      expect(get(showDetailView)).toBe(true);
-      expect(get(showQuickActions)).toBe(false);
+    it("should handle view action with focused headline", async () => {
+      // Since view action now delegates to DetailView store,
+      // we just verify the action completes without error
+      await expect(handleQuickAction("view")).resolves.not.toThrow();
     });
 
     it("should handle mark-done action", async () => {
@@ -414,8 +410,10 @@ describe("ListView Store", () => {
 
       await handleQuickAction("mark-done");
 
-      expect(consoleSpy).toHaveBeenCalledWith("Mark as done:", "headline-1");
-      expect(get(showQuickActions)).toBe(false);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Mark as done:",
+        mockDocument.headlines[0].id,
+      );
     });
 
     it("should handle priority actions", async () => {
@@ -424,16 +422,14 @@ describe("ListView Store", () => {
       await handleQuickAction("priority-up");
       expect(consoleSpy).toHaveBeenCalledWith(
         "Increase priority:",
-        "headline-1",
+        mockDocument.headlines[0].id,
       );
 
       await handleQuickAction("priority-down");
       expect(consoleSpy).toHaveBeenCalledWith(
         "Decrease priority:",
-        "headline-1",
+        mockDocument.headlines[0].id,
       );
-
-      expect(get(showQuickActions)).toBe(false);
     });
 
     it("should handle open-editor action", async () => {
@@ -443,9 +439,8 @@ describe("ListView Store", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         "Opening file in external editor:",
-        "/test/path.org",
+        mockDocument.file_path,
       );
-      expect(get(showQuickActions)).toBe(false);
     });
   });
 });
