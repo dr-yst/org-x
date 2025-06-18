@@ -21,6 +21,11 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 
 ### Recently Completed
+- ✅ **COMPLETED Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off**
+  - ✅ **ROOT CAUSE FIX** - Replaced UUID-based document IDs with file path-based IDs to ensure one document per file
+  - ✅ **HIERARCHICAL HEADLINE IDS** - Implemented position-based headline IDs (e.g., "1", "1.1", "1.2") for stability across content edits
+  - ✅ **COMPREHENSIVE TESTING** - Added tests to verify no duplicates occur when toggling monitoring and IDs are deterministic
+  - ✅ **ARCHITECTURE IMPROVEMENT** - Eliminated UUID dependency, making the system more predictable and robust
 - ✅ **COMPLETED Issue #34: Recursive DetailView Breadcrumb Navigation**
   - ✅ **ARCHITECTURAL MIGRATION** - Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
   - ✅ **RESPONSIVE BREADCRUMB DESIGN** - Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)

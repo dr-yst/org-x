@@ -115,6 +115,15 @@ We've broken down the task list view implementation into smaller, focused issues
 
 ### Recently Completed
 
+- ✅ **COMPLETED Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off**
+  - Successfully eliminated duplicate headlines when toggling monitored paths by replacing UUID-based document IDs with file path-based IDs
+  - Implemented hierarchical position-based headline IDs (e.g., "1", "1.1", "1.2") that remain stable across content edits
+  - Fixed root cause: Each file reparse now replaces the existing document instead of creating a new one with a different UUID
+  - Added comprehensive test suite including `test_issue_29_no_duplicate_headlines_when_toggling_monitoring` and `test_issue_29_hierarchical_ids_and_file_path_document_ids`
+  - Removed UUID dependency from document and headline ID generation, making the system more predictable and robust
+  - Repository upsert logic now correctly handles file path-based IDs, automatically replacing old documents when files are reparsed
+  - All existing tests continue to pass, ensuring no regressions were introduced
+  - Architecture improvement: Document IDs are now meaningful (file paths) rather than opaque UUIDs, improving debugging and maintainability
 - ✅ **COMPLETED Issue #18: ListView spinner/empty state logic**
   - Updated ListView.svelte to check for monitored paths before loading documents.
   - Spinner is never shown when no monitored paths are set; instead, an immediate empty state message is displayed.
