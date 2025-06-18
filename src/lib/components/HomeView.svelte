@@ -19,6 +19,7 @@
         setFilter,
         setFocus,
         cycleFilter,
+        setDisplayMode,
         moveFocusDown,
         moveFocusUp,
         toggleQuickActions,
@@ -257,6 +258,14 @@
             // Decrease priority
             event.preventDefault();
             handleQuickAction("priority-down", undefined, openDetailView);
+        } else if (event.key === "1" && (event.metaKey || event.ctrlKey)) {
+            // Switch to Task List mode (⌘+1 or Ctrl+1)
+            event.preventDefault();
+            setDisplayMode("task-list");
+        } else if (event.key === "2" && (event.metaKey || event.ctrlKey)) {
+            // Switch to Headline List mode (⌘+2 or Ctrl+2)
+            event.preventDefault();
+            setDisplayMode("headline-list");
         }
     }
 

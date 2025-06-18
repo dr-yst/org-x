@@ -20,6 +20,16 @@ export const refreshTrigger = writable(0);
 export type DisplayMode = "task-list" | "headline-list";
 export const displayMode = writable<DisplayMode>("task-list");
 
+// Available display modes for the selector
+export const displayModes: {
+  value: DisplayMode;
+  label: string;
+  shortcut: string;
+}[] = [
+  { value: "task-list", label: "Task List", shortcut: "⌘1" },
+  { value: "headline-list", label: "Headline List", shortcut: "⌘2" },
+];
+
 // Filter options constant
 export const filterOptions = ["all", "today", "week", "overdue"];
 
