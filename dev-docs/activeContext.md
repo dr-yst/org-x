@@ -348,6 +348,15 @@ Each issue has detailed tasks, technical approach, and acceptance criteria to gu
 3. **Issue #28: "Back to Task List"/"Back to Headline List" Button Should Be a Universal Home Button [COMPLETED]**
    - **Main Implementation**: Replaced conditional "Back to Task List"/"Back to Headline List" button with universal Home breadcrumb navigation in DetailView
    - **ListView → HomeView Renaming**: Successfully renamed all components, imports, tests, and documentation from ListView to HomeView throughout the codebase
+
+4. **Issue #30: Add Display Mode Dropdown Selector to Sidebar (shadcn-svelte Select) [COMPLETED]**
+   - **UI Migration**: Moved display mode switching from main page Tabs to shadcn-svelte Select component at the top of MonitoringSidebar
+   - **Extensible Architecture**: Created displayModes array in homeview.store.ts for easy addition of future display modes
+   - **Keyboard Shortcuts**: Implemented ⌘+1/⌘+2 (Mac) and Ctrl+1/Ctrl+2 (Windows/Linux) shortcuts for quick mode switching
+   - **Clean Page Layout**: Removed Tabs component from +page.svelte, now renders HomeView directly for simplified structure
+   - **Accessible UI**: Select component shows current mode with keyboard shortcut hints, fully keyboard navigable
+   - **Comprehensive Testing**: Updated page tests to reflect new structure, added tests for displayModes array extensibility
+   - **Status**: All acceptance criteria met - users can switch modes from sidebar dropdown, UI updates immediately, keyboard shortcuts work, solution is extensible for future modes
    - **Universal Navigation**: Home breadcrumb always returns to main view regardless of display mode, providing consistent user experience
    - **Test Fixes**: Resolved major test failures including:
      - Fixed ambiguous text queries by replacing `getByText` with `getAllByText` and function matchers

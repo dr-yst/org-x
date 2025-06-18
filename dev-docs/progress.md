@@ -48,6 +48,13 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #30: Add Display Mode Dropdown Selector to Sidebar**
+  - ✅ Migrated display mode switching from main page Tabs to shadcn-svelte Select component in MonitoringSidebar
+  - ✅ Created extensible displayModes array architecture for easy addition of future display modes
+  - ✅ Implemented keyboard shortcuts (⌘+1/2, Ctrl+1/2) for quick mode switching between Task List and Headline List
+  - ✅ Simplified page layout by removing Tabs component and rendering HomeView directly
+  - ✅ Enhanced accessibility with Select component showing current mode and keyboard shortcut hints
+  - ✅ Updated comprehensive test suite including page tests and displayModes array extensibility tests
 - ✅ **COMPLETED Issue #34: Recursive DetailView Breadcrumb Navigation**
   - ✅ **ARCHITECTURAL MIGRATION** - Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
   - ✅ **RESPONSIVE BREADCRUMB DESIGN** - Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)
