@@ -6,7 +6,7 @@
 This is an example org-mode document for testing the file monitoring functionality.
 It contains various elements that can be parsed by Org-X.
 
-* TODO Tasks
+* TODO Example tasks
 ** TODO Write documentation for file monitoring
 DEADLINE: <2023-09-01 Fri>
 
