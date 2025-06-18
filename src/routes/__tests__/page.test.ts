@@ -83,40 +83,20 @@ describe("Page Component", () => {
     displayMode.set("task-list");
   });
 
-  it("should render display mode tabs", async () => {
+  it("should render HomeView component directly", async () => {
     render(Page);
 
-    // Check that both tabs are rendered
-    expect(screen.getByRole("tab", { name: "Task List" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("tab", { name: "Headline List" }),
-    ).toBeInTheDocument();
+    // The page should render the HomeView component directly without tabs
+    // We can check for the presence of the HomeView container
+    const homeViewContainer = screen.getByTestId
+      ? screen.queryByTestId("homeview-container") ||
+        document.querySelector(".w-full.h-full")
+      : document.querySelector(".w-full.h-full");
+
+    expect(homeViewContainer).toBeTruthy();
   });
 
-  it("should have task-list tab selected by default", async () => {
-    render(Page);
-
-    const taskListTab = screen.getByRole("tab", { name: "Task List" });
-    expect(taskListTab).toHaveAttribute("data-state", "active");
-  });
-
-  it("should switch to headline-list tab when clicked", async () => {
-    render(Page);
-
-    const headlineListTab = screen.getByRole("tab", { name: "Headline List" });
-
-    // Click the headline list tab
-    await fireEvent.click(headlineListTab);
-
-    // Check that the tab is now active
-    expect(headlineListTab).toHaveAttribute("data-state", "active");
-
-    // Check that task list tab is no longer active
-    const taskListTab = screen.getByRole("tab", { name: "Task List" });
-    expect(taskListTab).toHaveAttribute("data-state", "inactive");
-  });
-
-  it("should render ListView component in both tab contents", async () => {
+  it("should render HomeView component with proper layout structure", async () => {
     // Set up some test data
     hasMonitoredPaths.set(true);
     documents.set([
@@ -136,10 +116,12 @@ describe("Page Component", () => {
 
     render(Page);
 
-    // The ListView component should be rendered
-    // We can check for the presence of the ListView container
-    const listViewContainer = screen.getByText(/Task List/);
-    expect(listViewContainer).toBeInTheDocument();
+    // The HomeView component should be rendered
+    // Check that the main container exists
+    const mainContainer = document.querySelector(
+      ".flex-1.min-w-0.overflow-hidden.p-4",
+    );
+    expect(mainContainer).toBeTruthy();
   });
 
   it("should show empty state when no monitored paths are configured", async () => {
@@ -153,27 +135,41 @@ describe("Page Component", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("should maintain tab layout structure", async () => {
+  it("should not render tabs since display mode is now controlled by sidebar", async () => {
     render(Page);
 
-    // Check that the tabs container exists
-    const tabsContainer = screen.getByRole("tablist");
-    expect(tabsContainer).toBeInTheDocument();
+    // Check that no tab elements exist
+    const tabs = screen.queryByRole("tablist");
+    expect(tabs).toBeNull();
 
-    // Check that task list panel exists (active by default)
-    const taskListPanel = screen.getByRole("tabpanel", { name: "Task List" });
-    expect(taskListPanel).toBeInTheDocument();
+    const taskTab = screen.queryByRole("tab", { name: "Task List" });
+    expect(taskTab).toBeNull();
 
-    // Activate the headline list tab to make its panel accessible
-    const headlineListTab = screen.getByRole("tab", { name: "Headline List" });
-    await fireEvent.click(headlineListTab);
+    const headlineTab = screen.queryByRole("tab", { name: "Headline List" });
+    expect(headlineTab).toBeNull();
+  });
 
-    // Now check that headline list panel exists
-    await waitFor(() => {
-      const headlineListPanel = screen.getByRole("tabpanel", {
-        name: "Headline List",
-      });
-      expect(headlineListPanel).toBeInTheDocument();
-    });
+  it("should render HomeView regardless of display mode", async () => {
+    // Test with different display modes
+    displayMode.set("headline-list");
+    render(Page);
+
+    // HomeView should still be rendered
+    const homeViewContainer = document.querySelector(".w-full.h-full");
+    expect(homeViewContainer).toBeTruthy();
+  });
+
+  it("should maintain proper page layout structure", async () => {
+    render(Page);
+
+    // Check that the main page container exists with correct classes
+    const pageContainer = document.querySelector(
+      ".flex-1.min-w-0.overflow-hidden.p-4",
+    );
+    expect(pageContainer).toBeTruthy();
+
+    // HomeView should be a direct child
+    const homeView = pageContainer?.querySelector(".w-full.h-full");
+    expect(homeView).toBeTruthy();
   });
 });

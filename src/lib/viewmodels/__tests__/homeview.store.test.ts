@@ -16,6 +16,7 @@ import {
   headlineCount,
   filterOptions,
   displayMode,
+  displayModes,
   setDisplayMode,
   refresh,
   setFilter,
@@ -244,6 +245,30 @@ describe("ListView Store", () => {
       activeFilterIndex.set(1);
       const filtered = get(filteredHeadlines);
       expect(filtered).toHaveLength(0);
+    });
+
+    it("should have correctly structured displayModes array", () => {
+      expect(displayModes).toHaveLength(2);
+      expect(displayModes[0]).toEqual({
+        value: "task-list",
+        label: "Task List",
+        shortcut: "⌘1",
+      });
+      expect(displayModes[1]).toEqual({
+        value: "headline-list",
+        label: "Headline List",
+        shortcut: "⌘2",
+      });
+    });
+
+    it("should have displayModes that match available display modes", () => {
+      // Ensure all modes in displayModes array have valid values
+      const validModes = ["task-list", "headline-list"];
+      displayModes.forEach((mode) => {
+        expect(validModes).toContain(mode.value);
+        expect(mode.label).toBeTruthy();
+        expect(mode.shortcut).toBeTruthy();
+      });
     });
 
     it("should update headline count based on filtered results", () => {
