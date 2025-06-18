@@ -565,4 +565,110 @@ mod tests {
         // This test verifies that the repository correctly reflects the current
         // monitoring configuration and doesn't retain stale documents
     }
+
+    #[test]
+    fn test_issue_29_no_duplicate_headlines_when_toggling_monitoring() {
+        // This test verifies the fix for Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off
+        // The issue was that each time a file is parsed, a new document with a new UUID is created,
+        // but old documents aren't removed, leading to duplicates.
+
+        let mut repo = OrgDocumentRepository::new();
+        let test_file_path = "/test/sample.org";
+
+        // Create a sample document that would be parsed from a file
+        let create_sample_document = || -> OrgDocument {
+            use crate::orgmode::headline::OrgHeadline;
+            use crate::orgmode::title::OrgTitle;
+
+            // Create a headline with position-based ID
+            let headline = OrgHeadline {
+                id: "1".to_string(), // Position-based ID
+                document_id: test_file_path.to_string(),
+                title: OrgTitle::new(
+                    "Sample Headline".to_string(),
+                    1,
+                    None,
+                    vec!["tag1".to_string()],
+                    Some("TODO".to_string()),
+                ),
+                content: "Sample content".to_string(),
+                children: Vec::new(),
+                etag: "test-etag".to_string(),
+            };
+
+            OrgDocument {
+                id: test_file_path.to_string(), // File path as ID (fix for Issue #29)
+                title: "Sample Document".to_string(),
+                content: "Sample content".to_string(),
+                headlines: vec![headline],
+                filetags: vec!["test".to_string()],
+                parsed_at: Utc::now(),
+                file_path: test_file_path.to_string(),
+                properties: HashMap::new(),
+                category: "Test".to_string(),
+                etag: "etag1".to_string(),
+                todo_config: None,
+            }
+        };
+
+        // Scenario 1: Parse the file for the first time
+        let doc1 = create_sample_document();
+        repo.upsert(doc1);
+        assert_eq!(repo.list().len(), 1);
+        assert_eq!(repo.list()[0].headlines.len(), 1);
+
+        // Scenario 2: Simulate toggling parse_enabled off then on (file gets reparsed)
+        // This would previously create a duplicate document with a new UUID
+        let doc2 = create_sample_document();
+        repo.upsert(doc2);
+
+        // After the fix: Should still have only 1 document and 1 headline
+        // (because document ID is now based on file path, upsert replaces the old document)
+        assert_eq!(
+            repo.list().len(),
+            1,
+            "Should have only 1 document after reparsing"
+        );
+        assert_eq!(
+            repo.list()[0].headlines.len(),
+            1,
+            "Should have only 1 headline after reparsing"
+        );
+        assert_eq!(
+            repo.list()[0].id,
+            test_file_path,
+            "Document ID should be file path"
+        );
+        assert_eq!(
+            repo.list()[0].headlines[0].id,
+            "1",
+            "Headline ID should be position-based"
+        );
+
+        // Scenario 3: Multiple toggles (parse multiple times)
+        for _ in 0..5 {
+            let doc = create_sample_document();
+            repo.upsert(doc);
+        }
+
+        // Should still have only 1 document and 1 headline
+        assert_eq!(
+            repo.list().len(),
+            1,
+            "Should have only 1 document after multiple reparses"
+        );
+        assert_eq!(
+            repo.list()[0].headlines.len(),
+            1,
+            "Should have only 1 headline after multiple reparses"
+        );
+
+        // Verify document retrieval by file path works correctly
+        assert!(
+            repo.get(test_file_path).is_some(),
+            "Should be able to retrieve document by file path"
+        );
+
+        // This test confirms that using file path as document ID eliminates the duplicate issue
+    }
 }
