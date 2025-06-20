@@ -2,6 +2,29 @@ import { writable, derived } from "svelte/store";
 import { commands } from "$lib/bindings";
 import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
+// Type for headline with parent context
+type HeadlineWithParent = {
+  headline: OrgHeadline;
+  parent: OrgHeadline | null;
+};
+
+// Utility function to recursively flatten headlines with parent context
+function flattenHeadlinesWithParent(
+  headlines: OrgHeadline[],
+  parent: OrgHeadline | null = null,
+): HeadlineWithParent[] {
+  let result: HeadlineWithParent[] = [];
+  for (const headline of headlines) {
+    result.push({ headline, parent });
+    if (headline.children && headline.children.length > 0) {
+      result = result.concat(
+        flattenHeadlinesWithParent(headline.children, headline),
+      );
+    }
+  }
+  return result;
+}
+
 // Core state stores
 export const documents = writable<OrgDocument[]>([]);
 export const loading = writable(true);
@@ -40,26 +63,39 @@ export const documentMap = derived(
 );
 
 export const allHeadlines = derived(documents, ($docs) =>
-  $docs.flatMap((doc) => doc.headlines),
+  $docs.flatMap((doc) =>
+    flattenHeadlinesWithParent(doc.headlines).map(({ headline }) => headline),
+  ),
+);
+
+// Derived store for headlines with parent context
+export const headlinesWithParent = derived(documents, ($docs) =>
+  $docs.flatMap((doc) => flattenHeadlinesWithParent(doc.headlines)),
 );
 
 // Display mode filtered headlines
 export const displayModeFilteredHeadlines = derived(
-  [allHeadlines, displayMode],
-  ([$headlines, $mode]) => {
+  [headlinesWithParent, displayMode],
+  ([$headlinesWithParent, $mode]) => {
     switch ($mode) {
       case "task-list":
-        // Show all headlines with TODO keywords (tasks)
-        return $headlines.filter(
-          (headline) => headline.title.todo_keyword !== null,
-        );
+        // Show all tasks whose parent is not a task (or parent is null)
+        return $headlinesWithParent
+          .filter(
+            ({ headline, parent }) =>
+              headline.title.todo_keyword !== null &&
+              (!parent || parent.title.todo_keyword === null),
+          )
+          .map(({ headline }) => headline);
 
       case "headline-list":
         // Show only first-level headlines
-        return $headlines.filter((headline) => headline.title.level === 1);
+        return $headlinesWithParent
+          .filter(({ headline }) => headline.title.level === 1)
+          .map(({ headline }) => headline);
 
       default:
-        return $headlines;
+        return $headlinesWithParent.map(({ headline }) => headline);
     }
   },
 );
@@ -435,6 +471,7 @@ const listViewStore = {
   refreshTrigger: { subscribe: refreshTrigger.subscribe },
   documentMap: { subscribe: documentMap.subscribe },
   allHeadlines: { subscribe: allHeadlines.subscribe },
+  headlinesWithParent: { subscribe: headlinesWithParent.subscribe },
   displayModeFilteredHeadlines: {
     subscribe: displayModeFilteredHeadlines.subscribe,
   },

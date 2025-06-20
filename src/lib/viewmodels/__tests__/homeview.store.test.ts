@@ -116,6 +116,103 @@ const mockDocument: OrgDocument = {
   todo_config: null,
 };
 
+// Mock document with hierarchical structure to test Issue #36 fix
+const mockHierarchicalDocument: OrgDocument = {
+  id: "doc-hierarchical",
+  title: "Hierarchical Document",
+  content: "Document with nested headlines",
+  headlines: [
+    {
+      id: "note-1",
+      document_id: "doc-hierarchical",
+      title: {
+        raw: "Note",
+        level: 1,
+        priority: null,
+        tags: [],
+        todo_keyword: null, // Note (not a task)
+        properties: {},
+        planning: null,
+      },
+      content: "Note content",
+      children: [
+        {
+          id: "task-under-note",
+          document_id: "doc-hierarchical",
+          title: {
+            raw: "TODO Task under note",
+            level: 2,
+            priority: null,
+            tags: [],
+            todo_keyword: "TODO", // Task under note - should be shown
+            properties: {},
+            planning: null,
+          },
+          content: "Task under note content",
+          children: [],
+          etag: "test-etag-task-under-note",
+        },
+      ],
+      etag: "test-etag-note",
+    },
+    {
+      id: "top-level-task",
+      document_id: "doc-hierarchical",
+      title: {
+        raw: "TODO Top-level task",
+        level: 1,
+        priority: null,
+        tags: [],
+        todo_keyword: "TODO", // Top-level task - should be shown
+        properties: {},
+        planning: null,
+      },
+      content: "Top-level task content",
+      children: [],
+      etag: "test-etag-top-level-task",
+    },
+    {
+      id: "parent-task",
+      document_id: "doc-hierarchical",
+      title: {
+        raw: "TODO Parent task",
+        level: 1,
+        priority: null,
+        tags: [],
+        todo_keyword: "TODO", // Parent task - should be shown
+        properties: {},
+        planning: null,
+      },
+      content: "Parent task content",
+      children: [
+        {
+          id: "subtask",
+          document_id: "doc-hierarchical",
+          title: {
+            raw: "TODO Subtask",
+            level: 2,
+            priority: null,
+            tags: [],
+            todo_keyword: "TODO", // Subtask under task - should NOT be shown
+            properties: {},
+            planning: null,
+          },
+          content: "Subtask content",
+          children: [],
+          etag: "test-etag-subtask",
+        },
+      ],
+      etag: "test-etag-parent-task",
+    },
+  ],
+  filetags: [],
+  file_path: "/test/hierarchical.org",
+  properties: {},
+  category: "test",
+  etag: "doc-hierarchical-etag",
+  todo_config: null,
+};
+
 describe("ListView Store", () => {
   beforeEach(() => {
     // Reset store state before each test
@@ -279,6 +376,109 @@ describe("ListView Store", () => {
       // Headline list mode
       setDisplayMode("headline-list");
       expect(get(headlineCount)).toBe(2); // Only level 1 headlines
+    });
+  });
+
+  describe("Issue #36: Recursive Headline Flattening and Parent-Aware Task Filtering", () => {
+    beforeEach(() => {
+      documents.set([mockHierarchicalDocument]);
+      setDisplayMode("task-list");
+    });
+
+    it("should recursively flatten all headlines from hierarchical structure", () => {
+      // allHeadlines should contain all headlines from all levels
+      const allHeadlines = get(displayModeFilteredHeadlines);
+
+      // Should include:
+      // - "TODO Task under note" (task under note)
+      // - "TODO Top-level task" (top-level task)
+      // - "TODO Parent task" (parent task)
+      // Should NOT include:
+      // - "TODO Subtask" (task under task)
+      expect(allHeadlines).toHaveLength(3);
+
+      const taskTitles = allHeadlines.map((h) => h.title.raw);
+      expect(taskTitles).toContain("TODO Task under note");
+      expect(taskTitles).toContain("TODO Top-level task");
+      expect(taskTitles).toContain("TODO Parent task");
+      expect(taskTitles).not.toContain("TODO Subtask");
+    });
+
+    it("should show tasks whose parent is not a task (Issue #36 acceptance criteria)", () => {
+      const filtered = get(displayModeFilteredHeadlines);
+
+      // Expected tasks based on Issue #36 design:
+      // ✅ "TODO Task under note" - parent is "Note" (not a task)
+      // ✅ "TODO Top-level task" - parent is null
+      // ✅ "TODO Parent task" - parent is null
+      // ❌ "TODO Subtask" - parent is "TODO Parent task" (is a task)
+
+      expect(filtered).toHaveLength(3);
+
+      // Verify specific headlines are included
+      const taskUnderNote = filtered.find((h) => h.id === "task-under-note");
+      const topLevelTask = filtered.find((h) => h.id === "top-level-task");
+      const parentTask = filtered.find((h) => h.id === "parent-task");
+      const subtask = filtered.find((h) => h.id === "subtask");
+
+      expect(taskUnderNote).toBeDefined();
+      expect(topLevelTask).toBeDefined();
+      expect(parentTask).toBeDefined();
+      expect(subtask).toBeUndefined(); // Should NOT be included
+    });
+
+    it("should not show subtasks (tasks whose parent is also a task)", () => {
+      const filtered = get(displayModeFilteredHeadlines);
+
+      // The subtask should not appear because its parent is a task
+      const subtask = filtered.find((h) => h.id === "subtask");
+      expect(subtask).toBeUndefined();
+
+      // All filtered tasks should have parents that are either null or not tasks
+      filtered.forEach((task) => {
+        if (task.id === "task-under-note") {
+          // This task's parent is "Note" which has todo_keyword: null
+          expect(task.title.todo_keyword).toBe("TODO");
+        } else if (task.id === "top-level-task" || task.id === "parent-task") {
+          // These are top-level tasks (parent is null)
+          expect(task.title.todo_keyword).toBe("TODO");
+        }
+      });
+    });
+
+    it("should correctly identify tasks at different hierarchy levels", () => {
+      const filtered = get(displayModeFilteredHeadlines);
+
+      // Should include tasks from different levels
+      const levels = filtered.map((h) => h.title.level);
+      expect(levels).toContain(1); // Top-level tasks
+      expect(levels).toContain(2); // Task under note
+
+      // Verify specific hierarchy levels
+      const taskUnderNote = filtered.find((h) => h.id === "task-under-note");
+      const topLevelTask = filtered.find((h) => h.id === "top-level-task");
+      const parentTask = filtered.find((h) => h.id === "parent-task");
+
+      expect(taskUnderNote?.title.level).toBe(2);
+      expect(topLevelTask?.title.level).toBe(1);
+      expect(parentTask?.title.level).toBe(1);
+    });
+
+    it("should work correctly with mixed document types", () => {
+      // Test with both simple and hierarchical documents
+      documents.set([mockDocument, mockHierarchicalDocument]);
+
+      const filtered = get(displayModeFilteredHeadlines);
+
+      // Should include tasks from both documents
+      // From mockDocument: 2 tasks (both are top-level)
+      // From mockHierarchicalDocument: 3 tasks (following parent rules)
+      expect(filtered).toHaveLength(5);
+
+      // Verify tasks from both documents are present
+      const documentIds = [...new Set(filtered.map((h) => h.document_id))];
+      expect(documentIds).toContain("doc-1");
+      expect(documentIds).toContain("doc-hierarchical");
     });
   });
 
