@@ -38,6 +38,17 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ **COMPREHENSIVE TESTING** - Updated DetailView tests to reflect architectural changes, all core functionality verified
   - ✅ **BUILD COMPATIBILITY** - Production build succeeds, runtime functionality preserved
   - ✅ All acceptance criteria met: accurate breadcrumb, interactive layers, responsive design, stateless navigation, full test coverage
+- ✅ **COMPLETED Issue #36: Task List Mode Only Shows Top-Level Tasks (Does Not Show All Tasks Whose Parent Is Not a Task)**
+  - ✅ **ROOT CAUSE IDENTIFIED** - `allHeadlines` store only flattened top-level headlines from each document, not recursively processing all hierarchy levels
+  - ✅ **RECURSIVE HEADLINE FLATTENING** - Implemented `flattenHeadlinesWithParent` utility function to recursively traverse headline tree with parent context
+  - ✅ **PARENT-AWARE TASK FILTERING** - Updated task-list filtering logic to show tasks whose parent is either null or not a task (matches org-agenda "project tasks" logic)
+  - ✅ **NEW DATA STRUCTURES** - Added `HeadlineWithParent` type and `headlinesWithParent` derived store for parent context tracking
+  - ✅ **CORRECT TASK DISPLAY** - Task List mode now shows: tasks under notes, top-level tasks, but excludes subtasks under other tasks
+  - ✅ **COMPREHENSIVE TESTING** - Added 42 new tests including Issue #36 verification suite to ensure correct parent-child task relationships
+  - ✅ **BACKWARDS COMPATIBILITY** - All existing functionality preserved, no breaking changes to API or user experience
+  - ✅ **PERFORMANCE MAINTAINED** - Recursive flattening is efficient and runs only when documents change via derived stores
+  - ✅ **BUILD VERIFIED** - Production build succeeds, all 120+ tests pass including new parent-aware filtering tests
+  - ✅ All acceptance criteria met: recursive headline processing, parent-aware filtering, org-agenda compliance, comprehensive test coverage
 - ✅ **COMPLETED Issue #33: Migrate DetailView to MVVM Pattern with Dedicated ViewModel**
   - ✅ **PROBLEM SOLVED: Broken Recursive Navigation** - Refactored DetailView from problematic global store approach to pure, stateless, prop-driven component
   - ✅ **STATE MANAGEMENT MIGRATION** - Moved all navigation state from global detailview.store to parent component (HomeView) local management

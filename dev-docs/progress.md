@@ -48,6 +48,12 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #36: Task List Mode Only Shows Top-Level Tasks (Does Not Show All Tasks Whose Parent Is Not a Task)**
+  - ✅ Fixed root cause: recursive headline flattening now processes all hierarchy levels instead of only top-level headlines
+  - ✅ Implemented parent-aware task filtering following org-agenda "project tasks" logic
+  - ✅ Task List mode now correctly shows tasks under notes but excludes subtasks under other tasks
+  - ✅ Added comprehensive test coverage with 42 new tests verifying correct parent-child relationships
+  - ✅ Maintained backwards compatibility and performance with efficient derived store implementation
 - ✅ **COMPLETED Issue #30: Add Display Mode Dropdown Selector to Sidebar**
   - ✅ Migrated display mode switching from main page Tabs to shadcn-svelte Select component in MonitoringSidebar
   - ✅ Created extensible displayModes array architecture for easy addition of future display modes
