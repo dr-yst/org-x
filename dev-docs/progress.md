@@ -48,6 +48,31 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #36: Task List Mode Only Shows Top-Level Tasks (Does Not Show All Tasks Whose Parent Is Not a Task)**
+  - ✅ Fixed root cause: recursive headline flattening now processes all hierarchy levels instead of only top-level headlines
+  - ✅ Implemented parent-aware task filtering following org-agenda "project tasks" logic
+  - ✅ Task List mode now correctly shows tasks under notes but excludes subtasks under other tasks
+  - ✅ Added comprehensive test coverage with 42 new tests verifying correct parent-child relationships
+  - ✅ Maintained backwards compatibility and performance with efficient derived store implementation
+- ✅ **COMPLETED Issue #30: Add Display Mode Dropdown Selector to Sidebar**
+  - ✅ Migrated display mode switching from main page Tabs to shadcn-svelte Select component in MonitoringSidebar
+  - ✅ Created extensible displayModes array architecture for easy addition of future display modes
+  - ✅ Implemented keyboard shortcuts (⌘+1/2, Ctrl+1/2) for quick mode switching between Task List and Headline List
+  - ✅ Simplified page layout by removing Tabs component and rendering HomeView directly
+  - ✅ Enhanced accessibility with Select component showing current mode and keyboard shortcut hints
+  - ✅ Updated comprehensive test suite including page tests and displayModes array extensibility tests
+- ✅ **COMPLETED Issue #34: Recursive DetailView Breadcrumb Navigation**
+  - ✅ **ARCHITECTURAL MIGRATION** - Moved breadcrumb navigation from DetailView to HomeView following MVVM/container-presentational patterns
+  - ✅ **RESPONSIVE BREADCRUMB DESIGN** - Implemented shadcn-svelte breadcrumb with ellipsis dropdown/drawer pattern for deep hierarchies (>3 levels)
+  - ✅ **ACCURATE NAVIGATION STACK** - Breadcrumb now correctly displays full parent chain for any recursion depth (`Home > Parent1 > Parent2 > ... > Current`)
+  - ✅ **INTERACTIVE NAVIGATION** - All parent layers (except current) are clickable and allow direct navigation to any level in the hierarchy
+  - ✅ **MOBILE-RESPONSIVE** - Uses dropdown on desktop, drawer on mobile for intermediate levels in deep hierarchies
+  - ✅ **STATELESS ARCHITECTURE** - Navigation state managed via props and callbacks in HomeView, DetailView remains pure and stateless
+  - ✅ **EVENT PROPAGATION** - Implemented callback-based event propagation from DetailView to HomeView for recursive navigation
+  - ✅ **CLEAN TITLE DISPLAY** - Breadcrumb items show cleaned titles without TODO keywords, priorities, or tags
+  - ✅ **COMPREHENSIVE TESTING** - Updated DetailView tests to reflect architectural changes, all core functionality verified
+  - ✅ **BUILD COMPATIBILITY** - Production build succeeds, runtime functionality preserved
+  - ✅ All acceptance criteria met: accurate breadcrumb, interactive layers, responsive design, stateless navigation, full test coverage
 - ✅ **COMPLETED Issue #20: MVVM Refactor of ListView**
   - ✅ Successfully implemented Model-View-ViewModel pattern for ListView component
   - ✅ Created dedicated ViewModel store (`src/lib/viewmodels/listview.store.ts`) with comprehensive business logic
@@ -96,12 +121,35 @@ We've broken down the task list view implementation into smaller, focused issues
 
 ### Recently Completed
 
+- ✅ **COMPLETED Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off**
+  - Successfully eliminated duplicate headlines when toggling monitored paths by replacing UUID-based document IDs with file path-based IDs
+  - Implemented hierarchical position-based headline IDs (e.g., "1", "1.1", "1.2") that remain stable across content edits
+  - Fixed root cause: Each file reparse now replaces the existing document instead of creating a new one with a different UUID
+  - Added comprehensive test suite including `test_issue_29_no_duplicate_headlines_when_toggling_monitoring` and `test_issue_29_hierarchical_ids_and_file_path_document_ids`
+  - Removed UUID dependency from document and headline ID generation, making the system more predictable and robust
+  - Repository upsert logic now correctly handles file path-based IDs, automatically replacing old documents when files are reparsed
+  - All existing tests continue to pass, ensuring no regressions were introduced
+  - Architecture improvement: Document IDs are now meaningful (file paths) rather than opaque UUIDs, improving debugging and maintainability
 - ✅ **COMPLETED Issue #18: ListView spinner/empty state logic**
   - Updated ListView.svelte to check for monitored paths before loading documents.
   - Spinner is never shown when no monitored paths are set; instead, an immediate empty state message is displayed.
   - Loading spinner only appears if monitored paths exist and documents are being loaded.
   - Tests updated to cover all relevant scenarios (no monitored paths, no documents, normal loading, error).
   - Improved UX for new users and clarified empty state messaging.
+- ✅ **COMPLETED Issue #33: DetailView MVVM Refactoring**
+  - Successfully migrated DetailView.svelte to follow MVVM pattern consistent with HomeView architecture
+  - Created dedicated DetailView ViewModel store (`src/lib/viewmodels/detailview.store.ts`) containing all business logic and state management
+  - Moved all formatting functions (timestamp, content, title cleaning, styling) from component to store
+  - Implemented comprehensive derived state for formatted planning, content, cleaned titles, priority/TODO styling classes
+  - Added boolean derived flags (hasChildren, hasProperties, hasContent) for conditional rendering
+  - Refactored DetailView.svelte to be purely presentational with reactive store subscriptions
+  - Updated HomeView integration to use DetailView store instead of local detail view state
+  - Migrated detail view state management from homeview.store to dedicated detailview.store
+  - Maintained all existing functionality including recursive navigation, breadcrumb handling, and child headline display
+  - Added comprehensive test suite for DetailView store with 43 passing tests covering all derived state and actions
+  - Updated existing component tests to work with new store pattern
+  - Enhanced separation of concerns following established MVVM patterns in the codebase
+  - Improved testability with store logic isolated from UI rendering
 
 ## Remaining Tasks
 

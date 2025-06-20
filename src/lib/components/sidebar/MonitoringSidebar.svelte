@@ -4,9 +4,16 @@
     import type { UserSettings, MonitoredPath } from "$lib/bindings";
     import * as Sidebar from "$lib/components/ui/sidebar";
     import * as ScrollArea from "$lib/components/ui/scroll-area";
+    import * as Select from "$lib/components/ui/select";
     import MonitoredFilesSection from "./MonitoredFilesSection.svelte";
     import FilterSection from "./FilterSection.svelte";
-    import { Settings, Filter, FolderOpen } from "@lucide/svelte";
+    import {
+        displayMode,
+        displayModes,
+        setDisplayMode,
+        type DisplayMode,
+    } from "$lib/viewmodels/homeview.store";
+    import { Settings, Filter, FolderOpen, List } from "@lucide/svelte";
 
     const sidebar = Sidebar.useSidebar();
 
@@ -67,6 +74,43 @@
 
     {#if sidebar.state === "expanded"}
         <Sidebar.Content>
+            <!-- Display Mode Selector -->
+            <Sidebar.Group>
+                <Sidebar.GroupLabel class="flex items-center gap-2">
+                    <List class="h-4 w-4" />
+                    Display Mode
+                </Sidebar.GroupLabel>
+                <Sidebar.GroupContent class="pl-6">
+                    <Select.Root type="single" bind:value={$displayMode}>
+                        <Select.Trigger class="w-full">
+                            {displayModes.find(
+                                (mode) => mode.value === $displayMode,
+                            )?.label || "Select mode"}
+                        </Select.Trigger>
+                        <Select.Content>
+                            {#each displayModes as mode}
+                                <Select.Item
+                                    value={mode.value}
+                                    label={mode.label}
+                                >
+                                    <div
+                                        class="flex items-center justify-between w-full"
+                                    >
+                                        <span>{mode.label}</span>
+                                        <span
+                                            class="text-xs text-muted-foreground ml-2"
+                                            >{mode.shortcut}</span
+                                        >
+                                    </div>
+                                </Select.Item>
+                            {/each}
+                        </Select.Content>
+                    </Select.Root>
+                </Sidebar.GroupContent>
+            </Sidebar.Group>
+
+            <Sidebar.Separator />
+
             {#if loading}
                 <Sidebar.Group>
                     <div class="flex items-center justify-center p-4">

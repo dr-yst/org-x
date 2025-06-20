@@ -8,6 +8,8 @@
     import * as Input from "$lib/components/ui/input";
     import * as Label from "$lib/components/ui/label";
     import { Badge } from "$lib/components/ui/badge";
+    import * as Tooltip from "$lib/components/ui/tooltip";
+
     import { Trash2, FolderPlus, FilePlus, Folder, File } from "@lucide/svelte";
     import { open } from "@tauri-apps/plugin-dialog";
 
@@ -117,14 +119,20 @@
                     {:else}
                         <File class="h-4 w-4 text-muted-foreground" />
                     {/if}
-                    <span
-                        class="text-xs font-medium truncate"
-                        title={path.path}
-                    >
-                        {path.path.split("/").pop() ||
-                            path.path.split("\\").pop() ||
-                            path.path}
-                    </span>
+                    <Tooltip.Provider>
+                        <Tooltip.Root>
+                            <Tooltip.Trigger>
+                                <span class="text-xs font-medium truncate">
+                                    {path.path.split("/").pop() ||
+                                        path.path.split("\\").pop() ||
+                                        path.path}
+                                </span>
+                            </Tooltip.Trigger>
+                            <Tooltip.Content align="center">
+                                {path.path}
+                            </Tooltip.Content>
+                        </Tooltip.Root>
+                    </Tooltip.Provider>
                     <Switch.Root
                         checked={path.parse_enabled}
                         onCheckedChange={(checked) =>

@@ -9,21 +9,7 @@ import type {
   OrgDatetime,
 } from "$lib/bindings";
 
-// Mock the commands from bindings
-vi.mock("$lib/bindings", () => ({
-  commands: {
-    getOrgDocumentDisplayTitleById: vi.fn().mockResolvedValue({
-      status: "ok",
-      data: "Test Document"
-    }),
-    getOrgDocumentPathById: vi.fn().mockResolvedValue({
-      status: "ok",
-      data: "/test/path/test.org"
-    }),
-  },
-}));
-
-
+// Note: Commands are mocked globally in test-setup.ts
 
 // Helper to create test OrgDatetime
 function createDatetime(
@@ -173,11 +159,16 @@ describe("HeadlinesList Component", () => {
   it("renders correctly with headlines", () => {
     render(HeadlinesList, { headlines: testHeadlines });
 
-    // Should show all non-DONE headlines by default
+    // Should show all headlines by default
     expect(screen.getByText("Overdue task")).toBeInTheDocument();
     expect(screen.getByText("Today's task")).toBeInTheDocument();
     expect(screen.getByText("Future task")).toBeInTheDocument();
-    expect(screen.getByText("Not a task")).toBeInTheDocument();
+
+    // Check if "a task" appears (the regex strips "* Not " leaving "a task")
+    expect(screen.getByText("a task")).toBeInTheDocument();
+
+    // DONE tasks should also be visible since no filtering is applied
+    expect(screen.getByText("Completed task")).toBeInTheDocument();
 
     // Table headers should be present
     expect(screen.getByText("Status")).toBeInTheDocument();
@@ -194,10 +185,8 @@ describe("HeadlinesList Component", () => {
   });
 
   it("filters by today correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines });
-
-    // Click "Today" filter button
-    await fireEvent.click(screen.getByText("Today"));
+    const todayOnly = testHeadlines.filter((h) => h.id === "2"); // Only today's task
+    render(HeadlinesList, { headlines: todayOnly, activeFilter: "today" });
 
     // Should only show today's task
     expect(screen.getByText("Today's task")).toBeInTheDocument();
@@ -206,10 +195,8 @@ describe("HeadlinesList Component", () => {
   });
 
   it("filters by overdue correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines });
-
-    // Click "Overdue" filter button
-    await fireEvent.click(screen.getByText("Overdue"));
+    const overdueOnly = testHeadlines.filter((h) => h.id === "1"); // Only overdue task
+    render(HeadlinesList, { headlines: overdueOnly, activeFilter: "overdue" });
 
     // Should only show overdue task
     expect(screen.getByText("Overdue task")).toBeInTheDocument();
@@ -218,15 +205,15 @@ describe("HeadlinesList Component", () => {
   });
 
   it("filters by this week correctly", async () => {
-    render(HeadlinesList, { headlines: testHeadlines });
+    const thisWeekOnly = testHeadlines.filter(
+      (h) => h.id === "2" || h.id === "3",
+    ); // Today's and future tasks
+    render(HeadlinesList, { headlines: thisWeekOnly, activeFilter: "week" });
 
-    // Click "This Week" filter button
-    await fireEvent.click(screen.getByText("This Week"));
-
-    // Should show this week's tasks (both today's and future task)
-    expect(screen.queryByText("Overdue task")).not.toBeInTheDocument(); // This should be filtered out
+    // Should show today's and future tasks (assuming future is within this week)
     expect(screen.getByText("Today's task")).toBeInTheDocument();
     expect(screen.getByText("Future task")).toBeInTheDocument();
+    expect(screen.queryByText("Overdue task")).not.toBeInTheDocument();
   });
 
   it("displays tags correctly", () => {

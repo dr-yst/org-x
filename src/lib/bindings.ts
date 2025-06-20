@@ -239,6 +239,17 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Get hardcoded TODO keywords with their state types (temporary implementation)
+   */
+  async getTodoKeywords(): Promise<Result<TodoStatus[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_todo_keywords") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/

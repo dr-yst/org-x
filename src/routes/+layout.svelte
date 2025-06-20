@@ -1,6 +1,16 @@
 <script>
     import "../app.css";
+    import MonitoringSidebar from "$lib/components/sidebar/MonitoringSidebar.svelte";
+    import * as Sidebar from "$lib/components/ui/sidebar";
+
+    // let sidebarOpen = $state(true);
+
     let { children } = $props();
 </script>
 
-{@render children()}
+<Sidebar.Provider>
+    <MonitoringSidebar />
+    <main>
+        {@render children()}
+    </main>
+</Sidebar.Provider>

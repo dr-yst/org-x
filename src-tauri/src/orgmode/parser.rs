@@ -10,7 +10,6 @@ use chrono::Utc;
 use orgize::{Element, Org};
 use std::collections::HashMap;
 use thiserror::Error;
-use uuid::Uuid;
 
 #[derive(Debug, Error)]
 pub enum OrgError {
@@ -143,8 +142,8 @@ pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgD
     let headlines = extract_headlines(&org);
     println!("Headlines extracted: {} headlines", headlines.len());
 
-    // Generate document ID
-    let id = Uuid::new_v4().to_string();
+    // Generate document ID based on file path
+    let id = file_path.unwrap_or("").to_string();
 
     // Create document with all extracted information
     let document = OrgDocument {
@@ -454,6 +453,9 @@ fn build_headline_hierarchy(flat_headlines: Vec<OrgHeadline>) -> Vec<OrgHeadline
         generate_etags_recursively(headline);
     }
 
+    // Assign hierarchical position-based IDs
+    assign_hierarchical_ids(&mut root_headlines);
+
     root_headlines
 }
 
@@ -466,6 +468,24 @@ fn generate_etags_recursively(headline: &mut OrgHeadline) {
 
     // Now generate etag for this headline (children already have their etags)
     headline.etag = generate_headline_etag(headline);
+}
+
+// Assign hierarchical position-based IDs to headlines
+fn assign_hierarchical_ids(headlines: &mut [OrgHeadline]) {
+    assign_hierarchical_ids_recursive(headlines, String::new());
+}
+
+// Recursively assign hierarchical position-based IDs
+fn assign_hierarchical_ids_recursive(headlines: &mut [OrgHeadline], parent_path: String) {
+    for (i, headline) in headlines.iter_mut().enumerate() {
+        let path = if parent_path.is_empty() {
+            format!("{}", i + 1)
+        } else {
+            format!("{}.{}", parent_path, i + 1)
+        };
+        headline.id = path.clone();
+        assign_hierarchical_ids_recursive(&mut headline.children, path);
+    }
 }
 
 /// Function to process a single headline
@@ -511,7 +531,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     let children = Vec::new();
 
     OrgHeadline {
-        id: Uuid::new_v4().to_string(),
+        id: String::new(),          // Will be assigned hierarchical ID later
         document_id: String::new(), // Will be filled in later
         title: org_title,
         content,
@@ -608,7 +628,7 @@ To-do list
         Err(_) => {
             // Return dummy data on error
             OrgDocument {
-                id: Uuid::new_v4().to_string(),
+                id: "error.org".to_string(),
                 title: "Error".to_string(),
                 content: "".to_string(),
                 headlines: Vec::new(),
@@ -627,6 +647,73 @@ To-do list
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_issue_29_hierarchical_ids_and_file_path_document_ids() {
+        // Test the fix for Issue #29: verify that document IDs are based on file path
+        // and headline IDs are hierarchical position-based
+        let sample_content = r#"#+TITLE: Test Document
+* First Headline
+Content for first headline
+** First Sub-headline
+Sub content 1
+** Second Sub-headline
+Sub content 2
+* Second Headline
+Content for second headline
+* Third Headline
+Content for third headline
+"#;
+
+        let result = parse_org_document(sample_content, Some("/test/path/sample.org"));
+        assert!(result.is_ok());
+
+        let document = result.unwrap();
+
+        // Verify document ID is file path-based (not UUID)
+        assert_eq!(document.id, "/test/path/sample.org");
+        assert_eq!(document.file_path, "/test/path/sample.org");
+
+        // Verify hierarchical structure and IDs
+        assert_eq!(document.headlines.len(), 3); // 3 top-level headlines
+
+        // First headline: ID should be "1"
+        assert_eq!(document.headlines[0].id, "1");
+        assert_eq!(document.headlines[0].title.raw, "First Headline");
+        assert_eq!(document.headlines[0].children.len(), 2); // 2 sub-headlines
+
+        // First sub-headline: ID should be "1.1"
+        assert_eq!(document.headlines[0].children[0].id, "1.1");
+        assert_eq!(
+            document.headlines[0].children[0].title.raw,
+            "First Sub-headline"
+        );
+
+        // Second sub-headline: ID should be "1.2"
+        assert_eq!(document.headlines[0].children[1].id, "1.2");
+        assert_eq!(
+            document.headlines[0].children[1].title.raw,
+            "Second Sub-headline"
+        );
+
+        // Second headline: ID should be "2"
+        assert_eq!(document.headlines[1].id, "2");
+        assert_eq!(document.headlines[1].title.raw, "Second Headline");
+        assert_eq!(document.headlines[1].children.len(), 0); // No sub-headlines
+
+        // Third headline: ID should be "3"
+        assert_eq!(document.headlines[2].id, "3");
+        assert_eq!(document.headlines[2].title.raw, "Third Headline");
+        assert_eq!(document.headlines[2].children.len(), 0); // No sub-headlines
+
+        // Verify all headlines have the correct document_id
+        for headline in &document.headlines {
+            assert_eq!(headline.document_id, "/test/path/sample.org");
+            for child in &headline.children {
+                assert_eq!(child.document_id, "/test/path/sample.org");
+            }
+        }
+    }
 
     #[test]
     fn test_parse_simple_org() {

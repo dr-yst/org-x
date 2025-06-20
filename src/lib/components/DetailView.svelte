@@ -1,14 +1,24 @@
 <script lang="ts">
-    import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
-    import { Button } from "$lib/components/ui/button";
+    import type { OrgHeadline } from "$lib/bindings";
     import { Badge } from "$lib/components/ui/badge";
-    import { cn } from "$lib/utils";
+    import HeadlinesList from "$lib/components/HeadlinesList.svelte";
+    import DetailView from "./DetailView.svelte";
 
-    // Props definition using Svelte 5 runes
-    const { headline = null } = $props<{ headline: OrgHeadline | null }>();
+    // Pure, stateless props interface for recursive navigation support
+    const {
+        headline = null,
+        parentChain = [],
+        selectedChild = null,
+        onHeadlineSelected = null,
+    } = $props<{
+        headline: OrgHeadline | null;
+        parentChain?: OrgHeadline[];
+        selectedChild?: OrgHeadline | null;
+        onHeadlineSelected?: ((headline: OrgHeadline) => void) | null;
+    }>();
 
-    // Helper function to format OrgTimestamp
-    function formatTimestamp(timestamp: OrgTimestamp | null): string {
+    // Pure formatting functions - no side effects
+    function formatTimestamp(timestamp: any): string {
         if (!timestamp) return "";
 
         let dateStr = "";
@@ -40,7 +50,6 @@
         return "";
     }
 
-    // Helper to format a date from OrgDatetime
     function formatDateFromOrgDatetime(datetime: any): string {
         if (!datetime) return "";
         const { year, month, day, hour, minute } = datetime;
@@ -54,223 +63,125 @@
         return dateStr;
     }
 
-    // Format the content for display
     function formatContent(content: string): string {
         if (!content) return "";
-
-        // Replace newlines with <br> for HTML display
         return content.replace(/\n/g, "<br>");
     }
 
-    // Get priority display
-    function getPriority(priority: string | null): string {
-        if (!priority) return "None";
-        return priority;
-    }
-
-    // Get priority color class
     function getPriorityColorClass(priority: string | null): string {
         if (!priority) return "";
 
         switch (priority) {
             case "A":
-                return "text-red-600";
+                return "bg-red-100 text-red-700";
             case "B":
-                return "text-orange-500";
+                return "bg-orange-100 text-orange-700";
             case "C":
-                return "text-yellow-500";
+                return "bg-yellow-100 text-yellow-700";
             default:
-                return "text-gray-500";
+                return "bg-gray-100 text-gray-700";
         }
     }
 
-    // Define custom badge classes for TODO status
-    const todoBadgeClasses = {
-        todo: "bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 border-blue-200",
-        done: "bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 border-green-200",
-        waiting:
-            "bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 border-orange-200",
-        cancelled:
-            "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600 border-gray-200",
-    };
-
-    // Get badge class for TODO status
     function getTodoBadgeClass(todoKeyword: string | null): string {
         if (!todoKeyword) return "";
 
-        switch (todoKeyword.toUpperCase()) {
-            case "TODO":
-                return todoBadgeClasses.todo;
-            case "DONE":
-                return todoBadgeClasses.done;
-            case "WAITING":
-                return todoBadgeClasses.waiting;
-            case "CANCELLED":
-                return todoBadgeClasses.cancelled;
-            default:
-                return todoBadgeClasses.todo;
-        }
+        const todoBadgeClasses = {
+            todo: "bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 border-blue-200",
+            done: "bg-green-100 text-green-600 hover:bg-green-200 hover:text-green-700 border-green-200",
+            waiting:
+                "bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 border-orange-200",
+            cancelled:
+                "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-600 border-gray-200",
+            "in-progress":
+                "bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 border-purple-200",
+        };
+
+        const normalized = todoKeyword.toLowerCase().replace("_", "-");
+        return (
+            todoBadgeClasses[normalized as keyof typeof todoBadgeClasses] ||
+            todoBadgeClasses.todo
+        );
     }
 
-    // Get TODO status color (kept for other usages)
-    function getTodoColorClass(todoKeyword: string | null): string {
-        if (!todoKeyword) return "";
+    function cleanTitle(title: string): string {
+        return title
+            .replace(
+                /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?(.+?)(?:\s+:.+:)?$/,
+                "$1",
+            )
+            .trim();
+    }
 
-        switch (todoKeyword) {
-            case "TODO":
-                return "text-blue-600";
-            case "DONE":
-                return "text-green-600";
-            case "WAITING":
-                return "text-orange-500";
-            case "CANCELLED":
-                return "text-gray-500";
-            default:
-                return "text-blue-600";
+    function formatPlanningForDisplay(planning: any) {
+        if (!planning) return null;
+
+        const result: { [key: string]: string } = {};
+
+        if (planning.scheduled) {
+            result.scheduled = formatTimestamp(planning.scheduled);
+        }
+        if (planning.deadline) {
+            result.deadline = formatTimestamp(planning.deadline);
+        }
+        if (planning.closed) {
+            result.closed = formatTimestamp(planning.closed);
+        }
+
+        return Object.keys(result).length > 0 ? result : null;
+    }
+
+    // Derived values - computed from props
+    const formattedPlanning = $derived(
+        headline?.title?.planning
+            ? formatPlanningForDisplay(headline.title.planning)
+            : null,
+    );
+    const formattedContent = $derived(
+        headline?.content ? formatContent(headline.content) : "",
+    );
+    const cleanedTitle = $derived(
+        headline?.title?.raw ? cleanTitle(headline.title.raw) : "",
+    );
+    const priorityColorClass = $derived(
+        getPriorityColorClass(headline?.title?.priority || null),
+    );
+    const todoBadgeClass = $derived(
+        getTodoBadgeClass(headline?.title?.todo_keyword || null),
+    );
+    const hasChildren = $derived(
+        Boolean(headline?.children && headline.children.length > 0),
+    );
+    const hasProperties = $derived(
+        Boolean(
+            headline?.title?.properties &&
+                Object.keys(headline.title.properties).length > 0,
+        ),
+    );
+    const hasContent = $derived(
+        Boolean(headline?.content && headline.content.trim().length > 0),
+    );
+
+    // Event handlers - pure functions that call parent callbacks
+    function handleChildSelected(event: CustomEvent<OrgHeadline>) {
+        if (onHeadlineSelected) {
+            onHeadlineSelected(event.detail);
         }
     }
 </script>
 
 <div class="w-full h-full">
-    {#if headline}
-        <div class="mb-4">
-            <h2 class="text-xl font-semibold mb-2 flex items-center gap-2">
-                {#if headline.title.todo_keyword}
-                    <Badge
-                        class={cn(
-                            getTodoBadgeClass(headline.title.todo_keyword),
-                            headline.title.todo_keyword === "CANCELLED" &&
-                                "line-through",
-                            "text-xs font-medium",
-                        )}
-                        variant="secondary"
-                    >
-                        {headline.title.todo_keyword}
-                    </Badge>
-                {/if}
-
-                {#if headline.title.priority}
-                    <span
-                        class="px-1.5 py-0.5 font-mono rounded {getPriorityColorClass(
-                            headline.title.priority,
-                        )}"
-                    >
-                        [#{headline.title.priority}]
-                    </span>
-                {/if}
-
-                <span>
-                    {headline.title.raw.replace(
-                        /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                        "",
-                    )}
-                </span>
-            </h2>
-
-            {#if headline.title.tags && headline.title.tags.length > 0}
-                <div class="flex flex-wrap gap-1 mb-3">
-                    {#each headline.title.tags as tag}
-                        <Badge variant="secondary" class="text-xs">
-                            {tag}
-                        </Badge>
-                    {/each}
-                </div>
-            {/if}
-        </div>
-
-        {#if headline.title.planning}
-            <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
-                <h3 class="font-medium text-gray-700 mb-2">Planning</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    {#if headline.title.planning.scheduled}
-                        <div class="text-gray-500 font-medium">SCHEDULED:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.scheduled)}
-                        </div>
-                    {/if}
-
-                    {#if headline.title.planning.deadline}
-                        <div class="text-gray-500 font-medium">DEADLINE:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.deadline)}
-                        </div>
-                    {/if}
-
-                    {#if headline.title.planning.closed}
-                        <div class="text-gray-500 font-medium">CLOSED:</div>
-                        <div class="text-gray-800 col-span-2">
-                            {formatTimestamp(headline.title.planning.closed)}
-                        </div>
-                    {/if}
-                </div>
-            </div>
-        {/if}
-
-        {#if Object.keys(headline.title.properties).length > 0}
-            <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
-                <h3 class="font-medium text-gray-700 mb-2">Properties</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    {#each Object.entries(headline.title.properties) as [key, value]}
-                        <div class="text-gray-500 font-medium">{key}:</div>
-                        <div class="text-gray-800 col-span-2">{value}</div>
-                    {/each}
-                </div>
-            </div>
-        {/if}
-
-        {#if headline.content && headline.content.trim()}
-            <div class="mb-4">
-                <h3 class="text-md font-medium mb-2 text-gray-700">Content</h3>
-                <div
-                    class="prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
-                >
-                    {@html formatContent(headline.content)}
-                </div>
-            </div>
-        {/if}
-
-        {#if headline.children && headline.children.length > 0}
-            <div>
-                <h3 class="text-md font-medium mb-2 text-gray-700">
-                    Subtasks ({headline.children.length})
-                </h3>
-                <ul class="list-disc pl-5 space-y-2">
-                    {#each headline.children as child}
-                        <li class="text-sm">
-                            {#if child.title.todo_keyword}
-                                <Badge
-                                    class={cn(
-                                        getTodoBadgeClass(
-                                            child.title.todo_keyword,
-                                        ),
-                                        child.title.todo_keyword ===
-                                            "CANCELLED" && "line-through",
-                                        "text-xs font-medium",
-                                    )}
-                                    variant="secondary"
-                                >
-                                    {child.title.todo_keyword}
-                                </Badge>
-                            {/if}
-                            {child.title.raw.replace(
-                                /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                "",
-                            )}
-                        </li>
-                    {/each}
-                </ul>
-            </div>
-        {/if}
-    {:else}
+    {#if !headline}
+        <!-- Empty state when no headline is provided -->
         <div
-            class="flex flex-col items-center justify-center py-12 text-gray-500"
+            class="w-full h-64 flex flex-col items-center justify-center text-gray-500"
         >
             <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-12 w-12 mb-4"
+                class="w-16 h-16 text-gray-400 mb-4"
                 fill="none"
-                viewBox="0 0 24 24"
                 stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
             >
                 <path
                     stroke-linecap="round"
@@ -279,7 +190,107 @@
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
             </svg>
-            <p>Select a task to view details</p>
+            <p class="text-gray-400 text-center">
+                Select a task/headline to view details
+            </p>
+        </div>
+    {:else if selectedChild}
+        <!-- Recursive DetailView for selected child -->
+        <DetailView
+            headline={selectedChild}
+            parentChain={[...parentChain, headline]}
+            {onHeadlineSelected}
+        />
+    {:else}
+        <!-- Main detail view -->
+        <div class="space-y-4">
+            <!-- Headline Title, Status, Priority, Tags -->
+            <div class="flex items-center gap-2 mb-2">
+                {#if headline.title.todo_keyword}
+                    <Badge
+                        class="{todoBadgeClass} {headline.title.todo_keyword ===
+                        'CANCELLED'
+                            ? 'line-through'
+                            : ''} text-xs font-medium"
+                        variant="secondary"
+                    >
+                        {headline.title.todo_keyword}
+                    </Badge>
+                {/if}
+
+                {#if headline.title.priority}
+                    <span
+                        class="px-1.5 py-0.5 font-mono rounded text-xs {priorityColorClass}"
+                    >
+                        [#{headline.title.priority}]
+                    </span>
+                {/if}
+
+                <span class="font-semibold text-lg">
+                    {cleanedTitle}
+                </span>
+
+                {#if headline.title.tags && headline.title.tags.length > 0}
+                    <span class="flex gap-1">
+                        {#each headline.title.tags as tag}
+                            <Badge variant="default" class="text-xs">
+                                {tag}
+                            </Badge>
+                        {/each}
+                    </span>
+                {/if}
+            </div>
+
+            <!-- Properties -->
+            {#if hasProperties}
+                <div class="mb-2 grid grid-cols-3 gap-2">
+                    {#each Object.entries(headline.title.properties) as [key, value]}
+                        <div class="text-gray-500 font-medium">{key}:</div>
+                        <div class="text-gray-800 col-span-2">{value}</div>
+                    {/each}
+                </div>
+            {/if}
+
+            <!-- Planning Information -->
+            {#if formattedPlanning}
+                <div class="p-3 bg-gray-50 rounded mb-4 text-sm">
+                    <h3 class="font-medium text-gray-700 mb-2">Planning</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        {#each Object.entries(formattedPlanning) as [key, value]}
+                            <div class="text-gray-500 font-medium uppercase">
+                                {key}:
+                            </div>
+                            <div class="text-gray-800 col-span-2">
+                                {value}
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            {/if}
+
+            <!-- Content (displayed above child headlines table as per requirements) -->
+            {#if hasContent}
+                <div
+                    class="mb-4 prose prose-sm max-w-none p-3 bg-gray-50 rounded overflow-x-auto"
+                >
+                    {@html formattedContent}
+                </div>
+            {/if}
+
+            <!-- Table of Child Headlines (if any) -->
+            {#if hasChildren}
+                <div class="mt-6">
+                    <h3 class="mb-2 font-medium text-gray-700">
+                        Subtasks / Child Headlines ({headline.children.length})
+                    </h3>
+                    <HeadlinesList
+                        headlines={headline.children}
+                        focusedIndex={-1}
+                        activeFilter="all"
+                        on:headlineSelected={handleChildSelected}
+                    />
+                </div>
+            {/if}
         </div>
     {/if}
 </div>

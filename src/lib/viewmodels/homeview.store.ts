@@ -1,6 +1,29 @@
-import { writable, derived } from 'svelte/store';
-import { commands } from '$lib/bindings';
-import type { OrgDocument, OrgHeadline } from '$lib/bindings';
+import { writable, derived } from "svelte/store";
+import { commands } from "$lib/bindings";
+import type { OrgDocument, OrgHeadline } from "$lib/bindings";
+
+// Type for headline with parent context
+type HeadlineWithParent = {
+  headline: OrgHeadline;
+  parent: OrgHeadline | null;
+};
+
+// Utility function to recursively flatten headlines with parent context
+function flattenHeadlinesWithParent(
+  headlines: OrgHeadline[],
+  parent: OrgHeadline | null = null,
+): HeadlineWithParent[] {
+  let result: HeadlineWithParent[] = [];
+  for (const headline of headlines) {
+    result.push({ headline, parent });
+    if (headline.children && headline.children.length > 0) {
+      result = result.concat(
+        flattenHeadlinesWithParent(headline.children, headline),
+      );
+    }
+  }
+  return result;
+}
 
 // Core state stores
 export const documents = writable<OrgDocument[]>([]);
@@ -12,102 +35,155 @@ export const hasMonitoredPaths = writable(true);
 export const focusedIndex = writable<number>(-1);
 export const activeFilterIndex = writable(0);
 export const showQuickActions = writable(false);
-export const selectedHeadline = writable<OrgHeadline | null>(null);
-export const showDetailView = writable(false);
 export const showQuickLook = writable(false);
+export const quickLookHeadline = writable<OrgHeadline | null>(null);
 export const refreshTrigger = writable(0);
+
+// Display mode state
+export type DisplayMode = "task-list" | "headline-list";
+export const displayMode = writable<DisplayMode>("task-list");
+
+// Available display modes for the selector
+export const displayModes: {
+  value: DisplayMode;
+  label: string;
+  shortcut: string;
+}[] = [
+  { value: "task-list", label: "Task List", shortcut: "⌘1" },
+  { value: "headline-list", label: "Headline List", shortcut: "⌘2" },
+];
 
 // Filter options constant
 export const filterOptions = ["all", "today", "week", "overdue"];
 
 // Derived state
-export const documentMap = derived(documents, ($docs) => 
-  new Map($docs.map((doc) => [doc.id, doc]))
+export const documentMap = derived(
+  documents,
+  ($docs) => new Map($docs.map((doc) => [doc.id, doc])),
 );
 
-export const allHeadlines = derived(documents, ($docs) => 
-  $docs.flatMap((doc) => doc.headlines)
+export const allHeadlines = derived(documents, ($docs) =>
+  $docs.flatMap((doc) =>
+    flattenHeadlinesWithParent(doc.headlines).map(({ headline }) => headline),
+  ),
+);
+
+// Derived store for headlines with parent context
+export const headlinesWithParent = derived(documents, ($docs) =>
+  $docs.flatMap((doc) => flattenHeadlinesWithParent(doc.headlines)),
+);
+
+// Display mode filtered headlines
+export const displayModeFilteredHeadlines = derived(
+  [headlinesWithParent, displayMode],
+  ([$headlinesWithParent, $mode]) => {
+    switch ($mode) {
+      case "task-list":
+        // Show all tasks whose parent is not a task (or parent is null)
+        return $headlinesWithParent
+          .filter(
+            ({ headline, parent }) =>
+              headline.title.todo_keyword !== null &&
+              (!parent || parent.title.todo_keyword === null),
+          )
+          .map(({ headline }) => headline);
+
+      case "headline-list":
+        // Show only first-level headlines
+        return $headlinesWithParent
+          .filter(({ headline }) => headline.title.level === 1)
+          .map(({ headline }) => headline);
+
+      default:
+        return $headlinesWithParent.map(({ headline }) => headline);
+    }
+  },
 );
 
 export const filteredHeadlines = derived(
-  [allHeadlines, activeFilterIndex],
+  [displayModeFilteredHeadlines, activeFilterIndex],
   ([$headlines, $filterIndex]) => {
     const filterType = filterOptions[$filterIndex];
-    
+
     switch (filterType) {
       case "today":
         return $headlines.filter((headline) => {
           const scheduled = headline.title.planning?.scheduled;
           if (!scheduled) return false;
-          
+
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
-          if ('Active' in scheduled) {
+
+          if ("Active" in scheduled) {
             const schedDate = new Date(
               scheduled.Active.start.year,
               scheduled.Active.start.month - 1,
-              scheduled.Active.start.day
+              scheduled.Active.start.day,
             );
             schedDate.setHours(0, 0, 0, 0);
             return schedDate.getTime() === today.getTime();
           }
-          
+
           return false;
         });
-        
+
       case "week":
         return $headlines.filter((headline) => {
           const scheduled = headline.title.planning?.scheduled;
           if (!scheduled) return false;
-          
+
           const today = new Date();
-          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const weekFromNow = new Date(
+            today.getTime() + 7 * 24 * 60 * 60 * 1000,
+          );
           today.setHours(0, 0, 0, 0);
           weekFromNow.setHours(23, 59, 59, 999);
-          
-          if ('Active' in scheduled) {
+
+          if ("Active" in scheduled) {
             const schedDate = new Date(
               scheduled.Active.start.year,
               scheduled.Active.start.month - 1,
-              scheduled.Active.start.day
+              scheduled.Active.start.day,
             );
             return schedDate >= today && schedDate <= weekFromNow;
           }
-          
+
           return false;
         });
-        
+
       case "overdue":
         return $headlines.filter((headline) => {
           const deadline = headline.title.planning?.deadline;
           if (!deadline) return false;
-          
+
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          
-          if ('Active' in deadline) {
+
+          if ("Active" in deadline) {
             const deadlineDate = new Date(
               deadline.Active.start.year,
               deadline.Active.start.month - 1,
-              deadline.Active.start.day
+              deadline.Active.start.day,
             );
             deadlineDate.setHours(23, 59, 59, 999);
             return deadlineDate < today;
           }
-          
+
           return false;
         });
-        
+
       default: // "all"
         return $headlines;
     }
-  }
+  },
 );
 
 // Statistics derived stores
 export const documentCount = derived(documents, ($docs) => $docs.length);
-export const headlineCount = derived(allHeadlines, ($headlines) => $headlines.length);
+export const headlineCount = derived(
+  filteredHeadlines,
+  ($headlines) => $headlines.length,
+);
 
 // Action functions
 export async function refresh(): Promise<void> {
@@ -127,15 +203,17 @@ export async function refresh(): Promise<void> {
       return;
     } else if (settingsResult.status === "ok") {
       hasMonitoredPaths.set(true);
-      
+
       // Check if any monitored paths have parsing enabled
       const hasParsingEnabled = settingsResult.data.monitored_paths.some(
-        path => path.parse_enabled
+        (path) => path.parse_enabled,
       );
-      
+
       if (!hasParsingEnabled) {
         // No parsing enabled for any paths - skip loading and show empty state immediately
-        console.log("📚 No parsing enabled for any monitored paths - skipping document loading");
+        console.log(
+          "📚 No parsing enabled for any monitored paths - skipping document loading",
+        );
         loading.set(false);
         documents.set([]);
         return;
@@ -176,10 +254,7 @@ export async function refresh(): Promise<void> {
       const docsResult = await commands.getAllDocuments();
 
       if (docsResult.status === "error") {
-        console.warn(
-          `Attempt ${retryCount + 1} failed:`,
-          docsResult.error,
-        );
+        console.warn(`Attempt ${retryCount + 1} failed:`, docsResult.error);
         retryCount++;
         if (retryCount >= maxRetries) {
           error.set(docsResult.error);
@@ -212,7 +287,7 @@ export async function refresh(): Promise<void> {
 
     documents.set(docs);
     console.log(
-      `✅ Loaded ${docs.length} documents, ${docs.flatMap(doc => doc.headlines).length} headlines`,
+      `✅ Loaded ${docs.length} documents, ${docs.flatMap((doc) => doc.headlines).length} headlines`,
     );
     loading.set(false);
   } catch (err) {
@@ -230,8 +305,14 @@ export function setFilter(filterIndex: number): void {
 }
 
 export function cycleFilter(): void {
-  activeFilterIndex.update(index => (index + 1) % filterOptions.length);
+  activeFilterIndex.update((index) => (index + 1) % filterOptions.length);
   focusedIndex.set(-1); // Reset focus when filter changes
+}
+
+export function setDisplayMode(mode: DisplayMode): void {
+  displayMode.set(mode);
+  focusedIndex.set(-1); // Reset focus when display mode changes
+  showQuickActions.set(false);
 }
 
 export function setFocus(index: number): void {
@@ -241,10 +322,12 @@ export function setFocus(index: number): void {
 
 export function moveFocusDown(): void {
   let currentFiltered: OrgHeadline[] = [];
-  const unsubscribe = filteredHeadlines.subscribe(value => { currentFiltered = value; });
+  const unsubscribe = filteredHeadlines.subscribe((value) => {
+    currentFiltered = value;
+  });
   unsubscribe();
-  
-  focusedIndex.update(current => {
+
+  focusedIndex.update((current) => {
     if (currentFiltered.length > 0) {
       return Math.min(current + 1, currentFiltered.length - 1);
     }
@@ -254,40 +337,26 @@ export function moveFocusDown(): void {
 }
 
 export function moveFocusUp(): void {
-  focusedIndex.update(current => Math.max(current - 1, -1));
+  focusedIndex.update((current) => Math.max(current - 1, -1));
   showQuickActions.set(false);
 }
 
 export function toggleQuickActions(): void {
-  showQuickActions.update(show => !show);
+  showQuickActions.update((show) => !show);
 }
 
 export function hideQuickActions(): void {
   showQuickActions.set(false);
 }
 
-export function openDetailView(headline?: OrgHeadline): void {
-  if (headline) {
-    selectedHeadline.set(headline);
-  }
-  showDetailView.set(true);
-  showQuickActions.set(false);
-}
-
-export function closeDetailView(): void {
-  showDetailView.set(false);
-  selectedHeadline.set(null);
-}
-
 export function toggleQuickLook(headline?: OrgHeadline): void {
-  showQuickLook.update(show => {
+  showQuickLook.update((show) => {
     if (!show && headline) {
-      selectedHeadline.set(headline);
-      showDetailView.set(false);
+      quickLookHeadline.set(headline);
       showQuickActions.set(false);
       return true;
     } else {
-      selectedHeadline.set(null);
+      quickLookHeadline.set(null);
       return false;
     }
   });
@@ -295,30 +364,57 @@ export function toggleQuickLook(headline?: OrgHeadline): void {
 
 export function closeQuickLook(): void {
   showQuickLook.set(false);
-  selectedHeadline.set(null);
+  quickLookHeadline.set(null);
 }
 
 export async function handleQuickAction(
-  action: "view" | "mark-done" | "priority-up" | "priority-down" | "open-editor", 
-  headline?: OrgHeadline
+  action:
+    | "view"
+    | "mark-done"
+    | "priority-up"
+    | "priority-down"
+    | "open-editor",
+  headline?: OrgHeadline,
+  onViewAction?: (headline: OrgHeadline) => void,
 ): Promise<void> {
   let headlineValue: OrgHeadline | null = headline || null;
-  
+
   if (!headline) {
-    const unsubscribe = selectedHeadline.subscribe(value => { headlineValue = value; });
+    // Get the currently focused headline
+    let currentFiltered: OrgHeadline[] = [];
+    const unsubscribe = filteredHeadlines.subscribe((value) => {
+      currentFiltered = value;
+    });
     unsubscribe();
+
+    let currentFocusedIndex = -1;
+    const unsubscribeFocus = focusedIndex.subscribe((value) => {
+      currentFocusedIndex = value;
+    });
+    unsubscribeFocus();
+
+    if (
+      currentFocusedIndex >= 0 &&
+      currentFocusedIndex < currentFiltered.length
+    ) {
+      headlineValue = currentFiltered[currentFocusedIndex];
+    }
   }
 
   if (!headlineValue) return;
 
   let documentsValue: OrgDocument[] = [];
-  const unsubscribe = documents.subscribe(value => { documentsValue = value; });
+  const unsubscribe = documents.subscribe((value) => {
+    documentsValue = value;
+  });
   unsubscribe();
 
   switch (action) {
     case "view":
-      selectedHeadline.set(headlineValue);
-      showDetailView.set(true);
+      // Use callback if provided, otherwise do nothing
+      if (onViewAction) {
+        onViewAction(headlineValue);
+      }
       break;
     case "mark-done":
       console.log("Mark as done:", headlineValue.id);
@@ -358,7 +454,7 @@ export function exposeGlobalRefresh(): void {
 }
 
 export function triggerRefresh(): void {
-  refreshTrigger.update(n => n + 1);
+  refreshTrigger.update((n) => n + 1);
 }
 
 // Export store object for backwards compatibility
@@ -370,31 +466,34 @@ const listViewStore = {
   focusedIndex: { subscribe: focusedIndex.subscribe },
   activeFilterIndex: { subscribe: activeFilterIndex.subscribe },
   showQuickActions: { subscribe: showQuickActions.subscribe },
-  selectedHeadline: { subscribe: selectedHeadline.subscribe },
-  showDetailView: { subscribe: showDetailView.subscribe },
   showQuickLook: { subscribe: showQuickLook.subscribe },
+  quickLookHeadline: { subscribe: quickLookHeadline.subscribe },
   refreshTrigger: { subscribe: refreshTrigger.subscribe },
   documentMap: { subscribe: documentMap.subscribe },
   allHeadlines: { subscribe: allHeadlines.subscribe },
+  headlinesWithParent: { subscribe: headlinesWithParent.subscribe },
+  displayModeFilteredHeadlines: {
+    subscribe: displayModeFilteredHeadlines.subscribe,
+  },
   filteredHeadlines: { subscribe: filteredHeadlines.subscribe },
   documentCount: { subscribe: documentCount.subscribe },
   headlineCount: { subscribe: headlineCount.subscribe },
+  displayMode: { subscribe: displayMode.subscribe },
   filterOptions,
   refresh,
   setFilter,
   cycleFilter,
+  setDisplayMode,
   setFocus,
   moveFocusDown,
   moveFocusUp,
   toggleQuickActions,
   hideQuickActions,
-  openDetailView,
-  closeDetailView,
   toggleQuickLook,
   closeQuickLook,
   handleQuickAction,
   exposeGlobalRefresh,
-  triggerRefresh
+  triggerRefresh,
 };
 
 export default listViewStore;
