@@ -1,0 +1,45 @@
+* Note
+** TODO Task under note
+   This task should be shown in Task List mode because its parent is a note (not a task).
+
+* TODO Top-level task
+  This task should be shown in Task List mode because it's at the top level.
+
+* TODO Parent task
+  This task should be shown in Task List mode because it's at the top level.
+
+** TODO Subtask
+   This task should NOT be shown in Task List mode because its parent is a task.
+
+*** TODO Deep subtask
+    This task should also NOT be shown because its parent is a task.
+
+* Another Note Section
+** Another note subsection
+*** TODO Task under nested notes
+    This task should be shown because its parent chain contains no tasks.
+
+** TODO Task directly under note
+   This task should be shown because its parent is a note.
+
+*** TODO Task under the above task
+    This task should NOT be shown because its parent is a task.
+
+* DONE Completed top-level task
+  This completed task should be shown in Task List mode.
+
+** TODO Task under completed task
+   This task should NOT be shown because its parent is a task (even though it's completed).
+
+* Project Planning
+** Phase 1
+*** TODO Research phase task
+    This should be shown - parent chain has no tasks.
+*** DONE Completed research
+    This should be shown - parent chain has no tasks.
+
+** TODO Phase 2 implementation
+   This should be shown - parent is a note.
+
+*** TODO Implementation subtask
+    This should NOT be shown - parent is a task.
