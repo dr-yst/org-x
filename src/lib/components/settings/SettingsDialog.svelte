@@ -6,6 +6,7 @@
         settingsDialogOpen,
         closeDialog,
     } from "$lib/viewmodels/settings.store";
+    import TodoKeywordsSection from "./TodoKeywordsSection.svelte";
     import {
         Settings,
         Keyboard,
@@ -40,12 +41,6 @@
 
     // Placeholder sections for future settings implementation
     const settingSections = [
-        {
-            title: "TODO Keywords",
-            description: "Configure custom TODO states and keywords",
-            icon: FileText,
-            comingSoon: true,
-        },
         {
             title: "Custom Properties",
             description:
@@ -101,6 +96,13 @@
         </Dialog.Header>
 
         <div class="py-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            <!-- TODO Keywords Section -->
+            <div class="space-y-3">
+                <TodoKeywordsSection />
+            </div>
+
+            <Separator class="my-4" />
+
             {#each settingSections as section, index (section.title)}
                 <div class="space-y-3">
                     <div
