@@ -6,7 +6,7 @@ use crate::orgmode::{
     parse_org_document, parse_sample_org, FileMonitor, OrgDocument, OrgDocumentRepository,
     StateType, TodoStatus,
 };
-use crate::settings::{MonitoredPath, PathType, SettingsManager, UserSettings};
+use crate::settings::{MonitoredPath, PathType, SettingsManager, TodoKeywords, UserSettings};
 #[cfg(debug_assertions)]
 use crate::test_datetime;
 use once_cell::sync::Lazy;
@@ -495,7 +495,7 @@ pub async fn set_path_parse_enabled(
     Ok(settings)
 }
 
-/// Clear all settings
+/// Clear user settings
 #[tauri::command]
 #[specta::specta]
 pub async fn clear_user_settings(app_handle: tauri::AppHandle) -> Result<(), String> {
@@ -503,6 +503,265 @@ pub async fn clear_user_settings(app_handle: tauri::AppHandle) -> Result<(), Str
         .clear_settings(&app_handle)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Get current TODO keywords configuration from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_user_todo_keywords(app_handle: tauri::AppHandle) -> Result<TodoKeywords, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_todo_keywords().clone())
+}
+
+/// Update TODO keywords in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn update_todo_keywords(
+    app_handle: tauri::AppHandle,
+    todo_keywords: TodoKeywords,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.update_todo_keywords(todo_keywords);
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Add active TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn add_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .add_active_keyword(keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Add closed TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn add_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .add_closed_keyword(keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Remove active TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .remove_active_keyword(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Remove closed TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .remove_closed_keyword(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Edit active TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .edit_active_keyword(index as usize, new_keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Edit closed TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .edit_closed_keyword(index as usize, new_keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Move active TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn move_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .move_active_keyword(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Move closed TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn move_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .move_closed_keyword(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Reset TODO keywords to defaults
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_todo_keywords_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.get_todo_keywords_mut().reset_to_defaults();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
 }
 
 /// Check if a file path is covered by current monitoring configuration
@@ -520,42 +779,46 @@ pub async fn check_path_monitoring_status(
     Ok(settings.is_file_covered(&file_path))
 }
 
-/// Get hardcoded TODO keywords with their state types (temporary implementation)
+/// Get TODO keywords as TodoStatus objects for UI display
 #[tauri::command]
 #[specta::specta]
-pub async fn get_todo_keywords() -> Result<Vec<TodoStatus>, String> {
-    let keywords = vec![
-        TodoStatus {
-            keyword: "TODO".to_string(),
+pub async fn get_todo_keywords(app_handle: tauri::AppHandle) -> Result<Vec<TodoStatus>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let todo_keywords = current_settings.get_todo_keywords();
+    let mut keywords = Vec::new();
+
+    // Add active keywords
+    for (order, keyword) in todo_keywords.active.iter().enumerate() {
+        keywords.push(TodoStatus {
+            keyword: keyword.clone(),
             state_type: StateType::Active,
-            order: 0,
-            color: Some("#ff0000".to_string()), // Red
-        },
-        TodoStatus {
-            keyword: "IN-PROGRESS".to_string(),
-            state_type: StateType::Active,
-            order: 10,
-            color: Some("#ff9900".to_string()), // Orange
-        },
-        TodoStatus {
-            keyword: "WAITING".to_string(),
-            state_type: StateType::Active,
-            order: 20,
-            color: Some("#ffff00".to_string()), // Yellow
-        },
-        TodoStatus {
-            keyword: "DONE".to_string(),
+            order: order as u32,
+            color: Some(match keyword.as_str() {
+                "TODO" => "#ff0000".to_string(),        // Red
+                "IN-PROGRESS" => "#ff9900".to_string(), // Orange
+                "WAITING" => "#ffff00".to_string(),     // Yellow
+                _ => "#0066cc".to_string(),             // Blue for custom keywords
+            }),
+        });
+    }
+
+    // Add closed keywords
+    for (order, keyword) in todo_keywords.closed.iter().enumerate() {
+        keywords.push(TodoStatus {
+            keyword: keyword.clone(),
             state_type: StateType::Closed,
-            order: 100,
-            color: Some("#00ff00".to_string()), // Green
-        },
-        TodoStatus {
-            keyword: "CANCELLED".to_string(),
-            state_type: StateType::Closed,
-            order: 110,
-            color: Some("#999999".to_string()), // Gray
-        },
-    ];
+            order: (100 + order) as u32, // Start closed keywords at 100
+            color: Some(match keyword.as_str() {
+                "DONE" => "#00ff00".to_string(),      // Green
+                "CANCELLED" => "#999999".to_string(), // Gray
+                _ => "#666666".to_string(),           // Dark gray for custom closed keywords
+            }),
+        });
+    }
 
     Ok(keywords)
 }

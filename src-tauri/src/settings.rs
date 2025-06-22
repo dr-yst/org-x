@@ -6,6 +6,222 @@ use std::path::PathBuf;
 use tauri_plugin_store::StoreExt;
 use thiserror::Error;
 
+/// Configuration for TODO keywords
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
+pub struct TodoKeywords {
+    /// Active (open) TODO keywords
+    pub active: Vec<String>,
+    /// Closed (completed) TODO keywords
+    pub closed: Vec<String>,
+}
+
+impl Default for TodoKeywords {
+    fn default() -> Self {
+        Self {
+            active: vec![
+                "TODO".to_string(),
+                "IN-PROGRESS".to_string(),
+                "WAITING".to_string(),
+            ],
+            closed: vec!["DONE".to_string(), "CANCELLED".to_string()],
+        }
+    }
+}
+
+impl TodoKeywords {
+    /// Create new TodoKeywords with default values
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Get all keywords (active + closed)
+    pub fn all_keywords(&self) -> Vec<String> {
+        let mut all = self.active.clone();
+        all.extend(self.closed.clone());
+        all
+    }
+
+    /// Check if a keyword is an active (open) keyword
+    pub fn is_active_keyword(&self, keyword: &str) -> bool {
+        self.active.contains(&keyword.to_string())
+    }
+
+    /// Check if a keyword is a closed (completed) keyword
+    pub fn is_closed_keyword(&self, keyword: &str) -> bool {
+        self.closed.contains(&keyword.to_string())
+    }
+
+    /// Check if a keyword is valid (exists in either active or closed)
+    pub fn is_valid_keyword(&self, keyword: &str) -> bool {
+        self.is_active_keyword(keyword) || self.is_closed_keyword(keyword)
+    }
+
+    /// Add an active keyword if it doesn't already exist
+    pub fn add_active_keyword(&mut self, keyword: String) -> Result<(), SettingsError> {
+        if keyword.trim().is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Keyword cannot be empty".to_string(),
+            ));
+        }
+
+        if self.all_keywords().contains(&keyword) {
+            return Err(SettingsError::DuplicateKeyword(keyword));
+        }
+
+        self.active.push(keyword);
+        Ok(())
+    }
+
+    /// Add a closed keyword if it doesn't already exist
+    pub fn add_closed_keyword(&mut self, keyword: String) -> Result<(), SettingsError> {
+        if keyword.trim().is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Keyword cannot be empty".to_string(),
+            ));
+        }
+
+        if self.all_keywords().contains(&keyword) {
+            return Err(SettingsError::DuplicateKeyword(keyword));
+        }
+
+        self.closed.push(keyword);
+        Ok(())
+    }
+
+    /// Remove an active keyword
+    pub fn remove_active_keyword(&mut self, index: usize) -> Result<(), SettingsError> {
+        if index >= self.active.len() {
+            return Err(SettingsError::InvalidIndex(index, self.active.len()));
+        }
+        self.active.remove(index);
+        Ok(())
+    }
+
+    /// Remove a closed keyword
+    pub fn remove_closed_keyword(&mut self, index: usize) -> Result<(), SettingsError> {
+        if index >= self.closed.len() {
+            return Err(SettingsError::InvalidIndex(index, self.closed.len()));
+        }
+        self.closed.remove(index);
+        Ok(())
+    }
+
+    /// Edit an active keyword
+    pub fn edit_active_keyword(
+        &mut self,
+        index: usize,
+        new_keyword: String,
+    ) -> Result<(), SettingsError> {
+        if new_keyword.trim().is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Keyword cannot be empty".to_string(),
+            ));
+        }
+
+        if index >= self.active.len() {
+            return Err(SettingsError::InvalidIndex(index, self.active.len()));
+        }
+
+        // Check if the new keyword already exists (excluding the current one)
+        let mut all_except_current = self.active.clone();
+        all_except_current.remove(index);
+        all_except_current.extend(self.closed.clone());
+
+        if all_except_current.contains(&new_keyword) {
+            return Err(SettingsError::DuplicateKeyword(new_keyword));
+        }
+
+        self.active[index] = new_keyword;
+        Ok(())
+    }
+
+    /// Edit a closed keyword
+    pub fn edit_closed_keyword(
+        &mut self,
+        index: usize,
+        new_keyword: String,
+    ) -> Result<(), SettingsError> {
+        if new_keyword.trim().is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Keyword cannot be empty".to_string(),
+            ));
+        }
+
+        if index >= self.closed.len() {
+            return Err(SettingsError::InvalidIndex(index, self.closed.len()));
+        }
+
+        // Check if the new keyword already exists (excluding the current one)
+        let mut all_except_current = self.closed.clone();
+        all_except_current.remove(index);
+        all_except_current.extend(self.active.clone());
+
+        if all_except_current.contains(&new_keyword) {
+            return Err(SettingsError::DuplicateKeyword(new_keyword));
+        }
+
+        self.closed[index] = new_keyword;
+        Ok(())
+    }
+
+    /// Move an active keyword up/down in the list
+    pub fn move_active_keyword(
+        &mut self,
+        index: usize,
+        direction: i32,
+    ) -> Result<(), SettingsError> {
+        if index >= self.active.len() {
+            return Err(SettingsError::InvalidIndex(index, self.active.len()));
+        }
+
+        let new_index = if direction < 0 {
+            if index == 0 {
+                return Ok(()); // Already at the top
+            }
+            index - 1
+        } else {
+            if index >= self.active.len() - 1 {
+                return Ok(()); // Already at the bottom
+            }
+            index + 1
+        };
+
+        self.active.swap(index, new_index);
+        Ok(())
+    }
+
+    /// Move a closed keyword up/down in the list
+    pub fn move_closed_keyword(
+        &mut self,
+        index: usize,
+        direction: i32,
+    ) -> Result<(), SettingsError> {
+        if index >= self.closed.len() {
+            return Err(SettingsError::InvalidIndex(index, self.closed.len()));
+        }
+
+        let new_index = if direction < 0 {
+            if index == 0 {
+                return Ok(()); // Already at the top
+            }
+            index - 1
+        } else {
+            if index >= self.closed.len() - 1 {
+                return Ok(()); // Already at the bottom
+            }
+            index + 1
+        };
+
+        self.closed.swap(index, new_index);
+        Ok(())
+    }
+
+    /// Reset to default values
+    pub fn reset_to_defaults(&mut self) {
+        *self = Self::default();
+    }
+}
+
 /// Type of path being monitored
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "PascalCase")]
@@ -89,12 +305,15 @@ impl MonitoredPath {
 pub struct UserSettings {
     /// List of monitored paths
     pub monitored_paths: Vec<MonitoredPath>,
+    /// TODO keyword configuration
+    pub todo_keywords: TodoKeywords,
 }
 
 impl Default for UserSettings {
     fn default() -> Self {
         Self {
             monitored_paths: Vec::new(),
+            todo_keywords: TodoKeywords::default(),
         }
     }
 }
@@ -225,6 +444,21 @@ impl UserSettings {
             .filter(|path| path.parse_enabled)
             .collect()
     }
+
+    /// Update TODO keywords
+    pub fn update_todo_keywords(&mut self, todo_keywords: TodoKeywords) {
+        self.todo_keywords = todo_keywords;
+    }
+
+    /// Get reference to TODO keywords
+    pub fn get_todo_keywords(&self) -> &TodoKeywords {
+        &self.todo_keywords
+    }
+
+    /// Get mutable reference to TODO keywords
+    pub fn get_todo_keywords_mut(&mut self) -> &mut TodoKeywords {
+        &mut self.todo_keywords
+    }
 }
 
 /// Settings management errors
@@ -244,6 +478,15 @@ pub enum SettingsError {
 
     #[error("Serialization error: {0}")]
     SerializationError(String),
+
+    #[error("Invalid keyword: {0}")]
+    InvalidKeyword(String),
+
+    #[error("Duplicate keyword: {0}")]
+    DuplicateKeyword(String),
+
+    #[error("Invalid index {0}, max: {1}")]
+    InvalidIndex(usize, usize),
 }
 
 /// Settings manager using Tauri Store plugin
@@ -259,7 +502,7 @@ impl SettingsManager {
         }
     }
 
-    /// Load settings from store
+    /// Load settings from store, returns (settings, migration_occurred)
     pub async fn load_settings(
         &self,
         app_handle: &tauri::AppHandle,
@@ -270,13 +513,42 @@ impl SettingsManager {
 
         // Try to get the settings from the store
         match store.get("user_settings") {
-            Some(value) => serde_json::from_value(value.clone())
-                .map_err(|e| SettingsError::SerializationError(e.to_string())),
+            Some(value) => {
+                // Try to deserialize the settings
+                match serde_json::from_value::<UserSettings>(value.clone()) {
+                    Ok(settings) => Ok(settings),
+                    Err(_) => {
+                        // If deserialization fails, try to migrate from older format
+                        let migrated_settings = self.migrate_settings(value.clone())?;
+                        // Save the migrated settings immediately
+                        self.save_settings(app_handle, &migrated_settings).await?;
+                        Ok(migrated_settings)
+                    }
+                }
+            }
             None => {
                 // No settings found, return defaults
                 Ok(UserSettings::default())
             }
         }
+    }
+
+    /// Migrate settings from older format that might be missing new fields
+    fn migrate_settings(&self, value: serde_json::Value) -> Result<UserSettings, SettingsError> {
+        // Try to extract monitored_paths from the old format
+        let monitored_paths = if let Some(paths) = value.get("monitored_paths") {
+            serde_json::from_value(paths.clone()).unwrap_or_else(|_| Vec::new())
+        } else {
+            Vec::new()
+        };
+
+        // Create settings with default todo_keywords
+        let migrated_settings = UserSettings {
+            monitored_paths,
+            todo_keywords: TodoKeywords::default(),
+        };
+
+        Ok(migrated_settings)
     }
 
     /// Save settings to store
@@ -480,5 +752,253 @@ mod tests {
         assert_eq!(settings.monitored_paths.len(), 0);
 
         cleanup_test_directory(&test_dir);
+    }
+
+    #[test]
+    fn test_todo_keywords_default() {
+        let keywords = TodoKeywords::default();
+        assert_eq!(keywords.active, vec!["TODO", "IN-PROGRESS", "WAITING"]);
+        assert_eq!(keywords.closed, vec!["DONE", "CANCELLED"]);
+    }
+
+    #[test]
+    fn test_todo_keywords_all_keywords() {
+        let keywords = TodoKeywords::default();
+        let all = keywords.all_keywords();
+        assert_eq!(all.len(), 5);
+        assert!(all.contains(&"TODO".to_string()));
+        assert!(all.contains(&"DONE".to_string()));
+    }
+
+    #[test]
+    fn test_todo_keywords_validation() {
+        let keywords = TodoKeywords::default();
+
+        // Test active keywords
+        assert!(keywords.is_active_keyword("TODO"));
+        assert!(keywords.is_active_keyword("IN-PROGRESS"));
+        assert!(!keywords.is_active_keyword("DONE"));
+
+        // Test closed keywords
+        assert!(keywords.is_closed_keyword("DONE"));
+        assert!(keywords.is_closed_keyword("CANCELLED"));
+        assert!(!keywords.is_closed_keyword("TODO"));
+
+        // Test valid keywords
+        assert!(keywords.is_valid_keyword("TODO"));
+        assert!(keywords.is_valid_keyword("DONE"));
+        assert!(!keywords.is_valid_keyword("INVALID"));
+    }
+
+    #[test]
+    fn test_add_active_keyword() {
+        let mut keywords = TodoKeywords::default();
+
+        // Add valid keyword
+        assert!(keywords.add_active_keyword("NEXT".to_string()).is_ok());
+        assert!(keywords.active.contains(&"NEXT".to_string()));
+
+        // Try to add duplicate
+        assert!(matches!(
+            keywords.add_active_keyword("TODO".to_string()),
+            Err(SettingsError::DuplicateKeyword(_))
+        ));
+
+        // Try to add empty keyword
+        assert!(matches!(
+            keywords.add_active_keyword("".to_string()),
+            Err(SettingsError::InvalidKeyword(_))
+        ));
+    }
+
+    #[test]
+    fn test_add_closed_keyword() {
+        let mut keywords = TodoKeywords::default();
+
+        // Add valid keyword
+        assert!(keywords.add_closed_keyword("ARCHIVED".to_string()).is_ok());
+        assert!(keywords.closed.contains(&"ARCHIVED".to_string()));
+
+        // Try to add duplicate
+        assert!(matches!(
+            keywords.add_closed_keyword("DONE".to_string()),
+            Err(SettingsError::DuplicateKeyword(_))
+        ));
+    }
+
+    #[test]
+    fn test_remove_keywords() {
+        let mut keywords = TodoKeywords::default();
+        let initial_active_count = keywords.active.len();
+        let initial_closed_count = keywords.closed.len();
+
+        // Remove active keyword
+        assert!(keywords.remove_active_keyword(0).is_ok());
+        assert_eq!(keywords.active.len(), initial_active_count - 1);
+
+        // Try to remove with invalid index
+        assert!(matches!(
+            keywords.remove_active_keyword(100),
+            Err(SettingsError::InvalidIndex(_, _))
+        ));
+
+        // Remove closed keyword
+        assert!(keywords.remove_closed_keyword(0).is_ok());
+        assert_eq!(keywords.closed.len(), initial_closed_count - 1);
+    }
+
+    #[test]
+    fn test_edit_keywords() {
+        let mut keywords = TodoKeywords::default();
+
+        // Edit active keyword
+        assert!(keywords.edit_active_keyword(0, "TASK".to_string()).is_ok());
+        assert_eq!(keywords.active[0], "TASK");
+
+        // Try to edit with duplicate name
+        assert!(matches!(
+            keywords.edit_active_keyword(0, "IN-PROGRESS".to_string()),
+            Err(SettingsError::DuplicateKeyword(_))
+        ));
+
+        // Edit closed keyword
+        assert!(keywords
+            .edit_closed_keyword(0, "FINISHED".to_string())
+            .is_ok());
+        assert_eq!(keywords.closed[0], "FINISHED");
+
+        // Try to edit with invalid index
+        assert!(matches!(
+            keywords.edit_active_keyword(100, "TEST".to_string()),
+            Err(SettingsError::InvalidIndex(_, _))
+        ));
+    }
+
+    #[test]
+    fn test_move_keywords() {
+        let mut keywords = TodoKeywords::default();
+        let first_active = keywords.active[0].clone();
+        let second_active = keywords.active[1].clone();
+
+        // Move first active keyword down
+        assert!(keywords.move_active_keyword(0, 1).is_ok());
+        assert_eq!(keywords.active[0], second_active);
+        assert_eq!(keywords.active[1], first_active);
+
+        // Move it back up
+        assert!(keywords.move_active_keyword(1, -1).is_ok());
+        assert_eq!(keywords.active[0], first_active);
+        assert_eq!(keywords.active[1], second_active);
+
+        // Try to move beyond bounds (should succeed but do nothing)
+        assert!(keywords.move_active_keyword(0, -1).is_ok()); // Already at top
+        let last_index = keywords.active.len() - 1;
+        assert!(keywords.move_active_keyword(last_index, 1).is_ok()); // Already at bottom
+
+        // Test with invalid index
+        assert!(matches!(
+            keywords.move_active_keyword(100, 1),
+            Err(SettingsError::InvalidIndex(_, _))
+        ));
+    }
+
+    #[test]
+    fn test_reset_to_defaults() {
+        let mut keywords = TodoKeywords::default();
+
+        // Modify keywords
+        keywords.add_active_keyword("CUSTOM".to_string()).unwrap();
+        keywords
+            .add_closed_keyword("CUSTOM_DONE".to_string())
+            .unwrap();
+
+        // Reset to defaults
+        keywords.reset_to_defaults();
+
+        let default_keywords = TodoKeywords::default();
+        assert_eq!(keywords.active, default_keywords.active);
+        assert_eq!(keywords.closed, default_keywords.closed);
+    }
+
+    #[test]
+    fn test_user_settings_todo_keywords() {
+        let mut settings = UserSettings::new();
+
+        // Check default TODO keywords are included
+        assert_eq!(settings.todo_keywords.active.len(), 3);
+        assert_eq!(settings.todo_keywords.closed.len(), 2);
+
+        // Update TODO keywords
+        let mut new_keywords = TodoKeywords::new();
+        new_keywords
+            .add_active_keyword("CUSTOM".to_string())
+            .unwrap();
+        settings.update_todo_keywords(new_keywords.clone());
+
+        assert_eq!(settings.get_todo_keywords().active.len(), 4); // 3 defaults + 1 custom
+
+        // Test mutable access
+        settings
+            .get_todo_keywords_mut()
+            .add_closed_keyword("ARCHIVED".to_string())
+            .unwrap();
+        assert_eq!(settings.get_todo_keywords().closed.len(), 3); // 2 defaults + 1 custom
+    }
+
+    #[test]
+    fn test_settings_migration() {
+        let manager = SettingsManager::new();
+
+        // Create old format settings JSON (missing todo_keywords field)
+        let old_settings_json = serde_json::json!({
+            "monitored_paths": [
+                {
+                    "path": "/test/old.org",
+                    "path_type": "File",
+                    "parse_enabled": true
+                }
+            ]
+        });
+
+        // Test migration
+        let migrated_settings = manager.migrate_settings(old_settings_json).unwrap();
+
+        // Verify monitored paths were preserved
+        assert_eq!(migrated_settings.monitored_paths.len(), 1);
+        assert_eq!(migrated_settings.monitored_paths[0].path, "/test/old.org");
+
+        // Verify default TODO keywords were added
+        assert_eq!(
+            migrated_settings.todo_keywords.active,
+            vec!["TODO", "IN-PROGRESS", "WAITING"]
+        );
+        assert_eq!(
+            migrated_settings.todo_keywords.closed,
+            vec!["DONE", "CANCELLED"]
+        );
+    }
+
+    #[test]
+    fn test_settings_migration_empty() {
+        let manager = SettingsManager::new();
+
+        // Create empty old format settings JSON
+        let old_settings_json = serde_json::json!({});
+
+        // Test migration
+        let migrated_settings = manager.migrate_settings(old_settings_json).unwrap();
+
+        // Verify empty monitored paths
+        assert_eq!(migrated_settings.monitored_paths.len(), 0);
+
+        // Verify default TODO keywords were added
+        assert_eq!(
+            migrated_settings.todo_keywords.active,
+            vec!["TODO", "IN-PROGRESS", "WAITING"]
+        );
+        assert_eq!(
+            migrated_settings.todo_keywords.closed,
+            vec!["DONE", "CANCELLED"]
+        );
     }
 }

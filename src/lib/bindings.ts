@@ -213,7 +213,7 @@ export const commands = {
     }
   },
   /**
-   * Clear all settings
+   * Clear user settings
    */
   async clearUserSettings(): Promise<Result<null, string>> {
     try {
@@ -240,11 +240,199 @@ export const commands = {
     }
   },
   /**
-   * Get hardcoded TODO keywords with their state types (temporary implementation)
+   * Get TODO keywords as TodoStatus objects for UI display
    */
   async getTodoKeywords(): Promise<Result<TodoStatus[], string>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_todo_keywords") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get current TODO keywords configuration from user settings
+   */
+  async getUserTodoKeywords(): Promise<Result<TodoKeywords, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_user_todo_keywords"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update TODO keywords in user settings
+   */
+  async updateTodoKeywords(
+    todoKeywords: TodoKeywords,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_todo_keywords", { todoKeywords }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add active TODO keyword
+   */
+  async addActiveTodoKeyword(
+    keyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_active_todo_keyword", { keyword }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add closed TODO keyword
+   */
+  async addClosedTodoKeyword(
+    keyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_closed_todo_keyword", { keyword }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove active TODO keyword by index
+   */
+  async removeActiveTodoKeyword(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_active_todo_keyword", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove closed TODO keyword by index
+   */
+  async removeClosedTodoKeyword(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_closed_todo_keyword", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit active TODO keyword by index
+   */
+  async editActiveTodoKeyword(
+    index: number,
+    newKeyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_active_todo_keyword", {
+          index,
+          newKeyword,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit closed TODO keyword by index
+   */
+  async editClosedTodoKeyword(
+    index: number,
+    newKeyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_closed_todo_keyword", {
+          index,
+          newKeyword,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move active TODO keyword
+   */
+  async moveActiveTodoKeyword(
+    index: number,
+    direction: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_active_todo_keyword", {
+          index,
+          direction,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move closed TODO keyword
+   */
+  async moveClosedTodoKeyword(
+    index: number,
+    direction: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_closed_todo_keyword", {
+          index,
+          direction,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset TODO keywords to defaults
+   */
+  async resetTodoKeywordsToDefaults(): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_todo_keywords_to_defaults"),
+      };
     } catch (e) {
       if (e instanceof Error) throw e;
       else return { status: "error", error: e as any };
@@ -374,6 +562,19 @@ export type TodoConfiguration = {
   sequences: TodoSequence[];
   default_sequence: string;
 };
+/**
+ * Configuration for TODO keywords
+ */
+export type TodoKeywords = {
+  /**
+   * Active (open) TODO keywords
+   */
+  active: string[];
+  /**
+   * Closed (completed) TODO keywords
+   */
+  closed: string[];
+};
 export type TodoSequence = { name: string; statuses: TodoStatus[] };
 export type TodoStatus = {
   keyword: string;
@@ -389,6 +590,10 @@ export type UserSettings = {
    * List of monitored paths
    */
   monitored_paths: MonitoredPath[];
+  /**
+   * TODO keyword configuration
+   */
+  todo_keywords: TodoKeywords;
 };
 
 /** tauri-specta globals **/

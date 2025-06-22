@@ -30,6 +30,17 @@ fn generate_ts_bindings() {
         api::clear_user_settings,
         api::check_path_monitoring_status,
         api::get_todo_keywords,
+        api::get_user_todo_keywords,
+        api::update_todo_keywords,
+        api::add_active_todo_keyword,
+        api::add_closed_todo_keyword,
+        api::remove_active_todo_keyword,
+        api::remove_closed_todo_keyword,
+        api::edit_active_todo_keyword,
+        api::edit_closed_todo_keyword,
+        api::move_active_todo_keyword,
+        api::move_closed_todo_keyword,
+        api::reset_todo_keywords_to_defaults,
     ]);
 
     builder
@@ -74,6 +85,17 @@ pub fn run() {
         api::clear_user_settings,
         api::check_path_monitoring_status,
         api::get_todo_keywords,
+        api::get_user_todo_keywords,
+        api::update_todo_keywords,
+        api::add_active_todo_keyword,
+        api::add_closed_todo_keyword,
+        api::remove_active_todo_keyword,
+        api::remove_closed_todo_keyword,
+        api::edit_active_todo_keyword,
+        api::edit_closed_todo_keyword,
+        api::move_active_todo_keyword,
+        api::move_closed_todo_keyword,
+        api::reset_todo_keywords_to_defaults,
     ]);
 
     #[cfg(not(debug_assertions))]
@@ -95,6 +117,17 @@ pub fn run() {
         api::clear_user_settings,
         api::check_path_monitoring_status,
         api::get_todo_keywords,
+        api::get_user_todo_keywords,
+        api::update_todo_keywords,
+        api::add_active_todo_keyword,
+        api::add_closed_todo_keyword,
+        api::remove_active_todo_keyword,
+        api::remove_closed_todo_keyword,
+        api::edit_active_todo_keyword,
+        api::edit_closed_todo_keyword,
+        api::move_active_todo_keyword,
+        api::move_closed_todo_keyword,
+        api::reset_todo_keywords_to_defaults,
     ]);
 
     tauri::Builder::default()
