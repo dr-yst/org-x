@@ -250,16 +250,20 @@ describe("ListView Store", () => {
         data: {
           monitored_paths: [
             {
-              path: "/test/path1.org",
+              path: "/test/file1.org",
               path_type: "File",
               parse_enabled: false,
             },
             {
-              path: "/test/path2",
+              path: "/test/dir",
               path_type: "Directory",
               parse_enabled: false,
             },
           ],
+          todo_keywords: {
+            active: ["TODO", "IN-PROGRESS", "WAITING"],
+            closed: ["DONE", "CANCELLED"],
+          },
         },
       });
 
