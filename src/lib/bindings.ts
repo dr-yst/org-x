@@ -438,6 +438,20 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Reload all documents with updated TODO keywords settings
+   */
+  async reloadDocumentsWithSettings(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reload_documents_with_settings"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
