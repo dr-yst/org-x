@@ -3,8 +3,8 @@
 // and will be exported using tauri-specta
 
 use crate::orgmode::{
-    parse_org_document, parse_sample_org, FileMonitor, OrgDocument, OrgDocumentRepository,
-    StateType, TodoStatus,
+    parse_org_document_with_settings, parse_sample_org, FileMonitor, OrgDocument,
+    OrgDocumentRepository, StateType, TodoStatus,
 };
 use crate::settings::{MonitoredPath, PathType, SettingsManager, TodoKeywords, UserSettings};
 #[cfg(debug_assertions)]
@@ -92,8 +92,13 @@ pub fn get_sample_org() -> OrgDocument {
 /// Parse org document content
 #[tauri::command]
 #[specta::specta]
-pub fn parse_org_content(content: String) -> Result<OrgDocument, String> {
-    parse_org_document(&content, None).map_err(|e| e.to_string())
+pub async fn parse_org_content(
+    app_handle: tauri::AppHandle,
+    content: String,
+) -> Result<OrgDocument, String> {
+    parse_org_document_with_settings(&content, None, Some(&app_handle))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Run the datetime test program
@@ -115,88 +120,121 @@ pub async fn start_file_monitoring(app_handle: tauri::AppHandle) -> Result<Strin
         .await
         .map_err(|e| e.to_string())?;
 
-    // Get a lock on the monitor
-    let mut monitor_lock = FILE_MONITOR
-        .lock()
-        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    // Get repository reference for parsing
+    let repository = {
+        let mut monitor_lock = FILE_MONITOR
+            .lock()
+            .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
 
-    // Create a repository if it doesn't exist
-    let repository = Arc::new(Mutex::new(OrgDocumentRepository::new()));
+        // Create a repository if it doesn't exist
+        let repository = Arc::new(Mutex::new(OrgDocumentRepository::new()));
 
-    // Create and initialize the file monitor if it doesn't exist
-    if monitor_lock.is_none() {
-        *monitor_lock = Some(FileMonitor::new(repository));
-    }
-
-    if let Some(monitor) = monitor_lock.as_mut() {
-        // Add paths from user settings (only those with parsing enabled)
-        for monitored_path in settings.get_parse_enabled_paths() {
-            monitor.add_path(monitored_path.clone())?;
+        // Create and initialize the file monitor if it doesn't exist
+        if monitor_lock.is_none() {
+            *monitor_lock = Some(FileMonitor::new_with_app_handle(
+                repository.clone(),
+                app_handle.clone(),
+            ));
         }
 
-        // Parse initial files into the repository
-        let repo = monitor.get_repository();
-        {
-            let mut repo_lock = repo
-                .lock()
-                .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        // If monitor exists, update its app_handle
+        if let Some(monitor) = monitor_lock.as_mut() {
+            monitor.set_app_handle(app_handle.clone());
+        }
 
-            // Debug: Show current working directory
-            match std::env::current_dir() {
-                Ok(cwd) => println!("Current working directory: {}", cwd.display()),
-                Err(e) => eprintln!("Failed to get current directory: {}", e),
-            }
-
-            // Parse files from monitored paths (only those with parsing enabled)
+        if let Some(monitor) = monitor_lock.as_mut() {
+            // Add paths from user settings (only those with parsing enabled)
             for monitored_path in settings.get_parse_enabled_paths() {
-                match monitored_path.path_type {
-                    PathType::File => {
-                        match repo_lock.parse_file(std::path::Path::new(&monitored_path.path)) {
-                            Ok(doc_id) => println!(
-                                "Successfully parsed file: {} -> {}",
-                                monitored_path.path, doc_id
-                            ),
-                            Err(e) => {
-                                eprintln!("Failed to parse file {}: {}", monitored_path.path, e)
-                            }
-                        }
+                monitor.add_path(monitored_path.clone())?;
+            }
+            monitor.get_repository()
+        } else {
+            return Err("Failed to initialize file monitor".to_string());
+        }
+    }; // Drop monitor_lock here
+
+    // Parse initial files into the repository (outside of monitor lock)
+    // Debug: Show current working directory
+    match std::env::current_dir() {
+        Ok(cwd) => println!("Current working directory: {}", cwd.display()),
+        Err(e) => eprintln!("Failed to get current directory: {}", e),
+    }
+
+    // Collect all file paths first to avoid holding mutex across await
+    let mut all_file_paths = Vec::new();
+    for monitored_path in settings.get_parse_enabled_paths() {
+        match monitored_path.path_type {
+            PathType::File => {
+                all_file_paths.push(monitored_path.path.clone());
+            }
+            PathType::Directory => {
+                // Scan directory for org files (always recursive now)
+                match scan_directory_for_org_files(&monitored_path.path, true) {
+                    Ok(org_files) => {
+                        all_file_paths.extend(org_files);
                     }
-                    PathType::Directory => {
-                        // Scan directory for org files (always recursive now)
-                        match scan_directory_for_org_files(&monitored_path.path, true) {
-                            Ok(org_files) => {
-                                for file_path in org_files {
-                                    match repo_lock.parse_file(std::path::Path::new(&file_path)) {
-                                        Ok(doc_id) => println!(
-                                            "Successfully parsed file: {} -> {}",
-                                            file_path, doc_id
-                                        ),
-                                        Err(e) => {
-                                            eprintln!("Failed to parse file {}: {}", file_path, e)
-                                        }
-                                    }
-                                }
-                            }
-                            Err(e) => {
-                                eprintln!("Failed to scan directory {}: {}", monitored_path.path, e)
-                            }
-                        }
+                    Err(e) => {
+                        eprintln!("Failed to scan directory {}: {}", monitored_path.path, e)
                     }
                 }
             }
         }
-
-        // Start monitoring
-        monitor.start_monitoring()?;
-
-        let monitored_count = settings.get_parse_enabled_paths().len();
-        Ok(format!(
-            "File monitoring started with {} monitored paths from settings",
-            monitored_count
-        ))
-    } else {
-        Err("Failed to initialize file monitor".to_string())
     }
+
+    // Load user TODO keywords for initial parsing
+    let user_todo_keywords = {
+        let active = if settings.todo_keywords.active.is_empty() {
+            vec!["TODO".to_string()]
+        } else {
+            settings.todo_keywords.active.clone()
+        };
+
+        let closed = if settings.todo_keywords.closed.is_empty() {
+            vec!["DONE".to_string()]
+        } else {
+            settings.todo_keywords.closed.clone()
+        };
+
+        (active, closed)
+    };
+
+    println!(
+        "Using user TODO keywords for initial parsing: {:?} | {:?}",
+        user_todo_keywords.0, user_todo_keywords.1
+    );
+
+    // Now parse all files one by one using user TODO keywords
+    for file_path in all_file_paths {
+        let mut repo_lock = repository
+            .lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        match repo_lock
+            .parse_file_with_keywords(std::path::Path::new(&file_path), user_todo_keywords.clone())
+        {
+            Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
+            Err(e) => {
+                eprintln!("Failed to parse file {}: {}", file_path, e)
+            }
+        }
+        drop(repo_lock);
+    }
+
+    // Start monitoring (need to re-acquire monitor lock)
+    {
+        let mut monitor_lock = FILE_MONITOR
+            .lock()
+            .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+
+        if let Some(monitor) = monitor_lock.as_mut() {
+            monitor.start_monitoring()?;
+        }
+    }
+
+    let monitored_count = settings.get_parse_enabled_paths().len();
+    Ok(format!(
+        "File monitoring started with {} monitored paths from settings",
+        monitored_count
+    ))
 }
 
 /// Stop file monitoring
@@ -536,6 +574,14 @@ pub async fn update_todo_keywords(
         .await
         .map_err(|e| e.to_string())?;
 
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
     Ok(current_settings)
 }
 
@@ -561,6 +607,14 @@ pub async fn add_active_todo_keyword(
         .await
         .map_err(|e| e.to_string())?;
 
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
     Ok(current_settings)
 }
 
@@ -585,6 +639,14 @@ pub async fn add_closed_todo_keyword(
         .save_settings(&app_handle, &current_settings)
         .await
         .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
 
     Ok(current_settings)
 }
@@ -761,6 +823,14 @@ pub async fn reset_todo_keywords_to_defaults(
         .await
         .map_err(|e| e.to_string())?;
 
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
     Ok(current_settings)
 }
 
@@ -777,6 +847,20 @@ pub async fn check_path_monitoring_status(
         .map_err(|e| e.to_string())?;
 
     Ok(settings.is_file_covered(&file_path))
+}
+
+/// Reload all documents with updated TODO keywords settings
+#[tauri::command]
+#[specta::specta]
+pub async fn reload_documents_with_settings(
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    // Simple implementation: Just trigger file monitoring restart
+    // This will cause all files to be re-parsed with current settings
+    match restart_file_monitoring_with_settings(&app_handle).await {
+        Ok(_) => Ok("Documents reloaded with updated settings".to_string()),
+        Err(e) => Err(format!("Failed to reload documents: {}", e)),
+    }
 }
 
 /// Get TODO keywords as TodoStatus objects for UI display

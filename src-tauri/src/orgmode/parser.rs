@@ -6,6 +6,7 @@ use crate::orgmode::todo::TodoConfiguration;
 use crate::orgmode::todo::TodoSequence;
 use crate::orgmode::todo::TodoStatus;
 use crate::orgmode::utils::{generate_document_etag, generate_headline_etag};
+use crate::settings::SettingsManager;
 use chrono::Utc;
 use orgize::{Element, Org};
 use std::collections::HashMap;
@@ -101,12 +102,27 @@ fn extract_todo_keywords_from_content(content: &str) -> (Vec<String>, Vec<String
     (active_keywords, closed_keywords)
 }
 
-/// Function to parse an org-mode document
-pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
-    // Extract TODO keywords from content
-    let todo_keywords = extract_todo_keywords_from_content(content);
+/// Parse org document with user settings for TODO keywords
+pub async fn parse_org_document_with_settings(
+    content: &str,
+    file_path: Option<&str>,
+    app_handle: Option<&tauri::AppHandle>,
+) -> Result<OrgDocument, OrgError> {
+    // Load user settings to get configured TODO keywords
+    let todo_keywords = if let Some(handle) = app_handle {
+        match load_user_todo_keywords(handle).await {
+            Ok((active, closed)) => (active, closed),
+            Err(_) => {
+                // Fallback to extracting from content if settings load fails
+                extract_todo_keywords_from_content(content)
+            }
+        }
+    } else {
+        // No app handle provided, fallback to content extraction
+        extract_todo_keywords_from_content(content)
+    };
 
-    // Create ParseConfig with extracted TODO keywords
+    // Create ParseConfig with user-configured TODO keywords
     let config = orgize::ParseConfig {
         todo_keywords,
         ..Default::default()
@@ -114,7 +130,112 @@ pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgD
 
     // Parse with Orgize using custom configuration
     println!("Starting to parse document with custom config");
-    let org = orgize::Org::parse_custom(content, &config);
+    let org = config.parse(content);
+    println!("Orgize parsing complete");
+
+    // Get document title (use default if not found)
+    let title = extract_document_title(&org).unwrap_or_else(|| "Untitled Document".to_string());
+    println!("Title extracted: {}", title);
+
+    // Extract filetags
+    let filetags = extract_filetags(&org);
+    println!("Filetags extracted: {:?}", filetags);
+
+    // Extract category
+    let category = extract_category(&org).unwrap_or_else(String::new);
+    println!("Category extracted: {}", category);
+
+    // Extract document properties
+    let properties = extract_document_properties(&org);
+    println!("Properties extracted");
+
+    // Extract TODO configuration
+    let todo_config = extract_todo_configuration(&org, &config);
+    println!("TODO config extracted");
+
+    // Extract headlines
+    println!("Extracting headlines");
+    let headlines = extract_headlines(&org);
+    println!("Headlines extracted: {} headlines", headlines.len());
+
+    // Generate document ID based on file path
+    let id = file_path.unwrap_or("").to_string();
+
+    // Create document with all extracted information
+    let document = OrgDocument {
+        id: id.clone(),
+        title,
+        content: content.to_string(),
+        headlines,
+        filetags,
+        parsed_at: Utc::now(),
+        file_path: file_path.unwrap_or("").to_string(),
+        properties,
+        category,
+        etag: generate_document_etag(content),
+        todo_config,
+    };
+
+    // Update document_id in all headlines
+    let mut updated_document = document.clone();
+    update_headline_document_ids(&mut updated_document.headlines, &id);
+
+    Ok(updated_document)
+}
+
+/// Load user TODO keywords from settings
+async fn load_user_todo_keywords(
+    app_handle: &tauri::AppHandle,
+) -> Result<(Vec<String>, Vec<String>), Box<dyn std::error::Error>> {
+    let settings_manager = SettingsManager::new();
+    let settings = settings_manager.load_settings(app_handle).await?;
+
+    let active = settings.todo_keywords.active;
+    let closed = settings.todo_keywords.closed;
+
+    // Ensure we have at least default keywords
+    let active = if active.is_empty() {
+        vec!["TODO".to_string()]
+    } else {
+        active
+    };
+
+    let closed = if closed.is_empty() {
+        vec!["DONE".to_string()]
+    } else {
+        closed
+    };
+
+    println!("Loaded user TODO keywords: {:?} | {:?}", active, closed);
+    Ok((active, closed))
+}
+
+/// Function to parse an org-mode document
+pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
+    // First try to extract TODO keywords from content (for backward compatibility)
+    let content_todo_keywords = extract_todo_keywords_from_content(content);
+
+    // Use content keywords as fallback if no user settings are available
+    let todo_keywords = content_todo_keywords;
+
+    parse_org_document_with_keywords(content, file_path, todo_keywords)
+}
+
+/// Parse org document with custom TODO keywords
+pub fn parse_org_document_with_keywords(
+    content: &str,
+    file_path: Option<&str>,
+    todo_keywords: (Vec<String>, Vec<String>),
+) -> Result<OrgDocument, OrgError> {
+    // Create ParseConfig with TODO keywords
+    let config = orgize::ParseConfig {
+        todo_keywords,
+        ..Default::default()
+    };
+
+    // Parse with Orgize using custom configuration
+    println!("Starting to parse document with custom config");
+    let org = config.parse(content);
     println!("Orgize parsing complete");
 
     // Get document title (use default if not found)

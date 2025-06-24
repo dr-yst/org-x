@@ -58,7 +58,7 @@ impl TodoKeywords {
 
     /// Add an active keyword if it doesn't already exist
     pub fn add_active_keyword(&mut self, keyword: String) -> Result<(), SettingsError> {
-        if keyword.trim().is_empty() {
+        if keyword.is_empty() {
             return Err(SettingsError::InvalidKeyword(
                 "Keyword cannot be empty".to_string(),
             ));
@@ -74,7 +74,7 @@ impl TodoKeywords {
 
     /// Add a closed keyword if it doesn't already exist
     pub fn add_closed_keyword(&mut self, keyword: String) -> Result<(), SettingsError> {
-        if keyword.trim().is_empty() {
+        if keyword.is_empty() {
             return Err(SettingsError::InvalidKeyword(
                 "Keyword cannot be empty".to_string(),
             ));
@@ -112,7 +112,7 @@ impl TodoKeywords {
         index: usize,
         new_keyword: String,
     ) -> Result<(), SettingsError> {
-        if new_keyword.trim().is_empty() {
+        if new_keyword.is_empty() {
             return Err(SettingsError::InvalidKeyword(
                 "Keyword cannot be empty".to_string(),
             ));
@@ -141,7 +141,7 @@ impl TodoKeywords {
         index: usize,
         new_keyword: String,
     ) -> Result<(), SettingsError> {
-        if new_keyword.trim().is_empty() {
+        if new_keyword.is_empty() {
             return Err(SettingsError::InvalidKeyword(
                 "Keyword cannot be empty".to_string(),
             ));

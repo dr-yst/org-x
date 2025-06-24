@@ -41,6 +41,7 @@ fn generate_ts_bindings() {
         api::move_active_todo_keyword,
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
+        api::reload_documents_with_settings,
     ]);
 
     builder
@@ -96,6 +97,7 @@ pub fn run() {
         api::move_active_todo_keyword,
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
+        api::reload_documents_with_settings,
     ]);
 
     #[cfg(not(debug_assertions))]
@@ -128,6 +130,7 @@ pub fn run() {
         api::move_active_todo_keyword,
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
+        api::reload_documents_with_settings,
     ]);
 
     tauri::Builder::default()

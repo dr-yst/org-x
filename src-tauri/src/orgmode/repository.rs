@@ -1,6 +1,8 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
-use crate::orgmode::parser::parse_org_document;
+use crate::orgmode::parser::{
+    parse_org_document, parse_org_document_with_keywords, parse_org_document_with_settings,
+};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::fs;
@@ -55,8 +57,78 @@ impl OrgDocumentRepository {
             .and_then(|name| name.to_str())
             .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
 
-        // Parse the document
+        // Parse the document (fallback to content-based parsing)
         let mut document = parse_org_document(&content, path.to_str())
+            .map_err(|e| format!("Failed to parse document: {}", e))?;
+
+        // Use file name as document ID if not set
+        if document.id.is_empty() {
+            document.id = file_name.to_string();
+        }
+
+        // Add to repository
+        let doc_id = document.id.clone();
+        self.upsert(document);
+
+        Ok(doc_id)
+    }
+
+    // Parse a file with user settings and add it to the repository
+    pub async fn parse_file_with_settings(
+        &mut self,
+        path: &Path,
+        app_handle: Option<&tauri::AppHandle>,
+    ) -> Result<String, String> {
+        // Read the file
+        let content = fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file {}: {}", path.display(), e))?;
+
+        // Get file name for document ID
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
+
+        // Parse the document with user settings
+        let mut document = if let Some(handle) = app_handle {
+            parse_org_document_with_settings(&content, path.to_str(), Some(handle))
+                .await
+                .map_err(|e| format!("Failed to parse document: {}", e))?
+        } else {
+            parse_org_document(&content, path.to_str())
+                .map_err(|e| format!("Failed to parse document: {}", e))?
+        };
+
+        // Use file name as document ID if not set
+        if document.id.is_empty() {
+            document.id = file_name.to_string();
+        }
+
+        // Add to repository
+        let doc_id = document.id.clone();
+        self.upsert(document);
+
+        Ok(doc_id)
+    }
+
+    // Parse a file with custom TODO keywords and add it to the repository
+    pub fn parse_file_with_keywords(
+        &mut self,
+        path: &Path,
+        todo_keywords: (Vec<String>, Vec<String>),
+    ) -> Result<String, String> {
+        // Read the file
+        let content = fs::read_to_string(path)
+            .map_err(|e| format!("Failed to read file {}: {}", path.display(), e))?;
+
+        // Get file name for document ID
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| format!("Invalid file name: {}", path.display()))?;
+
+        // Parse the document with custom TODO keywords
+        let mut document = parse_org_document_with_keywords(&content, path.to_str(), todo_keywords)
             .map_err(|e| format!("Failed to parse document: {}", e))?;
 
         // Use file name as document ID if not set
