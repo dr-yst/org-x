@@ -56,16 +56,16 @@
 
     // Handle adding new active keyword
     async function handleAddActiveKeyword() {
-        if (newActiveKeyword.trim()) {
-            await addActiveKeyword(newActiveKeyword.trim());
+        if (newActiveKeyword.length > 0) {
+            await addActiveKeyword(newActiveKeyword);
             newActiveKeyword = "";
         }
     }
 
     // Handle adding new closed keyword
     async function handleAddClosedKeyword() {
-        if (newClosedKeyword.trim()) {
-            await addClosedKeyword(newClosedKeyword.trim());
+        if (newClosedKeyword.length > 0) {
+            await addClosedKeyword(newClosedKeyword);
             newClosedKeyword = "";
         }
     }
@@ -98,8 +98,8 @@
 
     // Handle saving edited active keyword
     async function saveEditedActive(index: number) {
-        if (editingActiveValue.trim()) {
-            await editActiveKeyword(index, editingActiveValue.trim());
+        if (editingActiveValue.length > 0) {
+            await editActiveKeyword(index, editingActiveValue);
         } else {
             setEditingActiveIndex(null);
         }
@@ -108,8 +108,8 @@
 
     // Handle saving edited closed keyword
     async function saveEditedClosed(index: number) {
-        if (editingClosedValue.trim()) {
-            await editClosedKeyword(index, editingClosedValue.trim());
+        if (editingClosedValue.length > 0) {
+            await editClosedKeyword(index, editingClosedValue);
         } else {
             setEditingClosedIndex(null);
         }
@@ -135,15 +135,20 @@
         }
     }
 
-    // Handle reset to defaults
-    async function handleResetToDefaults() {
-        if (
-            confirm(
-                "Are you sure you want to reset TODO keywords to defaults? This will remove any custom keywords you have added.",
-            )
-        ) {
-            await resetToDefaults();
-        }
+    // Handle reset to defaults with proper confirmation
+    let showResetConfirmDialog = $state(false);
+
+    function handleResetToDefaults() {
+        showResetConfirmDialog = true;
+    }
+
+    function confirmReset() {
+        showResetConfirmDialog = false;
+        resetToDefaults();
+    }
+
+    function cancelReset() {
+        showResetConfirmDialog = false;
     }
 
     // Reactive statements for accessing store values
@@ -203,8 +208,11 @@
                             bind:this={editActiveInput}
                             bind:value={editingActiveValue}
                             class="h-6 px-1 py-0 text-sm bg-white border-blue-300 min-w-[80px] max-w-[120px]"
-                            onkeydown={(e) =>
-                                handleKeydown(e, () => saveEditedActive(index))}
+                            onkeydown="{(e) =>
+                                handleKeydown(e, () =>
+                                    saveEditedActive(index),
+                                )},"
+                            type="text"
                         />
                         <Button
                             variant="ghost"
@@ -286,7 +294,7 @@
                     size="sm"
                     class="h-8 px-2"
                     onclick={handleAddActiveKeyword}
-                    disabled={loading || !newActiveKeyword.trim()}
+                    disabled={loading || newActiveKeyword.length === 0}
                 >
                     <Plus class="h-3 w-3" />
                 </Button>
@@ -402,7 +410,7 @@
                     size="sm"
                     class="h-8 px-2"
                     onclick={handleAddClosedKeyword}
-                    disabled={loading || !newClosedKeyword.trim()}
+                    disabled={loading || newClosedKeyword.length === 0}
                 >
                     <Plus class="h-3 w-3" />
                 </Button>
@@ -417,11 +425,45 @@
             size="sm"
             onclick={handleResetToDefaults}
             disabled={loading}
-            class="text-muted-foreground"
+            class="text-muted-foreground hover:text-foreground"
         >
             <RotateCcw class="h-4 w-4 mr-2" />
             Reset to Defaults
         </Button>
+
+        <!-- Reset Confirmation Dialog -->
+        {#if showResetConfirmDialog}
+            <div
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            >
+                <div class="bg-white rounded-lg shadow-lg p-6 max-w-md mx-4">
+                    <h3 class="text-lg font-semibold mb-2">
+                        Reset TODO Keywords
+                    </h3>
+                    <p class="text-sm text-muted-foreground mb-4">
+                        Are you sure you want to reset TODO keywords to
+                        defaults? This will remove any custom keywords you have
+                        added.
+                    </p>
+                    <div class="flex justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onclick={cancelReset}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onclick={confirmReset}
+                        >
+                            Reset to Defaults
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        {/if}
 
         <div class="text-xs text-muted-foreground">
             {#if loading}

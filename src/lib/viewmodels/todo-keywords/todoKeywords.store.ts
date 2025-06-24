@@ -1,6 +1,24 @@
 import { writable, derived, get } from "svelte/store";
 import { commands } from "$lib/bindings";
 import type { TodoKeywords, UserSettings } from "$lib/bindings";
+import { refresh as refreshHomeView } from "$lib/viewmodels/homeview.store";
+
+// Helper function to trigger document reload after settings change
+async function triggerDocumentReload(): Promise<void> {
+  try {
+    const result = await commands.reloadDocumentsWithSettings();
+    if (result.status === "ok") {
+      console.log("Documents reloaded with updated TODO keywords");
+      // Refresh the frontend to show updated headlines
+      await refreshHomeView();
+      console.log("Frontend refreshed to show updated headlines");
+    } else {
+      console.error("Failed to reload documents:", result.error);
+    }
+  } catch (error) {
+    console.error("Error reloading documents:", error);
+  }
+}
 
 /**
  * TodoKeywords ViewModel Store
@@ -127,6 +145,8 @@ export async function saveTodoKeywords(): Promise<void> {
 
     if (result.status === "ok") {
       markClean();
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -141,7 +161,7 @@ export async function saveTodoKeywords(): Promise<void> {
 
 // Action: Add active keyword
 export async function addActiveKeyword(keyword: string): Promise<void> {
-  if (!keyword.trim()) {
+  if (keyword.length === 0) {
     setError("Keyword cannot be empty");
     return;
   }
@@ -150,7 +170,7 @@ export async function addActiveKeyword(keyword: string): Promise<void> {
   setError(null);
 
   try {
-    const result = await commands.addActiveTodoKeyword(keyword.trim());
+    const result = await commands.addActiveTodoKeyword(keyword);
 
     if (result.status === "ok") {
       updateStore((state) => ({
@@ -161,6 +181,8 @@ export async function addActiveKeyword(keyword: string): Promise<void> {
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -175,7 +197,7 @@ export async function addActiveKeyword(keyword: string): Promise<void> {
 
 // Action: Add closed keyword
 export async function addClosedKeyword(keyword: string): Promise<void> {
-  if (!keyword.trim()) {
+  if (keyword.length === 0) {
     setError("Keyword cannot be empty");
     return;
   }
@@ -184,7 +206,7 @@ export async function addClosedKeyword(keyword: string): Promise<void> {
   setError(null);
 
   try {
-    const result = await commands.addClosedTodoKeyword(keyword.trim());
+    const result = await commands.addClosedTodoKeyword(keyword);
 
     if (result.status === "ok") {
       updateStore((state) => ({
@@ -195,6 +217,8 @@ export async function addClosedKeyword(keyword: string): Promise<void> {
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -224,6 +248,8 @@ export async function removeActiveKeyword(index: number): Promise<void> {
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -253,6 +279,8 @@ export async function removeClosedKeyword(index: number): Promise<void> {
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -270,7 +298,7 @@ export async function editActiveKeyword(
   index: number,
   newKeyword: string,
 ): Promise<void> {
-  if (!newKeyword.trim()) {
+  if (newKeyword.length === 0) {
     setError("Keyword cannot be empty");
     return;
   }
@@ -279,10 +307,7 @@ export async function editActiveKeyword(
   setError(null);
 
   try {
-    const result = await commands.editActiveTodoKeyword(
-      index,
-      newKeyword.trim(),
-    );
+    const result = await commands.editActiveTodoKeyword(index, newKeyword);
 
     if (result.status === "ok") {
       updateStore((state) => ({
@@ -294,6 +319,8 @@ export async function editActiveKeyword(
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -311,7 +338,7 @@ export async function editClosedKeyword(
   index: number,
   newKeyword: string,
 ): Promise<void> {
-  if (!newKeyword.trim()) {
+  if (newKeyword.length === 0) {
     setError("Keyword cannot be empty");
     return;
   }
@@ -320,10 +347,7 @@ export async function editClosedKeyword(
   setError(null);
 
   try {
-    const result = await commands.editClosedTodoKeyword(
-      index,
-      newKeyword.trim(),
-    );
+    const result = await commands.editClosedTodoKeyword(index, newKeyword);
 
     if (result.status === "ok") {
       updateStore((state) => ({
@@ -335,6 +359,8 @@ export async function editClosedKeyword(
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -367,6 +393,8 @@ export async function moveActiveKeyword(
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -399,6 +427,8 @@ export async function moveClosedKeyword(
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
@@ -444,6 +474,8 @@ export async function resetToDefaults(): Promise<void> {
         dirty: false,
         error: null,
       }));
+      // Trigger document reload to apply new settings
+      await triggerDocumentReload();
     } else {
       setError(result.error);
     }
