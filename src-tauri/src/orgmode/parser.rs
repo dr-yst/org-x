@@ -124,13 +124,13 @@ pub async fn parse_org_document_with_settings(
 
     // Create ParseConfig with user-configured TODO keywords
     let config = orgize::ParseConfig {
-        todo_keywords,
+        todo_keywords: todo_keywords.clone(),
         ..Default::default()
     };
 
     // Parse with Orgize using custom configuration
     println!("Starting to parse document with custom config");
-    let org = config.parse(content);
+    let org = orgize::Org::parse_custom(content, &config);
     println!("Orgize parsing complete");
 
     // Get document title (use default if not found)
@@ -155,8 +155,12 @@ pub async fn parse_org_document_with_settings(
 
     // Extract headlines
     println!("Extracting headlines");
-    let headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines(&org);
     println!("Headlines extracted: {} headlines", headlines.len());
+
+    // Post-process headlines to detect custom TODO keywords with spaces
+    post_process_custom_todo_keywords(&mut headlines, &todo_keywords);
+    println!("Custom TODO keyword post-processing complete");
 
     // Generate document ID based on file path
     let id = file_path.unwrap_or("").to_string();
@@ -229,13 +233,13 @@ pub fn parse_org_document_with_keywords(
 ) -> Result<OrgDocument, OrgError> {
     // Create ParseConfig with TODO keywords
     let config = orgize::ParseConfig {
-        todo_keywords,
+        todo_keywords: todo_keywords.clone(),
         ..Default::default()
     };
 
     // Parse with Orgize using custom configuration
     println!("Starting to parse document with custom config");
-    let org = config.parse(content);
+    let org = orgize::Org::parse_custom(content, &config);
     println!("Orgize parsing complete");
 
     // Get document title (use default if not found)
@@ -260,8 +264,12 @@ pub fn parse_org_document_with_keywords(
 
     // Extract headlines
     println!("Extracting headlines");
-    let headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines(&org);
     println!("Headlines extracted: {} headlines", headlines.len());
+
+    // Post-process headlines to detect custom TODO keywords with spaces
+    post_process_custom_todo_keywords(&mut headlines, &todo_keywords);
+    println!("Custom TODO keyword post-processing complete");
 
     // Generate document ID based on file path
     let id = file_path.unwrap_or("").to_string();
@@ -610,6 +618,64 @@ fn assign_hierarchical_ids_recursive(headlines: &mut [OrgHeadline], parent_path:
 }
 
 /// Function to process a single headline
+/// Post-process headlines to detect space-containing TODO keywords that orgize didn't recognize
+fn post_process_custom_todo_keywords(
+    headlines: &mut Vec<OrgHeadline>,
+    todo_keywords: &(Vec<String>, Vec<String>),
+) {
+    let (active_keywords, closed_keywords) = todo_keywords;
+
+    // Combine all custom keywords for checking
+    let mut all_custom_keywords = Vec::new();
+    all_custom_keywords.extend(active_keywords.iter().cloned());
+    all_custom_keywords.extend(closed_keywords.iter().cloned());
+
+    post_process_headlines_recursive(headlines, &all_custom_keywords);
+}
+
+/// Recursively process headlines and their children to detect custom TODO keywords
+fn post_process_headlines_recursive(headlines: &mut Vec<OrgHeadline>, custom_keywords: &[String]) {
+    for headline in headlines.iter_mut() {
+        // Check if orgize didn't detect a TODO keyword and if the title starts with a custom keyword
+        if headline.title.todo_keyword.is_none() {
+            if let Some(detected_keyword) =
+                detect_custom_todo_keyword(&headline.title.raw, custom_keywords)
+            {
+                // Update the headline with the detected TODO keyword
+                headline.title.todo_keyword = Some(detected_keyword.clone());
+
+                // Also update the raw title to remove the keyword from the beginning
+                let new_raw = headline.title.raw[detected_keyword.len()..]
+                    .trim_start()
+                    .to_string();
+                headline.title.raw = new_raw;
+
+                println!(
+                    "Detected custom TODO keyword '{}' in headline",
+                    detected_keyword
+                );
+            }
+        }
+
+        // Recursively process children
+        post_process_headlines_recursive(&mut headline.children, custom_keywords);
+    }
+}
+
+/// Detect if a headline title starts with a custom TODO keyword
+fn detect_custom_todo_keyword(raw_title: &str, custom_keywords: &[String]) -> Option<String> {
+    for keyword in custom_keywords {
+        if raw_title.starts_with(keyword) {
+            // Check if the keyword is followed by whitespace or end of string
+            let rest = &raw_title[keyword.len()..];
+            if rest.is_empty() || rest.chars().next().map_or(true, |c| c.is_whitespace()) {
+                return Some(keyword.clone());
+            }
+        }
+    }
+    None
+}
+
 fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     // Get title
     let title_element = headline.title(org);
@@ -1059,6 +1125,9 @@ No properties here
 :CATEGORY: Shopping
 :DEADLINE: <2025-04-15 Tue>
 :END:
+- [ ] Buy groceries
+- [ ] Pick up dry cleaning
+- [ ] Schedule dentist appointment
 "#;
 
         // 既存の関数を直接使って正しいプロパティが抽出されるかテスト
@@ -1079,5 +1148,56 @@ No properties here
         assert_eq!(h2.title, "Regular Headline");
         // この場合、プロパティがないので、ドキュメントのカテゴリが継承される
         assert_eq!(h2.get_category(&doc), ""); // ドキュメントに設定されていないので空文字
+    }
+
+    #[test]
+    fn test_space_containing_todo_keywords() {
+        let content = r#"#+TITLE: Space TODO Test
+
+* [ ] Task with checkbox
+Some content here
+
+* [X] Completed checkbox task
+Completed task content
+
+* TODO Regular keyword
+Regular TODO task
+
+* [WIP] Work in progress
+Content for WIP task
+"#;
+
+        // Define custom TODO keywords including space-containing ones
+        let custom_keywords = (
+            vec!["TODO".to_string(), "[ ]".to_string(), "[WIP]".to_string()],
+            vec!["DONE".to_string(), "[X]".to_string()],
+        );
+
+        // Parse with custom TODO keywords
+        let doc =
+            parse_org_document_with_keywords(content, Some("test.org"), custom_keywords).unwrap();
+
+        // Verify that space-containing keywords are detected
+        assert_eq!(doc.headlines.len(), 4);
+
+        // First headline should have [ ] as TODO keyword
+        let h1 = &doc.headlines[0];
+        assert_eq!(h1.title.todo_keyword, Some("[ ]".to_string()));
+        assert_eq!(h1.title.raw, "Task with checkbox");
+
+        // Second headline should have [X] as TODO keyword (done)
+        let h2 = &doc.headlines[1];
+        assert_eq!(h2.title.todo_keyword, Some("[X]".to_string()));
+        assert_eq!(h2.title.raw, "Completed checkbox task");
+
+        // Third headline should have regular TODO keyword (detected by orgize)
+        let h3 = &doc.headlines[2];
+        assert_eq!(h3.title.todo_keyword, Some("TODO".to_string()));
+        assert_eq!(h3.title.raw, "Regular keyword");
+
+        // Fourth headline should have [WIP] as TODO keyword
+        let h4 = &doc.headlines[3];
+        assert_eq!(h4.title.todo_keyword, Some("[WIP]".to_string()));
+        assert_eq!(h4.title.raw, "Work in progress");
     }
 }
