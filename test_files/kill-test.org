@@ -1,0 +1,59 @@
+#+TITLE: KILL Keyword Test
+#+AUTHOR: Test User
+#+DATE: 2025-01-26
+#+CATEGORY: Test
+#+FILETAGS: test kill
+
+* Test Headlines with KILL Keyword
+
+** KILL This should be recognized as a closed task
+:PROPERTIES:
+:Priority: A
+:END:
+
+This headline uses KILL which should be recognized as a closed TODO keyword based on user settings.
+
+** TODO This is a regular TODO item
+:PROPERTIES:
+:Priority: B
+:END:
+
+Regular TODO item for comparison.
+
+** KILL Another closed task with KILL
+CLOSED: [2025-01-26 Sun]
+:PROPERTIES:
+:Priority: C
+:Effort: 2:00
+:END:
+
+Another test case to verify KILL keyword recognition.
+
+** DONE This is a standard DONE item
+CLOSED: [2025-01-25 Sat]
+:PROPERTIES:
+:Priority: B
+:END:
+
+Standard DONE keyword for comparison.
+
+** KILL Test with deadline
+DEADLINE: <2025-02-15 Sat>
+:PROPERTIES:
+:Priority: A
+:Effort: 4:00
+:END:
+
+KILL task with deadline to test various scenarios.
+
+* Regular Headlines
+
+** This is not a task
+Just a regular headline without any TODO keyword.
+
+** Another regular headline
+:PROPERTIES:
+:Note: No TODO keyword here
+:END:
+
+Regular content without task status.

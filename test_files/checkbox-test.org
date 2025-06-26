@@ -1,0 +1,92 @@
+#+TITLE: Checkbox Style TODO Keywords Test
+#+AUTHOR: Test User
+#+DATE: 2025-01-26
+#+CATEGORY: Test
+#+FILETAGS: test checkbox whitespace
+
+* Test Headlines with Checkbox-style TODO Keywords
+
+** [ ] This should be recognized as an active task
+:PROPERTIES:
+:Priority: A
+:END:
+
+This headline uses "[ ]" which contains whitespace and should be recognized as an active TODO keyword.
+
+** [X] This should be recognized as a closed task
+CLOSED: [2025-01-26 Sun]
+:PROPERTIES:
+:Priority: B
+:END:
+
+This headline uses "[X]" which should be recognized as a closed TODO keyword.
+
+** [ ] Another active checkbox task
+SCHEDULED: <2025-02-01 Sat>
+:PROPERTIES:
+:Priority: C
+:Effort: 1:00
+:END:
+
+Another test case with "[ ]" to verify consistent recognition.
+
+** [X] Another completed checkbox task
+CLOSED: [2025-01-25 Sat]
+:PROPERTIES:
+:Priority: B
+:Effort: 2:00
+:END:
+
+Another test case with "[X]" for completed tasks.
+
+** [-] Partially completed task
+:PROPERTIES:
+:Priority: C
+:END:
+
+Test case with "[-]" which might be used for partially completed tasks.
+
+** [ ] Task with whitespace around keyword
+DEADLINE: <2025-02-15 Sat>
+:PROPERTIES:
+:Priority: A
+:Tags: important
+:END:
+
+Testing that whitespace is preserved exactly as entered.
+
+* Regular Headlines
+
+** This is not a task
+Just a regular headline without any TODO keyword.
+
+** Another regular headline
+:PROPERTIES:
+:Note: No TODO keyword here either
+:END:
+
+Regular content without task status.
+
+* Mixed TODO Keywords
+
+** TODO Traditional TODO keyword
+:PROPERTIES:
+:Priority: B
+:END:
+
+Traditional TODO keyword for comparison.
+
+** DONE Traditional DONE keyword
+CLOSED: [2025-01-24 Fri]
+:PROPERTIES:
+:Priority: A
+:END:
+
+Traditional DONE keyword for comparison.
+
+** [ ] Mix of checkbox and traditional
+:PROPERTIES:
+:Priority: C
+:END:
+
+Testing mixed usage in same document.
