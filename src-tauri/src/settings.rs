@@ -307,6 +307,8 @@ pub struct UserSettings {
     pub monitored_paths: Vec<MonitoredPath>,
     /// TODO keyword configuration
     pub todo_keywords: TodoKeywords,
+    /// Custom headline properties
+    pub custom_properties: Vec<String>,
 }
 
 impl Default for UserSettings {
@@ -314,6 +316,7 @@ impl Default for UserSettings {
         Self {
             monitored_paths: Vec::new(),
             todo_keywords: TodoKeywords::default(),
+            custom_properties: Vec::new(),
         }
     }
 }
@@ -322,6 +325,98 @@ impl UserSettings {
     /// Create new empty settings
     pub fn new() -> Self {
         Self::default()
+    }
+
+    // --- Custom Properties CRUD ---
+
+    /// Get a reference to custom properties
+    pub fn get_custom_properties(&self) -> &Vec<String> {
+        &self.custom_properties
+    }
+
+    /// Add a custom property if it doesn't already exist
+    pub fn add_custom_property(&mut self, property: String) -> Result<(), SettingsError> {
+        if property.is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Property name cannot be empty".to_string(),
+            ));
+        }
+        if self.custom_properties.contains(&property) {
+            return Err(SettingsError::DuplicateKeyword(property));
+        }
+        self.custom_properties.push(property);
+        Ok(())
+    }
+
+    /// Edit a custom property by index
+    pub fn edit_custom_property(
+        &mut self,
+        index: usize,
+        new_property: String,
+    ) -> Result<(), SettingsError> {
+        if new_property.is_empty() {
+            return Err(SettingsError::InvalidKeyword(
+                "Property name cannot be empty".to_string(),
+            ));
+        }
+        if index >= self.custom_properties.len() {
+            return Err(SettingsError::InvalidIndex(
+                index,
+                self.custom_properties.len(),
+            ));
+        }
+        // Check for duplicates (excluding the current index)
+        let mut all_except_current = self.custom_properties.clone();
+        all_except_current.remove(index);
+        if all_except_current.contains(&new_property) {
+            return Err(SettingsError::DuplicateKeyword(new_property));
+        }
+        self.custom_properties[index] = new_property;
+        Ok(())
+    }
+
+    /// Remove a custom property by index
+    pub fn remove_custom_property(&mut self, index: usize) -> Result<(), SettingsError> {
+        if index >= self.custom_properties.len() {
+            return Err(SettingsError::InvalidIndex(
+                index,
+                self.custom_properties.len(),
+            ));
+        }
+        self.custom_properties.remove(index);
+        Ok(())
+    }
+
+    /// Move a custom property up/down in the list
+    pub fn move_custom_property(
+        &mut self,
+        index: usize,
+        direction: i32,
+    ) -> Result<(), SettingsError> {
+        if index >= self.custom_properties.len() {
+            return Err(SettingsError::InvalidIndex(
+                index,
+                self.custom_properties.len(),
+            ));
+        }
+        let new_index = if direction < 0 {
+            if index == 0 {
+                return Ok(()); // Already at the top
+            }
+            index - 1
+        } else {
+            if index >= self.custom_properties.len() - 1 {
+                return Ok(()); // Already at the bottom
+            }
+            index + 1
+        };
+        self.custom_properties.swap(index, new_index);
+        Ok(())
+    }
+
+    /// Reset custom properties to empty (or defaults if desired)
+    pub fn reset_custom_properties(&mut self) {
+        self.custom_properties.clear();
     }
 
     /// Add a monitored path, preventing duplicates
@@ -542,10 +637,18 @@ impl SettingsManager {
             Vec::new()
         };
 
-        // Create settings with default todo_keywords
+        // Try to extract custom_properties from the old format
+        let custom_properties = if let Some(props) = value.get("custom_properties") {
+            serde_json::from_value(props.clone()).unwrap_or_else(|_| Vec::new())
+        } else {
+            Vec::new()
+        };
+
+        // Create settings with default todo_keywords and migrated custom_properties
         let migrated_settings = UserSettings {
             monitored_paths,
             todo_keywords: TodoKeywords::default(),
+            custom_properties,
         };
 
         Ok(migrated_settings)
@@ -824,6 +927,47 @@ mod tests {
             keywords.add_closed_keyword("DONE".to_string()),
             Err(SettingsError::DuplicateKeyword(_))
         ));
+    }
+
+    #[test]
+    fn test_user_settings_custom_properties_crud() {
+        let mut settings = UserSettings::new();
+
+        // Add custom properties
+        assert!(settings.add_custom_property("Effort".to_string()).is_ok());
+        assert!(settings
+            .add_custom_property("agenda-group".to_string())
+            .is_ok());
+        assert_eq!(settings.custom_properties.len(), 2);
+
+        // Prevent duplicate
+        assert!(matches!(
+            settings.add_custom_property("Effort".to_string()),
+            Err(SettingsError::DuplicateKeyword(_))
+        ));
+
+        // Edit custom property
+        assert!(settings
+            .edit_custom_property(0, "Estimate".to_string())
+            .is_ok());
+        assert_eq!(settings.custom_properties[0], "Estimate");
+
+        // Prevent duplicate on edit
+        assert!(matches!(
+            settings.edit_custom_property(0, "agenda-group".to_string()),
+            Err(SettingsError::DuplicateKeyword(_))
+        ));
+
+        // Remove custom property
+        assert!(settings.remove_custom_property(1).is_ok());
+        assert_eq!(settings.custom_properties.len(), 1);
+
+        // Move custom property (should be no-op with one element)
+        assert!(settings.move_custom_property(0, 1).is_ok());
+
+        // Reset custom properties
+        settings.reset_custom_properties();
+        assert_eq!(settings.custom_properties.len(), 0);
     }
 
     #[test]

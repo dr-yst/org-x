@@ -42,6 +42,12 @@ fn generate_ts_bindings() {
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
         api::reload_documents_with_settings,
+        api::get_custom_properties,
+        api::add_custom_property,
+        api::edit_custom_property,
+        api::remove_custom_property,
+        api::move_custom_property,
+        api::reset_custom_properties,
     ]);
 
     builder
@@ -98,6 +104,12 @@ pub fn run() {
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
         api::reload_documents_with_settings,
+        api::get_custom_properties,
+        api::add_custom_property,
+        api::edit_custom_property,
+        api::remove_custom_property,
+        api::move_custom_property,
+        api::reset_custom_properties,
     ]);
 
     #[cfg(not(debug_assertions))]
@@ -131,6 +143,12 @@ pub fn run() {
         api::move_closed_todo_keyword,
         api::reset_todo_keywords_to_defaults,
         api::reload_documents_with_settings,
+        api::get_custom_properties,
+        api::add_custom_property,
+        api::edit_custom_property,
+        api::remove_custom_property,
+        api::move_custom_property,
+        api::reset_custom_properties,
     ]);
 
     tauri::Builder::default()

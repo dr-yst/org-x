@@ -555,6 +555,174 @@ pub async fn get_user_todo_keywords(app_handle: tauri::AppHandle) -> Result<Todo
     Ok(current_settings.get_todo_keywords().clone())
 }
 
+/// Get current custom headline properties from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_custom_properties(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Add a custom headline property
+#[tauri::command]
+#[specta::specta]
+pub async fn add_custom_property(
+    app_handle: tauri::AppHandle,
+    property: String,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .add_custom_property(property)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Edit a custom headline property by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_property: String,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .edit_custom_property(index as usize, new_property)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Remove a custom headline property by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .remove_custom_property(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Move a custom headline property up/down in the list
+#[tauri::command]
+#[specta::specta]
+pub async fn move_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .move_custom_property(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Reset custom headline properties to empty
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_custom_properties(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.reset_custom_properties();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property reset: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
 /// Update TODO keywords in user settings
 #[tauri::command]
 #[specta::specta]
