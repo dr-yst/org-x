@@ -165,6 +165,8 @@
         <h3 class="text-lg font-semibold">TODO Keywords</h3>
         <p class="text-sm text-muted-foreground">
             Configure custom TODO states and keywords for your org-mode files.
+            These keywords will be used to recognize headlines as TODO items,
+            and be used to filter them from the sidebar.
         </p>
     </div>
 
