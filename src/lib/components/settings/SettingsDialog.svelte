@@ -7,6 +7,7 @@
         closeDialog,
     } from "$lib/viewmodels/settings.store";
     import TodoKeywordsSection from "./TodoKeywordsSection.svelte";
+    import CustomPropertiesSection from "./CustomPropertiesSection.svelte";
     import {
         Settings,
         Keyboard,
@@ -41,13 +42,6 @@
 
     // Placeholder sections for future settings implementation
     const settingSections = [
-        {
-            title: "Custom Properties",
-            description:
-                "Define custom org-mode properties for filtering and display",
-            icon: Settings,
-            comingSoon: true,
-        },
         {
             title: "Date Format",
             description:
@@ -96,6 +90,10 @@
         </Dialog.Header>
 
         <div class="py-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            <!-- Custom Properties Section -->
+            <div class="space-y-3">
+                <CustomPropertiesSection />
+            </div>
             <!-- TODO Keywords Section -->
             <div class="space-y-3">
                 <TodoKeywordsSection />
