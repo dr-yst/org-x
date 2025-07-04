@@ -452,6 +452,99 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Get current custom headline properties from user settings
+   */
+  async getCustomProperties(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_custom_properties"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add a custom headline property
+   */
+  async addCustomProperty(property: string): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_custom_property", { property }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit a custom headline property by index
+   */
+  async editCustomProperty(
+    index: number,
+    newProperty: string,
+  ): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_custom_property", {
+          index,
+          newProperty,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove a custom headline property by index
+   */
+  async removeCustomProperty(index: number): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_custom_property", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move a custom headline property up/down in the list
+   */
+  async moveCustomProperty(
+    index: number,
+    direction: number,
+  ): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_custom_property", { index, direction }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset custom headline properties to empty
+   */
+  async resetCustomProperties(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_custom_properties"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -608,6 +701,10 @@ export type UserSettings = {
    * TODO keyword configuration
    */
   todo_keywords: TodoKeywords;
+  /**
+   * Custom headline properties
+   */
+  custom_properties: string[];
 };
 
 /** tauri-specta globals **/
