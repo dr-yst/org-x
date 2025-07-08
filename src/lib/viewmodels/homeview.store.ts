@@ -434,11 +434,27 @@ export async function handleQuickAction(
         (doc) => doc.id === headlineValue!.document_id,
       );
       if (parentDocument?.file_path) {
-        console.log(
-          "Opening file in external editor:",
-          parentDocument.file_path,
-        );
-        // TODO: Implement external editor opening with tauri-plugin-opener
+        try {
+          const result = await commands.openFileInExternalEditor(
+            parentDocument.file_path,
+            headlineValue.line_number || null,
+            null, // Column position not available in current data model
+          );
+
+          if (result.status === "ok") {
+            console.log(
+              "Successfully opened file in external editor:",
+              parentDocument.file_path,
+            );
+          } else {
+            console.error(
+              "Failed to open file in external editor:",
+              result.error,
+            );
+          }
+        } catch (error) {
+          console.error("Error opening file in external editor:", error);
+        }
       }
       break;
   }
