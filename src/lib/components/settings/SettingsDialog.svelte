@@ -8,6 +8,7 @@
     } from "$lib/viewmodels/settings.store";
     import TodoKeywordsSection from "./TodoKeywordsSection.svelte";
     import CustomPropertiesSection from "./CustomPropertiesSection.svelte";
+    import ExternalEditorSection from "./ExternalEditorSection.svelte";
     import {
         Settings,
         Keyboard,
@@ -49,13 +50,7 @@
             icon: Calendar,
             comingSoon: true,
         },
-        {
-            title: "External Editor Command",
-            description:
-                "Set the command to open files in your preferred editor",
-            icon: ExternalLink,
-            comingSoon: true,
-        },
+
         {
             title: "Table Columns",
             description: "Configure which columns to display in task lists",
@@ -97,6 +92,10 @@
             <!-- TODO Keywords Section -->
             <div class="space-y-3">
                 <TodoKeywordsSection />
+            </div>
+            <!-- External Editor Section -->
+            <div class="space-y-3">
+                <ExternalEditorSection />
             </div>
 
             <Separator class="my-4" />
