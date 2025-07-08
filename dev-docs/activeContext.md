@@ -21,6 +21,17 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 
 ### Recently Completed
+- ✅ **COMPLETED Issue #42: Settings: External Editor Command**
+  - ✅ **FRONTEND IMPLEMENTATION** - Created external editor store following MVVM pattern with load, set, reset, and validation operations
+  - ✅ **SETTINGS UI COMPONENT** - Built ExternalEditorSection.svelte with text input, preset buttons, placeholder help, and validation
+  - ✅ **SETTINGS DIALOG INTEGRATION** - Integrated external editor section into SettingsDialog.svelte, removed from "coming soon" list
+  - ✅ **OPEN IN EDITOR FUNCTIONALITY** - Updated handleQuickAction to use new openFileInExternalEditor backend command with line number support
+  - ✅ **COMPREHENSIVE TESTING** - Added 22 unit tests for external editor store covering all functionality and edge cases
+  - ✅ **PRESET SYSTEM** - Included preset commands for common editors (Emacs, Vim, VSCode, Neovim, etc.)
+  - ✅ **VALIDATION SYSTEM** - Ensures command includes {file} placeholder and provides user-friendly error messages
+  - ✅ **PLACEHOLDER SUPPORT** - Full support for {file}, {line}, {column} placeholders with helpful documentation
+  - ✅ **BUILD VERIFICATION** - Production build succeeds, all existing tests continue to pass
+  - ✅ All acceptance criteria met: customizable command, persistence, app-wide usage, testing, and documentation
 - ✅ **COMPLETED Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off**
   - ✅ **ROOT CAUSE FIX** - Replaced UUID-based document IDs with file path-based IDs to ensure one document per file
   - ✅ **HIERARCHICAL HEADLINE IDS** - Implemented position-based headline IDs (e.g., "1", "1.1", "1.2") for stability across content edits
