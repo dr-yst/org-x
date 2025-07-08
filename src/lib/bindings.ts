@@ -545,6 +545,72 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Get the external editor command from user settings
+   */
+  async getExternalEditorCommand(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_external_editor_command"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set the external editor command in user settings
+   */
+  async setExternalEditorCommand(
+    command: string,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_external_editor_command", { command }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset the external editor command to default in user settings
+   */
+  async resetExternalEditorCommand(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_external_editor_command"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Open a file in external editor using the configured command
+   */
+  async openFileInExternalEditor(
+    filePath: string,
+    line: number | null,
+    column: number | null,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("open_file_in_external_editor", {
+          filePath,
+          line,
+          column,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -705,6 +771,10 @@ export type UserSettings = {
    * Custom headline properties
    */
   custom_properties: string[];
+  /**
+   * Command to open files in an external editor
+   */
+  external_editor_command: string;
 };
 
 /** tauri-specta globals **/
