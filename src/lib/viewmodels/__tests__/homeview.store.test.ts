@@ -50,6 +50,10 @@ vi.mock("$lib/bindings", () => ({
       status: "ok",
       data: [],
     }),
+    openFileInExternalEditor: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: null,
+    }),
   },
 }));
 
@@ -667,7 +671,7 @@ describe("ListView Store", () => {
       await handleQuickAction("open-editor");
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Opening file in external editor:",
+        "Successfully opened file in external editor:",
         mockDocument.file_path,
       );
     });
