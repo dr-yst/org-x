@@ -368,6 +368,96 @@ pub async fn load_user_settings(app_handle: tauri::AppHandle) -> Result<UserSett
         .map_err(|e| e.to_string())
 }
 
+/// Get the external editor command from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_external_editor_command(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(settings.external_editor_command)
+}
+
+/// Set the external editor command in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn set_external_editor_command(
+    app_handle: tauri::AppHandle,
+    command: String,
+) -> Result<(), String> {
+    let mut settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    settings.external_editor_command = command;
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &settings)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Reset the external editor command to default in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_external_editor_command(app_handle: tauri::AppHandle) -> Result<(), String> {
+    let mut settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    settings.external_editor_command = UserSettings::default().external_editor_command;
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &settings)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Open a file in external editor using the configured command
+#[tauri::command]
+#[specta::specta]
+pub async fn open_file_in_external_editor(
+    app_handle: tauri::AppHandle,
+    file_path: String,
+    line: Option<u32>,
+    column: Option<u32>,
+) -> Result<(), String> {
+    let settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut command = settings.external_editor_command.clone();
+    command = command.replace("{file}", &file_path);
+    command = command.replace("{line}", &line.unwrap_or(1).to_string());
+    command = command.replace("{column}", &column.unwrap_or(1).to_string());
+
+    let parts: Vec<&str> = command.split_whitespace().collect();
+    if parts.is_empty() {
+        return Err("External editor command is empty".to_string());
+    }
+
+    use std::process::Command;
+    let program = parts[0];
+    let args = &parts[1..];
+
+    let mut cmd = Command::new(program);
+    cmd.args(args);
+
+    match cmd.spawn() {
+        Ok(_) => {
+            println!(
+                "Successfully launched external editor: {} with args: {:?}",
+                program, args
+            );
+            Ok(())
+        }
+        Err(e) => Err(format!(
+            "Failed to open file in external editor '{}': {}",
+            program, e
+        )),
+    }
+}
+
 /// Save user settings
 #[tauri::command]
 #[specta::specta]

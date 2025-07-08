@@ -309,6 +309,8 @@ pub struct UserSettings {
     pub todo_keywords: TodoKeywords,
     /// Custom headline properties
     pub custom_properties: Vec<String>,
+    /// Command to open files in an external editor
+    pub external_editor_command: String,
 }
 
 impl Default for UserSettings {
@@ -317,6 +319,7 @@ impl Default for UserSettings {
             monitored_paths: Vec::new(),
             todo_keywords: TodoKeywords::default(),
             custom_properties: Vec::new(),
+            external_editor_command: "emacsclient --no-wait +{line}:{column} {file}".to_string(),
         }
     }
 }
@@ -644,11 +647,20 @@ impl SettingsManager {
             Vec::new()
         };
 
+        // Try to extract external_editor_command from the old format, or use default
+        let external_editor_command = if let Some(cmd) = value.get("external_editor_command") {
+            serde_json::from_value(cmd.clone())
+                .unwrap_or_else(|_| "emacsclient --no-wait +{line}:{column} {file}".to_string())
+        } else {
+            "emacsclient --no-wait +{line}:{column} {file}".to_string()
+        };
+
         // Create settings with default todo_keywords and migrated custom_properties
         let migrated_settings = UserSettings {
             monitored_paths,
             todo_keywords: TodoKeywords::default(),
             custom_properties,
+            external_editor_command,
         };
 
         Ok(migrated_settings)
@@ -1120,6 +1132,60 @@ mod tests {
             migrated_settings.todo_keywords.closed,
             vec!["DONE", "CANCELLED"]
         );
+    }
+
+    #[cfg(test)]
+    mod external_editor_command_tests {
+        use super::*;
+        use tempfile::tempdir;
+
+        #[test]
+        fn test_default_external_editor_command() {
+            let settings = UserSettings::default();
+            assert_eq!(
+                settings.external_editor_command,
+                "emacsclient --no-wait +{line}:{column} {file}"
+            );
+        }
+
+        #[test]
+        fn test_migrate_settings_adds_external_editor_command() {
+            let value = serde_json::json!({
+                "monitored_paths": [],
+                "todo_keywords": {
+                    "active": ["TODO"],
+                    "closed": ["DONE"]
+                },
+                "custom_properties": []
+            });
+            let mgr = SettingsManager {
+                store_path: "dummy".into(),
+            };
+            let migrated = mgr.migrate_settings(value).unwrap();
+            assert_eq!(
+                migrated.external_editor_command,
+                "emacsclient --no-wait +{line}:{column} {file}"
+            );
+        }
+
+        #[tokio::test]
+        async fn test_save_and_load_external_editor_command() {
+            let dir = tempdir().unwrap();
+            let store_path = dir.path().join("settings.store");
+            let mgr = SettingsManager {
+                store_path: store_path.to_string_lossy().to_string(),
+            };
+
+            // Simulate tauri AppHandle using a mock or actual app if possible
+            // Here we just check serialization roundtrip
+            let mut settings = UserSettings::default();
+            settings.external_editor_command = "vim {file}".to_string();
+
+            // Serialize and deserialize manually
+            let value = serde_json::to_value(&settings).unwrap();
+            let loaded: UserSettings = serde_json::from_value(value).unwrap();
+            assert_eq!(loaded.external_editor_command, "vim {file}");
+        }
     }
 
     #[test]
