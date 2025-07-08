@@ -48,6 +48,10 @@ fn generate_ts_bindings() {
         api::remove_custom_property,
         api::move_custom_property,
         api::reset_custom_properties,
+        api::get_external_editor_command,
+        api::set_external_editor_command,
+        api::reset_external_editor_command,
+        api::open_file_in_external_editor,
     ]);
 
     builder
@@ -110,6 +114,10 @@ pub fn run() {
         api::remove_custom_property,
         api::move_custom_property,
         api::reset_custom_properties,
+        api::get_external_editor_command,
+        api::set_external_editor_command,
+        api::reset_external_editor_command,
+        api::open_file_in_external_editor,
     ]);
 
     #[cfg(not(debug_assertions))]
@@ -149,6 +157,10 @@ pub fn run() {
         api::remove_custom_property,
         api::move_custom_property,
         api::reset_custom_properties,
+        api::get_external_editor_command,
+        api::set_external_editor_command,
+        api::reset_external_editor_command,
+        api::open_file_in_external_editor,
     ]);
 
     tauri::Builder::default()
