@@ -6,6 +6,23 @@ use std::path::PathBuf;
 use tauri_plugin_store::StoreExt;
 use thiserror::Error;
 
+/// Configuration for table columns
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
+pub struct TableColumnConfig {
+    /// Column identifier (e.g. "status", "title", "property:Effort")
+    pub id: String,
+    /// Whether the column is visible
+    pub visible: bool,
+    /// Display order of the column
+    pub order: u32,
+}
+
+impl TableColumnConfig {
+    pub fn new(id: String, visible: bool, order: u32) -> Self {
+        Self { id, visible, order }
+    }
+}
+
 /// Configuration for TODO keywords
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Type)]
 pub struct TodoKeywords {
@@ -311,6 +328,8 @@ pub struct UserSettings {
     pub custom_properties: Vec<String>,
     /// Command to open files in an external editor
     pub external_editor_command: String,
+    /// Table column configuration
+    pub table_columns: Vec<TableColumnConfig>,
 }
 
 impl Default for UserSettings {
@@ -320,6 +339,7 @@ impl Default for UserSettings {
             todo_keywords: TodoKeywords::default(),
             custom_properties: Vec::new(),
             external_editor_command: "emacsclient --no-wait +{line}:{column} {file}".to_string(),
+            table_columns: Self::default_table_columns(),
         }
     }
 }
@@ -418,7 +438,7 @@ impl UserSettings {
     }
 
     /// Reset custom properties to empty (or defaults if desired)
-    pub fn reset_custom_properties(&mut self) {
+    pub fn reset_custom_properties_to_defaults(&mut self) {
         self.custom_properties.clear();
     }
 
@@ -557,6 +577,111 @@ impl UserSettings {
     pub fn get_todo_keywords_mut(&mut self) -> &mut TodoKeywords {
         &mut self.todo_keywords
     }
+
+    /// Get default table columns configuration
+    pub fn default_table_columns() -> Vec<TableColumnConfig> {
+        vec![
+            TableColumnConfig::new("status".to_string(), true, 0),
+            TableColumnConfig::new("title".to_string(), true, 1),
+            TableColumnConfig::new("document".to_string(), true, 2),
+            TableColumnConfig::new("tags".to_string(), true, 3),
+            TableColumnConfig::new("date".to_string(), true, 4),
+        ]
+    }
+
+    /// Get table columns configuration
+    pub fn get_table_columns(&self) -> &Vec<TableColumnConfig> {
+        &self.table_columns
+    }
+
+    /// Get mutable table columns configuration
+    pub fn get_table_columns_mut(&mut self) -> &mut Vec<TableColumnConfig> {
+        &mut self.table_columns
+    }
+
+    /// Add a table column
+    pub fn add_table_column(&mut self, column: TableColumnConfig) -> Result<(), SettingsError> {
+        // Check for duplicate column ID
+        if self.table_columns.iter().any(|c| c.id == column.id) {
+            return Err(SettingsError::DuplicateKeyword(column.id.clone()));
+        }
+        self.table_columns.push(column);
+        Ok(())
+    }
+
+    /// Remove table column by index
+    pub fn remove_table_column(&mut self, index: u32) -> Result<(), SettingsError> {
+        let idx = index as usize;
+        if idx >= self.table_columns.len() {
+            return Err(SettingsError::InvalidIndex(
+                index as usize,
+                self.table_columns.len(),
+            ));
+        }
+        self.table_columns.remove(idx);
+        Ok(())
+    }
+
+    /// Update table column visibility
+    pub fn set_column_visibility(
+        &mut self,
+        column_id: &str,
+        visible: bool,
+    ) -> Result<(), SettingsError> {
+        if let Some(column) = self.table_columns.iter_mut().find(|c| c.id == column_id) {
+            column.visible = visible;
+            Ok(())
+        } else {
+            Err(SettingsError::PathNotFound(column_id.to_string()))
+        }
+    }
+
+    /// Reorder table columns
+    pub fn reorder_table_columns(
+        &mut self,
+        new_order: Vec<TableColumnConfig>,
+    ) -> Result<(), SettingsError> {
+        // Validate that all columns are present
+        if new_order.len() != self.table_columns.len() {
+            return Err(SettingsError::InvalidIndex(
+                new_order.len(),
+                self.table_columns.len(),
+            ));
+        }
+
+        // Check that all column IDs are present
+        for existing_column in &self.table_columns {
+            if !new_order.iter().any(|c| c.id == existing_column.id) {
+                return Err(SettingsError::PathNotFound(existing_column.id.clone()));
+            }
+        }
+
+        self.table_columns = new_order;
+        Ok(())
+    }
+
+    /// Reset table columns to defaults
+    pub fn reset_table_columns(&mut self) {
+        self.table_columns = Self::default_table_columns();
+    }
+
+    /// Get available columns including custom properties
+    pub fn get_available_columns(&self) -> Vec<String> {
+        let mut columns = vec![
+            "status".to_string(),
+            "title".to_string(),
+            "document".to_string(),
+            "tags".to_string(),
+            "date".to_string(),
+        ];
+
+        // Add custom properties as available columns
+        for property in &self.custom_properties {
+            columns.push(format!("property:{}", property));
+        }
+
+        columns
+    }
 }
 
 /// Settings management errors
@@ -655,12 +780,21 @@ impl SettingsManager {
             "emacsclient --no-wait +{line}:{column} {file}".to_string()
         };
 
+        // Try to extract table_columns from the old format, or use default
+        let table_columns = if let Some(columns) = value.get("table_columns") {
+            serde_json::from_value(columns.clone())
+                .unwrap_or_else(|_| UserSettings::default_table_columns())
+        } else {
+            UserSettings::default_table_columns()
+        };
+
         // Create settings with default todo_keywords and migrated custom_properties
         let migrated_settings = UserSettings {
             monitored_paths,
             todo_keywords: TodoKeywords::default(),
             custom_properties,
             external_editor_command,
+            table_columns,
         };
 
         Ok(migrated_settings)
@@ -978,7 +1112,7 @@ mod tests {
         assert!(settings.move_custom_property(0, 1).is_ok());
 
         // Reset custom properties
-        settings.reset_custom_properties();
+        settings.reset_custom_properties_to_defaults();
         assert_eq!(settings.custom_properties.len(), 0);
     }
 

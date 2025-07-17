@@ -47,11 +47,18 @@ fn generate_ts_bindings() {
         api::edit_custom_property,
         api::remove_custom_property,
         api::move_custom_property,
-        api::reset_custom_properties,
+        api::reset_custom_properties_to_defaults,
         api::get_external_editor_command,
         api::set_external_editor_command,
         api::reset_external_editor_command,
         api::open_file_in_external_editor,
+        api::get_table_columns,
+        api::get_available_table_columns,
+        api::update_table_columns,
+        api::add_table_column,
+        api::remove_table_column,
+        api::set_column_visibility,
+        api::reset_table_columns_to_defaults,
     ]);
 
     builder
@@ -113,11 +120,18 @@ pub fn run() {
         api::edit_custom_property,
         api::remove_custom_property,
         api::move_custom_property,
-        api::reset_custom_properties,
+        api::reset_custom_properties_to_defaults,
         api::get_external_editor_command,
         api::set_external_editor_command,
         api::reset_external_editor_command,
         api::open_file_in_external_editor,
+        api::get_table_columns,
+        api::get_available_table_columns,
+        api::update_table_columns,
+        api::add_table_column,
+        api::remove_table_column,
+        api::set_column_visibility,
+        api::reset_table_columns_to_defaults,
     ]);
 
     #[cfg(not(debug_assertions))]
@@ -156,11 +170,18 @@ pub fn run() {
         api::edit_custom_property,
         api::remove_custom_property,
         api::move_custom_property,
-        api::reset_custom_properties,
+        api::reset_custom_properties_to_defaults,
         api::get_external_editor_command,
         api::set_external_editor_command,
         api::reset_external_editor_command,
         api::open_file_in_external_editor,
+        api::get_table_columns,
+        api::get_available_table_columns,
+        api::update_table_columns,
+        api::add_table_column,
+        api::remove_table_column,
+        api::set_column_visibility,
+        api::reset_table_columns_to_defaults,
     ]);
 
     tauri::Builder::default()

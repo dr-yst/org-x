@@ -789,13 +789,15 @@ pub async fn move_custom_property(
 /// Reset custom headline properties to empty
 #[tauri::command]
 #[specta::specta]
-pub async fn reset_custom_properties(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+pub async fn reset_custom_properties_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<String>, String> {
     let mut current_settings = SETTINGS_MANAGER
         .load_settings(&app_handle)
         .await
         .map_err(|e| e.to_string())?;
 
-    current_settings.reset_custom_properties();
+    current_settings.reset_custom_properties_to_defaults();
 
     SETTINGS_MANAGER
         .save_settings(&app_handle, &current_settings)
@@ -1163,4 +1165,154 @@ pub async fn get_todo_keywords(app_handle: tauri::AppHandle) -> Result<Vec<TodoS
     }
 
     Ok(keywords)
+}
+
+// ============================================================================
+// Table Columns Configuration Commands
+// ============================================================================
+
+/// Get table columns configuration
+#[tauri::command]
+#[specta::specta]
+pub async fn get_table_columns(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<crate::settings::TableColumnConfig>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_table_columns().clone())
+}
+
+/// Get available table columns (built-in + custom properties)
+#[tauri::command]
+#[specta::specta]
+pub async fn get_available_table_columns(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<String>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_available_columns())
+}
+
+/// Update table columns configuration
+#[tauri::command]
+#[specta::specta]
+pub async fn update_table_columns(
+    app_handle: tauri::AppHandle,
+    table_columns: Vec<crate::settings::TableColumnConfig>,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .reorder_table_columns(table_columns)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Add table column
+#[tauri::command]
+#[specta::specta]
+pub async fn add_table_column(
+    app_handle: tauri::AppHandle,
+    column: crate::settings::TableColumnConfig,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .add_table_column(column)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Remove table column by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_table_column(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .remove_table_column(index)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Set table column visibility
+#[tauri::command]
+#[specta::specta]
+pub async fn set_column_visibility(
+    app_handle: tauri::AppHandle,
+    column_id: String,
+    visible: bool,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .set_column_visibility(&column_id, visible)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Reset table columns to defaults
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_table_columns_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.reset_table_columns();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
 }
