@@ -9,6 +9,7 @@
     import TodoKeywordsSection from "./TodoKeywordsSection.svelte";
     import CustomPropertiesSection from "./CustomPropertiesSection.svelte";
     import ExternalEditorSection from "./ExternalEditorSection.svelte";
+    import TableColumnsSection from "./TableColumnsSection.svelte";
     import {
         Settings,
         Keyboard,
@@ -52,12 +53,6 @@
         },
 
         {
-            title: "Table Columns",
-            description: "Configure which columns to display in task lists",
-            icon: Table,
-            comingSoon: true,
-        },
-        {
             title: "Keyboard Shortcuts",
             description: "Customize keybindings and shortcuts",
             icon: Keyboard,
@@ -96,6 +91,10 @@
             <!-- External Editor Section -->
             <div class="space-y-3">
                 <ExternalEditorSection />
+            </div>
+            <!-- Table Columns Section -->
+            <div class="space-y-3">
+                <TableColumnsSection />
             </div>
 
             <Separator class="my-4" />
