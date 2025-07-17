@@ -48,6 +48,15 @@ The project is focused on implementing the MVP centered around the task list vie
   - ✅ Unified MonitoredPath structure with parse_enabled field replacing enabled/recursive complexity
   - ✅ Eliminated ParseOverride system in favor of simple per-path parse toggle
   - ✅ Implemented always-recursive directory monitoring for consistent behavior
+- ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns**
+  - ✅ Added TableColumnConfig struct to UserSettings with complete CRUD operations
+  - ✅ Implemented full Tauri command API for table column management
+  - ✅ Created MVVM store following established patterns with reactive state management
+  - ✅ Built comprehensive settings UI with chip layout and sectioned dropdowns
+  - ✅ Integrated dynamic table rendering based on user column configuration
+  - ✅ Added support for custom properties as configurable columns
+  - ✅ Comprehensive testing with 25 unit tests covering all functionality
+  - ✅ Production build verification and frontend integration complete
 - ✅ **COMPLETED Issue #42: Settings: External Editor Command**
   - ✅ **FRONTEND IMPLEMENTATION** - Created external editor store following MVVM pattern with load, set, reset, and validation operations
   - ✅ **SETTINGS UI COMPONENT** - Built ExternalEditorSection.svelte with text input, preset buttons, placeholder help, and validation
