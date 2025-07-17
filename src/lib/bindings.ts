@@ -534,11 +534,11 @@ export const commands = {
   /**
    * Reset custom headline properties to empty
    */
-  async resetCustomProperties(): Promise<Result<string[], string>> {
+  async resetCustomPropertiesToDefaults(): Promise<Result<string[], string>> {
     try {
       return {
         status: "ok",
-        data: await TAURI_INVOKE("reset_custom_properties"),
+        data: await TAURI_INVOKE("reset_custom_properties_to_defaults"),
       };
     } catch (e) {
       if (e instanceof Error) throw e;
@@ -605,6 +605,113 @@ export const commands = {
           line,
           column,
         }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get table columns configuration
+   */
+  async getTableColumns(): Promise<Result<TableColumnConfig[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_table_columns") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get available table columns (built-in + custom properties)
+   */
+  async getAvailableTableColumns(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_available_table_columns"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update table columns configuration
+   */
+  async updateTableColumns(
+    tableColumns: TableColumnConfig[],
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_table_columns", { tableColumns }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add table column
+   */
+  async addTableColumn(
+    column: TableColumnConfig,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_table_column", { column }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove table column by index
+   */
+  async removeTableColumn(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_table_column", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set table column visibility
+   */
+  async setColumnVisibility(
+    columnId: string,
+    visible: boolean,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_column_visibility", {
+          columnId,
+          visible,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset table columns to defaults
+   */
+  async resetTableColumnsToDefaults(): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_table_columns_to_defaults"),
       };
     } catch (e) {
       if (e instanceof Error) throw e;
@@ -731,6 +838,23 @@ export type OrgTitle = {
  */
 export type PathType = "File" | "Directory";
 export type StateType = "Active" | "Closed";
+/**
+ * Configuration for table columns
+ */
+export type TableColumnConfig = {
+  /**
+   * Column identifier (e.g. "status", "title", "property:Effort")
+   */
+  id: string;
+  /**
+   * Whether the column is visible
+   */
+  visible: boolean;
+  /**
+   * Display order of the column
+   */
+  order: number;
+};
 export type TodoConfiguration = {
   sequences: TodoSequence[];
   default_sequence: string;
@@ -775,6 +899,10 @@ export type UserSettings = {
    * Command to open files in an external editor
    */
   external_editor_command: string;
+  /**
+   * Table column configuration
+   */
+  table_columns: TableColumnConfig[];
 };
 
 /** tauri-specta globals **/
