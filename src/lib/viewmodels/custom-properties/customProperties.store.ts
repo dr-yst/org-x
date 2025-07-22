@@ -2,6 +2,7 @@ import { writable, derived, get } from "svelte/store";
 import { commands } from "$lib/bindings";
 import type { UserSettings } from "$lib/bindings";
 import { refresh as refreshHomeView } from "$lib/viewmodels/homeview.store";
+import { refreshAvailableColumns } from "$lib/viewmodels/table-columns/tableColumns.store";
 
 // Helper function to trigger document reload after settings change
 async function triggerDocumentReload(): Promise<void> {
@@ -12,6 +13,10 @@ async function triggerDocumentReload(): Promise<void> {
       // Refresh the frontend to show updated headlines
       await refreshHomeView();
       console.log("Frontend refreshed to show updated headlines");
+
+      // Refresh available table columns to include new custom properties
+      await refreshAvailableColumns();
+      console.log("Table columns refreshed with updated custom properties");
     } else {
       console.error("Failed to reload documents:", result.error);
     }
