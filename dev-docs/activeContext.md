@@ -21,7 +21,7 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 
 ### Recently Completed
-- ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns**
+- ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns [FULLY RESOLVED]**
   - ✅ **BACKEND IMPLEMENTATION** - Added TableColumnConfig struct and table_columns field to UserSettings with complete CRUD operations
   - ✅ **TAURI COMMANDS** - Implemented get_table_columns, update_table_columns, add_table_column, remove_table_column, set_column_visibility, reset_table_columns_to_defaults commands
   - ✅ **SETTINGS MIGRATION** - Updated migration logic to include table_columns with default configuration (Status, Title, Document, Tags, Date)
@@ -32,8 +32,13 @@ The project is focused on developing the MVP centered around the task list view 
   - ✅ **COMPREHENSIVE TESTING** - Added 25 unit tests covering all store functionality, CRUD operations, error handling, and reactive updates
   - ✅ **COLUMN MANAGEMENT** - Support for show/hide, reorder, add/remove columns with visual feedback and validation
   - ✅ **CUSTOM PROPERTIES SUPPORT** - Architecture ready for custom properties as columns with proper categorization in UI
+  - ✅ **SVELTE 5 REACTIVITY FIX** - Resolved Select dropdown issue by centralizing reactive logic in store-level derived stores
+  - ✅ **IMMEDIATE SELECTION UX** - Updated Select component to add columns immediately upon selection, removing need for separate add button
+  - ✅ **DATA CONSISTENCY FIX** - Added one-time reset logic to resolve stale settings data inconsistency
+  - ✅ **REAL-TIME CUSTOM PROPERTIES INTEGRATION** - Fixed issue where new custom properties didn't appear in table columns until settings dialog was reopened
+  - ✅ **CROSS-STORE REACTIVITY** - Implemented refreshAvailableColumns() function that updates table column options when custom properties change
   - ✅ **BUILD VERIFICATION** - Production build succeeds, all tests pass, Select component integration working correctly
-  - ✅ All acceptance criteria met: customizable columns, reordering, persistence, table UI integration, comprehensive testing
+  - ✅ All acceptance criteria met: customizable columns, reordering, persistence, table UI integration, comprehensive testing, immediate selection workflow, real-time custom property updates
 
 ### Recently Completed
 - ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns**
