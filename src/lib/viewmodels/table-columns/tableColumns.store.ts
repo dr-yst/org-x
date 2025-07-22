@@ -81,18 +81,34 @@ function setError(error: string | null) {
   updateStore((state) => ({ ...state, error }));
 }
 
+// Add a flag to ensure reset happens only once per session
+let hasBeenReset = false;
+
 // Action: Load table columns configuration
 export async function loadTableColumns(): Promise<void> {
   setLoading(true);
   setError(null);
 
   try {
+    // ONE-TIME FIX: Reset settings to ensure no stale data
+    if (!hasBeenReset) {
+      console.log("Performing a one-time reset of table columns to defaults.");
+      await commands.resetTableColumnsToDefaults();
+      hasBeenReset = true;
+    }
+
     const [columnsResult, availableResult] = await Promise.all([
       commands.getTableColumns(),
       commands.getAvailableTableColumns(),
     ]);
 
+    console.log("Backend getTableColumns result:", columnsResult);
+    console.log("Backend getAvailableTableColumns result:", availableResult);
+
     if (columnsResult.status === "ok" && availableResult.status === "ok") {
+      console.log("Available columns from backend:", availableResult.data);
+      console.log("Current columns from backend:", columnsResult.data);
+
       updateStore((state) => ({
         ...state,
         columns: columnsResult.data,
@@ -113,6 +129,28 @@ export async function loadTableColumns(): Promise<void> {
     );
   } finally {
     setLoading(false);
+  }
+}
+
+// Action: Refresh available columns (for use when custom properties change)
+export async function refreshAvailableColumns(): Promise<void> {
+  try {
+    const availableResult = await commands.getAvailableTableColumns();
+
+    if (availableResult.status === "ok") {
+      console.log("Refreshed available columns:", availableResult.data);
+      updateStore((state) => ({
+        ...state,
+        availableColumns: availableResult.data,
+      }));
+    } else {
+      console.error(
+        "Failed to refresh available columns:",
+        availableResult.error,
+      );
+    }
+  } catch (err) {
+    console.error("Error refreshing available columns:", err);
   }
 }
 
@@ -296,33 +334,50 @@ export async function resetToDefaults(): Promise<void> {
   }
 }
 
-// Action: Get available columns that are not currently visible
+// NEW: Derived store to compute which columns are available to be added
+export const availableColumnsToAdd = derived(
+  [columns, availableColumns],
+  ([$columns, $availableColumns]) => {
+    if (!$availableColumns || $availableColumns.length === 0 || !$columns) {
+      return [];
+    }
+    const currentColumnIds = new Set($columns.map((c) => c.id));
+    return $availableColumns.filter((id) => !currentColumnIds.has(id));
+  },
+);
+
+// NEW: Derived store to get the built-in columns available to add
+export const availableBuiltInColumnsToAdd = derived(
+  availableColumnsToAdd,
+  ($available) => $available.filter((id) => !id.startsWith("property:")),
+);
+
+// NEW: Derived store to get the custom properties available to add
+export const availableCustomPropertiesToAdd = derived(
+  availableColumnsToAdd,
+  ($available) => $available.filter((id) => id.startsWith("property:")),
+);
+
+// DEPRECATED: Keep for backwards compatibility but use derived stores instead
 export function getAvailableColumnsToAdd(): string[] {
-  const currentState = get(tableColumnsStore);
-  const visibleColumnIds = new Set(currentState.columns.map((col) => col.id));
-  return currentState.availableColumns.filter(
-    (id) => !visibleColumnIds.has(id),
+  console.log(
+    "getAvailableColumnsToAdd: This function is deprecated, use availableColumnsToAdd derived store instead",
   );
+  return get(availableColumnsToAdd);
 }
 
-// Action: Get built-in vs custom property columns
+// DEPRECATED: Keep for backwards compatibility but use derived stores instead
 export function getColumnsByType(): {
   builtIn: string[];
   customProperties: string[];
 } {
-  const currentState = get(tableColumnsStore);
-  const builtIn: string[] = [];
-  const customProperties: string[] = [];
-
-  currentState.availableColumns.forEach((columnId) => {
-    if (columnId.startsWith("property:")) {
-      customProperties.push(columnId);
-    } else {
-      builtIn.push(columnId);
-    }
-  });
-
-  return { builtIn, customProperties };
+  console.log(
+    "getColumnsByType: This function is deprecated, use availableBuiltInColumnsToAdd and availableCustomPropertiesToAdd derived stores instead",
+  );
+  return {
+    builtIn: get(availableBuiltInColumnsToAdd),
+    customProperties: get(availableCustomPropertiesToAdd),
+  };
 }
 
 // Action: Clear error
@@ -348,6 +403,7 @@ const tableColumns = {
   reorderColumns,
   moveColumn,
   resetToDefaults,
+  refreshAvailableColumns,
   getAvailableColumnsToAdd,
   getColumnsByType,
   clearError,
