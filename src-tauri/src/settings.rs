@@ -675,11 +675,19 @@ impl UserSettings {
             "date".to_string(),
         ];
 
+        println!(
+            "get_available_columns: custom_properties = {:?}",
+            self.custom_properties
+        );
+
         // Add custom properties as available columns
         for property in &self.custom_properties {
-            columns.push(format!("property:{}", property));
+            let property_column = format!("property:{}", property);
+            println!("Adding custom property column: {}", property_column);
+            columns.push(property_column);
         }
 
+        println!("get_available_columns: final columns = {:?}", columns);
         columns
     }
 }

@@ -398,8 +398,19 @@
         return visibleCols.some((col) => col.id === columnId);
     }
 
-    // Get reactive reference to visible columns
-    const visibleColumnsList = $derived($visibleColumns);
+    // Default columns to show when table columns haven't loaded yet
+    const defaultColumns = [
+        { id: "status", visible: true, order: 0 },
+        { id: "title", visible: true, order: 1 },
+        { id: "document", visible: true, order: 2 },
+        { id: "tags", visible: true, order: 3 },
+        { id: "date", visible: true, order: 4 },
+    ];
+
+    // Get reactive reference to visible columns with fallback to defaults
+    const visibleColumnsList = $derived(
+        $visibleColumns.length > 0 ? $visibleColumns : defaultColumns,
+    );
 </script>
 
 <div class="w-full min-w-0">
