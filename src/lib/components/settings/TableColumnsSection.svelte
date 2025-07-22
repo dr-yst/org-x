@@ -9,7 +9,6 @@
         Trash2,
         ChevronLeft,
         ChevronRight,
-        Plus,
         RotateCcw,
         X,
         AlertCircle,
@@ -29,27 +28,33 @@
         toggleColumnVisibility,
         moveColumn,
         resetToDefaults,
-        getAvailableColumnsToAdd,
-        getColumnsByType,
+        availableColumnsToAdd,
+        availableBuiltInColumnsToAdd,
+        availableCustomPropertiesToAdd,
         clearError,
         type TableColumnConfig,
     } from "$lib/viewmodels/table-columns/tableColumns.store";
 
-    // Local state for adding new columns
-    let selectedColumnToAdd = $state<string | undefined>(undefined);
-
     // Load table columns when component mounts
     onMount(async () => {
+        console.log("TableColumnsSection: Loading table columns...");
         await loadTableColumns();
+        console.log("TableColumnsSection: Table columns loaded");
     });
 
-    // Handle adding new column
-    async function handleAddColumn() {
+    // Selected column for adding - reactive to immediate selection
+    let selectedColumnToAdd = $state<string | undefined>(undefined);
+
+    // Handle immediate column addition when selected
+    $effect(() => {
         if (selectedColumnToAdd) {
-            await addColumn(selectedColumnToAdd);
-            selectedColumnToAdd = undefined;
+            console.log("Adding column immediately:", selectedColumnToAdd);
+            addColumn(selectedColumnToAdd).then(() => {
+                // Reset selection after adding
+                selectedColumnToAdd = undefined;
+            });
         }
-    }
+    });
 
     // Handle reset to defaults with proper confirmation
     let showResetConfirmDialog = $state(false);
@@ -116,8 +121,27 @@
     const visibleColumnsList = $derived($visibleColumns);
     const loading = $derived($isLoading);
     const errorMessage = $derived($error);
-    const availableToAdd = $derived(getAvailableColumnsToAdd());
-    const columnsByType = $derived(getColumnsByType());
+
+    // Use the new derived stores from the store for reliable reactivity
+    const builtInColumnsToAdd = $derived($availableBuiltInColumnsToAdd);
+    const customPropertiesToAdd = $derived($availableCustomPropertiesToAdd);
+    const hasLoadedData = $derived(
+        $columns.length > 0 || $availableColumns.length > 0,
+    );
+
+    // Debug logging with simplified state
+    $effect(() => {
+        console.log("TableColumnsSection state:", {
+            timestamp: new Date().toISOString(),
+            columns: $columns?.length || 0,
+            availableColumns: $availableColumns?.length || 0,
+            availableToAdd: $availableColumnsToAdd?.length || 0,
+            builtInToAdd: builtInColumnsToAdd?.length || 0,
+            customToAdd: customPropertiesToAdd?.length || 0,
+            loading: $isLoading,
+            error: $error,
+        });
+    });
 </script>
 
 <div class="space-y-6">
@@ -241,22 +265,27 @@
                 </div>
             {/each}
 
-            <!-- Add column dropdown -->
-            {#if availableToAdd.length > 0}
+            <!-- Add column dropdown with immediate selection -->
+            {#if $availableColumnsToAdd.length > 0}
                 <div class="flex items-center gap-1">
-                    <Select.Root bind:selected={selectedColumnToAdd}>
-                        <Select.Trigger class="h-8 min-w-[120px] max-w-[180px]">
+                    <Select.Root type="single" bind:value={selectedColumnToAdd}>
+                        <Select.Trigger
+                            class="h-8 min-w-[120px] max-w-[180px]"
+                            disabled={loading}
+                        >
                             {selectedColumnToAdd
                                 ? getColumnDisplayName(selectedColumnToAdd)
-                                : "Add column..."}
+                                : loading || !hasLoadedData
+                                  ? "Loading..."
+                                  : "Add column..."}
                         </Select.Trigger>
                         <Select.Content>
                             <!-- Built-in columns -->
-                            {#if columnsByType.builtIn.filter( (id) => availableToAdd.includes(id), ).length > 0}
+                            {#if builtInColumnsToAdd.length > 0}
                                 <Select.Group>
                                     <Select.Label>Built-in Columns</Select.Label
                                     >
-                                    {#each columnsByType.builtIn.filter( (id) => availableToAdd.includes(id), ) as columnId}
+                                    {#each builtInColumnsToAdd as columnId}
                                         <Select.Item value={columnId}>
                                             {getColumnDisplayName(columnId)}
                                         </Select.Item>
@@ -265,12 +294,12 @@
                             {/if}
 
                             <!-- Custom properties -->
-                            {#if columnsByType.customProperties.filter( (id) => availableToAdd.includes(id), ).length > 0}
+                            {#if customPropertiesToAdd.length > 0}
                                 <Select.Group>
                                     <Select.Label
                                         >Custom Properties</Select.Label
                                     >
-                                    {#each columnsByType.customProperties.filter( (id) => availableToAdd.includes(id), ) as columnId}
+                                    {#each customPropertiesToAdd as columnId}
                                         <Select.Item value={columnId}>
                                             {getColumnDisplayName(columnId)}
                                         </Select.Item>
@@ -279,16 +308,10 @@
                             {/if}
                         </Select.Content>
                     </Select.Root>
-
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        class="h-8 px-2"
-                        onclick={handleAddColumn}
-                        disabled={loading || !selectedColumnToAdd}
-                    >
-                        <Plus class="h-3 w-3" />
-                    </Button>
+                </div>
+            {:else if !loading && hasLoadedData}
+                <div class="text-xs text-muted-foreground italic">
+                    All columns are already visible
                 </div>
             {/if}
         </div>
