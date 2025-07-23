@@ -213,7 +213,7 @@ export const commands = {
     }
   },
   /**
-   * Clear all settings
+   * Clear user settings
    */
   async clearUserSettings(): Promise<Result<null, string>> {
     try {
@@ -240,11 +240,479 @@ export const commands = {
     }
   },
   /**
-   * Get hardcoded TODO keywords with their state types (temporary implementation)
+   * Get TODO keywords as TodoStatus objects for UI display
    */
   async getTodoKeywords(): Promise<Result<TodoStatus[], string>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_todo_keywords") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get current TODO keywords configuration from user settings
+   */
+  async getUserTodoKeywords(): Promise<Result<TodoKeywords, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_user_todo_keywords"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update TODO keywords in user settings
+   */
+  async updateTodoKeywords(
+    todoKeywords: TodoKeywords,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_todo_keywords", { todoKeywords }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add active TODO keyword
+   */
+  async addActiveTodoKeyword(
+    keyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_active_todo_keyword", { keyword }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add closed TODO keyword
+   */
+  async addClosedTodoKeyword(
+    keyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_closed_todo_keyword", { keyword }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove active TODO keyword by index
+   */
+  async removeActiveTodoKeyword(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_active_todo_keyword", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove closed TODO keyword by index
+   */
+  async removeClosedTodoKeyword(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_closed_todo_keyword", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit active TODO keyword by index
+   */
+  async editActiveTodoKeyword(
+    index: number,
+    newKeyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_active_todo_keyword", {
+          index,
+          newKeyword,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit closed TODO keyword by index
+   */
+  async editClosedTodoKeyword(
+    index: number,
+    newKeyword: string,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_closed_todo_keyword", {
+          index,
+          newKeyword,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move active TODO keyword
+   */
+  async moveActiveTodoKeyword(
+    index: number,
+    direction: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_active_todo_keyword", {
+          index,
+          direction,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move closed TODO keyword
+   */
+  async moveClosedTodoKeyword(
+    index: number,
+    direction: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_closed_todo_keyword", {
+          index,
+          direction,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset TODO keywords to defaults
+   */
+  async resetTodoKeywordsToDefaults(): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_todo_keywords_to_defaults"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reload all documents with updated TODO keywords settings
+   */
+  async reloadDocumentsWithSettings(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reload_documents_with_settings"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get current custom headline properties from user settings
+   */
+  async getCustomProperties(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_custom_properties"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add a custom headline property
+   */
+  async addCustomProperty(property: string): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_custom_property", { property }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Edit a custom headline property by index
+   */
+  async editCustomProperty(
+    index: number,
+    newProperty: string,
+  ): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("edit_custom_property", {
+          index,
+          newProperty,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove a custom headline property by index
+   */
+  async removeCustomProperty(index: number): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_custom_property", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Move a custom headline property up/down in the list
+   */
+  async moveCustomProperty(
+    index: number,
+    direction: number,
+  ): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("move_custom_property", { index, direction }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset custom headline properties to empty
+   */
+  async resetCustomPropertiesToDefaults(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_custom_properties_to_defaults"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get the external editor command from user settings
+   */
+  async getExternalEditorCommand(): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_external_editor_command"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set the external editor command in user settings
+   */
+  async setExternalEditorCommand(
+    command: string,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_external_editor_command", { command }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset the external editor command to default in user settings
+   */
+  async resetExternalEditorCommand(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_external_editor_command"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Open a file in external editor using the configured command
+   */
+  async openFileInExternalEditor(
+    filePath: string,
+    line: number | null,
+    column: number | null,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("open_file_in_external_editor", {
+          filePath,
+          line,
+          column,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get table columns configuration
+   */
+  async getTableColumns(): Promise<Result<TableColumnConfig[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_table_columns") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get available table columns (built-in + custom properties)
+   */
+  async getAvailableTableColumns(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_available_table_columns"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Update table columns configuration
+   */
+  async updateTableColumns(
+    tableColumns: TableColumnConfig[],
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_table_columns", { tableColumns }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Add table column
+   */
+  async addTableColumn(
+    column: TableColumnConfig,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_table_column", { column }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Remove table column by index
+   */
+  async removeTableColumn(
+    index: number,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_table_column", { index }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Set table column visibility
+   */
+  async setColumnVisibility(
+    columnId: string,
+    visible: boolean,
+  ): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_column_visibility", {
+          columnId,
+          visible,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Reset table columns to defaults
+   */
+  async resetTableColumnsToDefaults(): Promise<Result<UserSettings, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("reset_table_columns_to_defaults"),
+      };
     } catch (e) {
       if (e instanceof Error) throw e;
       else return { status: "error", error: e as any };
@@ -370,9 +838,39 @@ export type OrgTitle = {
  */
 export type PathType = "File" | "Directory";
 export type StateType = "Active" | "Closed";
+/**
+ * Configuration for table columns
+ */
+export type TableColumnConfig = {
+  /**
+   * Column identifier (e.g. "status", "title", "property:Effort")
+   */
+  id: string;
+  /**
+   * Whether the column is visible
+   */
+  visible: boolean;
+  /**
+   * Display order of the column
+   */
+  order: number;
+};
 export type TodoConfiguration = {
   sequences: TodoSequence[];
   default_sequence: string;
+};
+/**
+ * Configuration for TODO keywords
+ */
+export type TodoKeywords = {
+  /**
+   * Active (open) TODO keywords
+   */
+  active: string[];
+  /**
+   * Closed (completed) TODO keywords
+   */
+  closed: string[];
 };
 export type TodoSequence = { name: string; statuses: TodoStatus[] };
 export type TodoStatus = {
@@ -389,6 +887,22 @@ export type UserSettings = {
    * List of monitored paths
    */
   monitored_paths: MonitoredPath[];
+  /**
+   * TODO keyword configuration
+   */
+  todo_keywords: TodoKeywords;
+  /**
+   * Custom headline properties
+   */
+  custom_properties: string[];
+  /**
+   * Command to open files in an external editor
+   */
+  external_editor_command: string;
+  /**
+   * Table column configuration
+   */
+  table_columns: TableColumnConfig[];
 };
 
 /** tauri-specta globals **/

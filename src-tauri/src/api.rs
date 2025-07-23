@@ -3,10 +3,10 @@
 // and will be exported using tauri-specta
 
 use crate::orgmode::{
-    parse_org_document, parse_sample_org, FileMonitor, OrgDocument, OrgDocumentRepository,
-    StateType, TodoStatus,
+    parse_org_document_with_settings, parse_sample_org, FileMonitor, OrgDocument,
+    OrgDocumentRepository, StateType, TodoStatus,
 };
-use crate::settings::{MonitoredPath, PathType, SettingsManager, UserSettings};
+use crate::settings::{MonitoredPath, PathType, SettingsManager, TodoKeywords, UserSettings};
 #[cfg(debug_assertions)]
 use crate::test_datetime;
 use once_cell::sync::Lazy;
@@ -92,8 +92,13 @@ pub fn get_sample_org() -> OrgDocument {
 /// Parse org document content
 #[tauri::command]
 #[specta::specta]
-pub fn parse_org_content(content: String) -> Result<OrgDocument, String> {
-    parse_org_document(&content, None).map_err(|e| e.to_string())
+pub async fn parse_org_content(
+    app_handle: tauri::AppHandle,
+    content: String,
+) -> Result<OrgDocument, String> {
+    parse_org_document_with_settings(&content, None, Some(&app_handle))
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Run the datetime test program
@@ -115,88 +120,121 @@ pub async fn start_file_monitoring(app_handle: tauri::AppHandle) -> Result<Strin
         .await
         .map_err(|e| e.to_string())?;
 
-    // Get a lock on the monitor
-    let mut monitor_lock = FILE_MONITOR
-        .lock()
-        .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+    // Get repository reference for parsing
+    let repository = {
+        let mut monitor_lock = FILE_MONITOR
+            .lock()
+            .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
 
-    // Create a repository if it doesn't exist
-    let repository = Arc::new(Mutex::new(OrgDocumentRepository::new()));
+        // Create a repository if it doesn't exist
+        let repository = Arc::new(Mutex::new(OrgDocumentRepository::new()));
 
-    // Create and initialize the file monitor if it doesn't exist
-    if monitor_lock.is_none() {
-        *monitor_lock = Some(FileMonitor::new(repository));
-    }
-
-    if let Some(monitor) = monitor_lock.as_mut() {
-        // Add paths from user settings (only those with parsing enabled)
-        for monitored_path in settings.get_parse_enabled_paths() {
-            monitor.add_path(monitored_path.clone())?;
+        // Create and initialize the file monitor if it doesn't exist
+        if monitor_lock.is_none() {
+            *monitor_lock = Some(FileMonitor::new_with_app_handle(
+                repository.clone(),
+                app_handle.clone(),
+            ));
         }
 
-        // Parse initial files into the repository
-        let repo = monitor.get_repository();
-        {
-            let mut repo_lock = repo
-                .lock()
-                .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        // If monitor exists, update its app_handle
+        if let Some(monitor) = monitor_lock.as_mut() {
+            monitor.set_app_handle(app_handle.clone());
+        }
 
-            // Debug: Show current working directory
-            match std::env::current_dir() {
-                Ok(cwd) => println!("Current working directory: {}", cwd.display()),
-                Err(e) => eprintln!("Failed to get current directory: {}", e),
-            }
-
-            // Parse files from monitored paths (only those with parsing enabled)
+        if let Some(monitor) = monitor_lock.as_mut() {
+            // Add paths from user settings (only those with parsing enabled)
             for monitored_path in settings.get_parse_enabled_paths() {
-                match monitored_path.path_type {
-                    PathType::File => {
-                        match repo_lock.parse_file(std::path::Path::new(&monitored_path.path)) {
-                            Ok(doc_id) => println!(
-                                "Successfully parsed file: {} -> {}",
-                                monitored_path.path, doc_id
-                            ),
-                            Err(e) => {
-                                eprintln!("Failed to parse file {}: {}", monitored_path.path, e)
-                            }
-                        }
+                monitor.add_path(monitored_path.clone())?;
+            }
+            monitor.get_repository()
+        } else {
+            return Err("Failed to initialize file monitor".to_string());
+        }
+    }; // Drop monitor_lock here
+
+    // Parse initial files into the repository (outside of monitor lock)
+    // Debug: Show current working directory
+    match std::env::current_dir() {
+        Ok(cwd) => println!("Current working directory: {}", cwd.display()),
+        Err(e) => eprintln!("Failed to get current directory: {}", e),
+    }
+
+    // Collect all file paths first to avoid holding mutex across await
+    let mut all_file_paths = Vec::new();
+    for monitored_path in settings.get_parse_enabled_paths() {
+        match monitored_path.path_type {
+            PathType::File => {
+                all_file_paths.push(monitored_path.path.clone());
+            }
+            PathType::Directory => {
+                // Scan directory for org files (always recursive now)
+                match scan_directory_for_org_files(&monitored_path.path, true) {
+                    Ok(org_files) => {
+                        all_file_paths.extend(org_files);
                     }
-                    PathType::Directory => {
-                        // Scan directory for org files (always recursive now)
-                        match scan_directory_for_org_files(&monitored_path.path, true) {
-                            Ok(org_files) => {
-                                for file_path in org_files {
-                                    match repo_lock.parse_file(std::path::Path::new(&file_path)) {
-                                        Ok(doc_id) => println!(
-                                            "Successfully parsed file: {} -> {}",
-                                            file_path, doc_id
-                                        ),
-                                        Err(e) => {
-                                            eprintln!("Failed to parse file {}: {}", file_path, e)
-                                        }
-                                    }
-                                }
-                            }
-                            Err(e) => {
-                                eprintln!("Failed to scan directory {}: {}", monitored_path.path, e)
-                            }
-                        }
+                    Err(e) => {
+                        eprintln!("Failed to scan directory {}: {}", monitored_path.path, e)
                     }
                 }
             }
         }
-
-        // Start monitoring
-        monitor.start_monitoring()?;
-
-        let monitored_count = settings.get_parse_enabled_paths().len();
-        Ok(format!(
-            "File monitoring started with {} monitored paths from settings",
-            monitored_count
-        ))
-    } else {
-        Err("Failed to initialize file monitor".to_string())
     }
+
+    // Load user TODO keywords for initial parsing
+    let user_todo_keywords = {
+        let active = if settings.todo_keywords.active.is_empty() {
+            vec!["TODO".to_string()]
+        } else {
+            settings.todo_keywords.active.clone()
+        };
+
+        let closed = if settings.todo_keywords.closed.is_empty() {
+            vec!["DONE".to_string()]
+        } else {
+            settings.todo_keywords.closed.clone()
+        };
+
+        (active, closed)
+    };
+
+    println!(
+        "Using user TODO keywords for initial parsing: {:?} | {:?}",
+        user_todo_keywords.0, user_todo_keywords.1
+    );
+
+    // Now parse all files one by one using user TODO keywords
+    for file_path in all_file_paths {
+        let mut repo_lock = repository
+            .lock()
+            .map_err(|e| format!("Failed to lock repository: {}", e))?;
+        match repo_lock
+            .parse_file_with_keywords(std::path::Path::new(&file_path), user_todo_keywords.clone())
+        {
+            Ok(doc_id) => println!("Successfully parsed file: {} -> {}", file_path, doc_id),
+            Err(e) => {
+                eprintln!("Failed to parse file {}: {}", file_path, e)
+            }
+        }
+        drop(repo_lock);
+    }
+
+    // Start monitoring (need to re-acquire monitor lock)
+    {
+        let mut monitor_lock = FILE_MONITOR
+            .lock()
+            .map_err(|e| format!("Failed to lock file monitor: {}", e))?;
+
+        if let Some(monitor) = monitor_lock.as_mut() {
+            monitor.start_monitoring()?;
+        }
+    }
+
+    let monitored_count = settings.get_parse_enabled_paths().len();
+    Ok(format!(
+        "File monitoring started with {} monitored paths from settings",
+        monitored_count
+    ))
 }
 
 /// Stop file monitoring
@@ -328,6 +366,96 @@ pub async fn load_user_settings(app_handle: tauri::AppHandle) -> Result<UserSett
         .load_settings(&app_handle)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Get the external editor command from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_external_editor_command(app_handle: tauri::AppHandle) -> Result<String, String> {
+    let settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(settings.external_editor_command)
+}
+
+/// Set the external editor command in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn set_external_editor_command(
+    app_handle: tauri::AppHandle,
+    command: String,
+) -> Result<(), String> {
+    let mut settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    settings.external_editor_command = command;
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &settings)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Reset the external editor command to default in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_external_editor_command(app_handle: tauri::AppHandle) -> Result<(), String> {
+    let mut settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    settings.external_editor_command = UserSettings::default().external_editor_command;
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &settings)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Open a file in external editor using the configured command
+#[tauri::command]
+#[specta::specta]
+pub async fn open_file_in_external_editor(
+    app_handle: tauri::AppHandle,
+    file_path: String,
+    line: Option<u32>,
+    column: Option<u32>,
+) -> Result<(), String> {
+    let settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let mut command = settings.external_editor_command.clone();
+    command = command.replace("{file}", &file_path);
+    command = command.replace("{line}", &line.unwrap_or(1).to_string());
+    command = command.replace("{column}", &column.unwrap_or(1).to_string());
+
+    let parts: Vec<&str> = command.split_whitespace().collect();
+    if parts.is_empty() {
+        return Err("External editor command is empty".to_string());
+    }
+
+    use std::process::Command;
+    let program = parts[0];
+    let args = &parts[1..];
+
+    let mut cmd = Command::new(program);
+    cmd.args(args);
+
+    match cmd.spawn() {
+        Ok(_) => {
+            println!(
+                "Successfully launched external editor: {} with args: {:?}",
+                program, args
+            );
+            Ok(())
+        }
+        Err(e) => Err(format!(
+            "Failed to open file in external editor '{}': {}",
+            program, e
+        )),
+    }
 }
 
 /// Save user settings
@@ -495,7 +623,7 @@ pub async fn set_path_parse_enabled(
     Ok(settings)
 }
 
-/// Clear all settings
+/// Clear user settings
 #[tauri::command]
 #[specta::specta]
 pub async fn clear_user_settings(app_handle: tauri::AppHandle) -> Result<(), String> {
@@ -503,6 +631,467 @@ pub async fn clear_user_settings(app_handle: tauri::AppHandle) -> Result<(), Str
         .clear_settings(&app_handle)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Get current TODO keywords configuration from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_user_todo_keywords(app_handle: tauri::AppHandle) -> Result<TodoKeywords, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_todo_keywords().clone())
+}
+
+/// Get current custom headline properties from user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn get_custom_properties(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Add a custom headline property
+#[tauri::command]
+#[specta::specta]
+pub async fn add_custom_property(
+    app_handle: tauri::AppHandle,
+    property: String,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .add_custom_property(property)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Edit a custom headline property by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_property: String,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .edit_custom_property(index as usize, new_property)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Remove a custom headline property by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .remove_custom_property(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Move a custom headline property up/down in the list
+#[tauri::command]
+#[specta::specta]
+pub async fn move_custom_property(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .move_custom_property(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Reset custom headline properties to empty
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_custom_properties_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<String>, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.reset_custom_properties_to_defaults();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after custom property reset: {}",
+            e
+        );
+    }
+
+    Ok(current_settings.get_custom_properties().clone())
+}
+
+/// Update TODO keywords in user settings
+#[tauri::command]
+#[specta::specta]
+pub async fn update_todo_keywords(
+    app_handle: tauri::AppHandle,
+    todo_keywords: TodoKeywords,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.update_todo_keywords(todo_keywords);
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings)
+}
+
+/// Add active TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn add_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .add_active_keyword(keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings)
+}
+
+/// Add closed TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn add_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .add_closed_keyword(keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings)
+}
+
+/// Remove active TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .remove_active_keyword(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Remove closed TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .remove_closed_keyword(index as usize)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Edit active TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .edit_active_keyword(index as usize, new_keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Edit closed TODO keyword by index
+#[tauri::command]
+#[specta::specta]
+pub async fn edit_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    new_keyword: String,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .edit_closed_keyword(index as usize, new_keyword)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Move active TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn move_active_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .move_active_keyword(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Move closed TODO keyword
+#[tauri::command]
+#[specta::specta]
+pub async fn move_closed_todo_keyword(
+    app_handle: tauri::AppHandle,
+    index: u32,
+    direction: i32,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .get_todo_keywords_mut()
+        .move_closed_keyword(index as usize, direction)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Reset TODO keywords to defaults
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_todo_keywords_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.get_todo_keywords_mut().reset_to_defaults();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Trigger re-parsing of all documents with updated settings
+    if let Err(e) = reload_documents_with_settings(app_handle.clone()).await {
+        eprintln!(
+            "Warning: Failed to reload documents after settings change: {}",
+            e
+        );
+    }
+
+    Ok(current_settings)
 }
 
 /// Check if a file path is covered by current monitoring configuration
@@ -520,42 +1109,210 @@ pub async fn check_path_monitoring_status(
     Ok(settings.is_file_covered(&file_path))
 }
 
-/// Get hardcoded TODO keywords with their state types (temporary implementation)
+/// Reload all documents with updated TODO keywords settings
 #[tauri::command]
 #[specta::specta]
-pub async fn get_todo_keywords() -> Result<Vec<TodoStatus>, String> {
-    let keywords = vec![
-        TodoStatus {
-            keyword: "TODO".to_string(),
+pub async fn reload_documents_with_settings(
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    // Simple implementation: Just trigger file monitoring restart
+    // This will cause all files to be re-parsed with current settings
+    match restart_file_monitoring_with_settings(&app_handle).await {
+        Ok(_) => Ok("Documents reloaded with updated settings".to_string()),
+        Err(e) => Err(format!("Failed to reload documents: {}", e)),
+    }
+}
+
+/// Get TODO keywords as TodoStatus objects for UI display
+#[tauri::command]
+#[specta::specta]
+pub async fn get_todo_keywords(app_handle: tauri::AppHandle) -> Result<Vec<TodoStatus>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let todo_keywords = current_settings.get_todo_keywords();
+    let mut keywords = Vec::new();
+
+    // Add active keywords
+    for (order, keyword) in todo_keywords.active.iter().enumerate() {
+        keywords.push(TodoStatus {
+            keyword: keyword.clone(),
             state_type: StateType::Active,
-            order: 0,
-            color: Some("#ff0000".to_string()), // Red
-        },
-        TodoStatus {
-            keyword: "IN-PROGRESS".to_string(),
-            state_type: StateType::Active,
-            order: 10,
-            color: Some("#ff9900".to_string()), // Orange
-        },
-        TodoStatus {
-            keyword: "WAITING".to_string(),
-            state_type: StateType::Active,
-            order: 20,
-            color: Some("#ffff00".to_string()), // Yellow
-        },
-        TodoStatus {
-            keyword: "DONE".to_string(),
+            order: order as u32,
+            color: Some(match keyword.as_str() {
+                "TODO" => "#ff0000".to_string(),        // Red
+                "IN-PROGRESS" => "#ff9900".to_string(), // Orange
+                "WAITING" => "#ffff00".to_string(),     // Yellow
+                _ => "#0066cc".to_string(),             // Blue for custom keywords
+            }),
+        });
+    }
+
+    // Add closed keywords
+    for (order, keyword) in todo_keywords.closed.iter().enumerate() {
+        keywords.push(TodoStatus {
+            keyword: keyword.clone(),
             state_type: StateType::Closed,
-            order: 100,
-            color: Some("#00ff00".to_string()), // Green
-        },
-        TodoStatus {
-            keyword: "CANCELLED".to_string(),
-            state_type: StateType::Closed,
-            order: 110,
-            color: Some("#999999".to_string()), // Gray
-        },
-    ];
+            order: (100 + order) as u32, // Start closed keywords at 100
+            color: Some(match keyword.as_str() {
+                "DONE" => "#00ff00".to_string(),      // Green
+                "CANCELLED" => "#999999".to_string(), // Gray
+                _ => "#666666".to_string(),           // Dark gray for custom closed keywords
+            }),
+        });
+    }
 
     Ok(keywords)
+}
+
+// ============================================================================
+// Table Columns Configuration Commands
+// ============================================================================
+
+/// Get table columns configuration
+#[tauri::command]
+#[specta::specta]
+pub async fn get_table_columns(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<crate::settings::TableColumnConfig>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_table_columns().clone())
+}
+
+/// Get available table columns (built-in + custom properties)
+#[tauri::command]
+#[specta::specta]
+pub async fn get_available_table_columns(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<String>, String> {
+    let current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings.get_available_columns())
+}
+
+/// Update table columns configuration
+#[tauri::command]
+#[specta::specta]
+pub async fn update_table_columns(
+    app_handle: tauri::AppHandle,
+    table_columns: Vec<crate::settings::TableColumnConfig>,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .reorder_table_columns(table_columns)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Add table column
+#[tauri::command]
+#[specta::specta]
+pub async fn add_table_column(
+    app_handle: tauri::AppHandle,
+    column: crate::settings::TableColumnConfig,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .add_table_column(column)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Remove table column by index
+#[tauri::command]
+#[specta::specta]
+pub async fn remove_table_column(
+    app_handle: tauri::AppHandle,
+    index: u32,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .remove_table_column(index)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Set table column visibility
+#[tauri::command]
+#[specta::specta]
+pub async fn set_column_visibility(
+    app_handle: tauri::AppHandle,
+    column_id: String,
+    visible: bool,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings
+        .set_column_visibility(&column_id, visible)
+        .map_err(|e| e.to_string())?;
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
+}
+
+/// Reset table columns to defaults
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_table_columns_to_defaults(
+    app_handle: tauri::AppHandle,
+) -> Result<crate::settings::UserSettings, String> {
+    let mut current_settings = SETTINGS_MANAGER
+        .load_settings(&app_handle)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    current_settings.reset_table_columns();
+
+    SETTINGS_MANAGER
+        .save_settings(&app_handle, &current_settings)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(current_settings)
 }

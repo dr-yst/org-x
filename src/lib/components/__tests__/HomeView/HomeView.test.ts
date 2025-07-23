@@ -105,14 +105,22 @@ describe("HomeView Component", () => {
       monitored_paths: [
         {
           path: "/path/to/test.org",
-          path_type: "File",
+          path_type: "File" as const,
           parse_enabled: true,
         },
       ],
+      todo_keywords: {
+        active: ["TODO", "IN-PROGRESS", "WAITING"],
+        closed: ["DONE", "CANCELLED"],
+      },
     };
 
     emptySettings = {
       monitored_paths: [],
+      todo_keywords: {
+        active: ["TODO", "IN-PROGRESS", "WAITING"],
+        closed: ["DONE", "CANCELLED"],
+      },
     };
 
     // Default: monitored paths exist, docs load successfully

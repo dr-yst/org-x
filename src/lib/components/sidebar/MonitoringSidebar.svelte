@@ -7,6 +7,8 @@
     import * as Select from "$lib/components/ui/select";
     import MonitoredFilesSection from "./MonitoredFilesSection.svelte";
     import FilterSection from "./FilterSection.svelte";
+    import SidebarFooterSettingsButton from "./SidebarFooterSettingsButton.svelte";
+    import SettingsDialog from "$lib/components/settings/SettingsDialog.svelte";
     import {
         displayMode,
         displayModes,
@@ -165,4 +167,13 @@
             {/if}
         </Sidebar.Content>
     {/if}
+
+    {#if sidebar.state === "expanded"}
+        <Sidebar.Footer>
+            <SidebarFooterSettingsButton />
+        </Sidebar.Footer>
+    {/if}
 </Sidebar.Root>
+
+<!-- Settings Dialog -->
+<SettingsDialog />

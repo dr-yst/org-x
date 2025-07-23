@@ -191,6 +191,16 @@
 
     // Handle keyboard navigation
     function handleKeyDown(event: KeyboardEvent) {
+        const target = event.target as HTMLElement | null;
+        const tag = target?.tagName?.toLowerCase();
+        const isEditable =
+            tag === "input" ||
+            tag === "textarea" ||
+            (target && target.isContentEditable);
+
+        // Only trigger shortcuts if NOT typing in an input/textarea/contenteditable
+        if (isEditable) return;
+
         // Only handle keyboard events when documents are loaded
         if ($documentCount === 0 || $loading) return;
 

@@ -21,6 +21,53 @@ The project is focused on developing the MVP centered around the task list view 
   - Backend Connection and Data Integration (Issue #8)
 
 ### Recently Completed
+- ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns [FULLY RESOLVED]**
+  - ✅ **BACKEND IMPLEMENTATION** - Added TableColumnConfig struct and table_columns field to UserSettings with complete CRUD operations
+  - ✅ **TAURI COMMANDS** - Implemented get_table_columns, update_table_columns, add_table_column, remove_table_column, set_column_visibility, reset_table_columns_to_defaults commands
+  - ✅ **SETTINGS MIGRATION** - Updated migration logic to include table_columns with default configuration (Status, Title, Document, Tags, Date)
+  - ✅ **FRONTEND STORE** - Created tableColumns.store.ts following MVVM pattern with complete state management and reactive derived stores
+  - ✅ **UI COMPONENT** - Built TableColumnsSection.svelte with horizontal chip layout, sectioned Select dropdown for built-in vs custom property columns
+  - ✅ **SETTINGS INTEGRATION** - Added TableColumnsSection to SettingsDialog, removed from "coming soon" list
+  - ✅ **TABLE RENDERING** - Updated HeadlinesList.svelte to dynamically render columns based on user configuration with proper column ordering
+  - ✅ **COMPREHENSIVE TESTING** - Added 25 unit tests covering all store functionality, CRUD operations, error handling, and reactive updates
+  - ✅ **COLUMN MANAGEMENT** - Support for show/hide, reorder, add/remove columns with visual feedback and validation
+  - ✅ **CUSTOM PROPERTIES SUPPORT** - Architecture ready for custom properties as columns with proper categorization in UI
+  - ✅ **SVELTE 5 REACTIVITY FIX** - Resolved Select dropdown issue by centralizing reactive logic in store-level derived stores
+  - ✅ **IMMEDIATE SELECTION UX** - Updated Select component to add columns immediately upon selection, removing need for separate add button
+  - ✅ **DATA CONSISTENCY FIX** - Added one-time reset logic to resolve stale settings data inconsistency
+  - ✅ **REAL-TIME CUSTOM PROPERTIES INTEGRATION** - Fixed issue where new custom properties didn't appear in table columns until settings dialog was reopened
+  - ✅ **CROSS-STORE REACTIVITY** - Implemented refreshAvailableColumns() function that updates table column options when custom properties change
+  - ✅ **BUILD VERIFICATION** - Production build succeeds, all tests pass, Select component integration working correctly
+  - ✅ All acceptance criteria met: customizable columns, reordering, persistence, table UI integration, comprehensive testing, immediate selection workflow, real-time custom property updates
+
+### Recently Completed
+- ✅ **COMPLETED Issue #43: Settings: Configurable Headline Table Columns**
+  - ✅ **BACKEND IMPLEMENTATION** - Added TableColumnConfig struct to UserSettings with id, visible, order fields following established patterns
+  - ✅ **TAURI COMMANDS** - Implemented complete CRUD API with get_table_columns, update_table_columns, add_table_column, remove_table_column, set_column_visibility, reset_table_columns_to_defaults commands
+  - ✅ **SETTINGS MIGRATION** - Updated settings migration to include table_columns field with default configuration (Status, Title, Document, Tags, Date)
+  - ✅ **TYPESCRIPT BINDINGS** - Generated TypeScript bindings for all table column commands and types, resolved usize compatibility issues
+  - ✅ **MVVM STORE** - Created tableColumns.store.ts following established store pattern with reactive state, derived stores, and full backend integration
+  - ✅ **SETTINGS UI COMPONENT** - Built TableColumnsSection.svelte with horizontal chip layout matching TODO keywords pattern, sectioned Select dropdown for built-in vs custom columns
+  - ✅ **SETTINGS DIALOG INTEGRATION** - Integrated table columns section into SettingsDialog.svelte, removed from "coming soon" list
+  - ✅ **TABLE INTEGRATION** - Updated HeadlinesList.svelte to dynamically render columns based on user configuration with proper column ordering
+  - ✅ **CUSTOM PROPERTIES SUPPORT** - Architecture supports custom properties as configurable columns (property:PropertyName format)
+  - ✅ **COMPREHENSIVE TESTING** - Added 25 unit tests covering all store functionality, CRUD operations, visibility toggles, reordering, and error handling with proper mocks
+  - ✅ **UI PATTERNS** - Eye/hide icons for visibility, left/right arrows for reordering, sectioned dropdown for adding columns, reset to defaults functionality
+  - ✅ **BACKEND INTEGRATION** - Full end-to-end integration with Tauri backend, persistent settings, automatic document reloading
+  - ✅ **BUILD VERIFICATION** - Production build succeeds, all tests pass, Tauri dev command working, TypeScript bindings generated successfully
+  - ✅ **PRODUCTION READY** - Feature is fully functional and ready for user interaction with complete persistence and error handling
+  - ✅ All acceptance criteria met: customizable columns, reordering, persistence, app-wide usage, custom properties support, testing, and documentation
+- ✅ **COMPLETED Issue #42: Settings: External Editor Command**
+  - ✅ **FRONTEND IMPLEMENTATION** - Created external editor store following MVVM pattern with load, set, reset, and validation operations
+  - ✅ **SETTINGS UI COMPONENT** - Built ExternalEditorSection.svelte with text input, preset buttons, placeholder help, and validation
+  - ✅ **SETTINGS DIALOG INTEGRATION** - Integrated external editor section into SettingsDialog.svelte, removed from "coming soon" list
+  - ✅ **OPEN IN EDITOR FUNCTIONALITY** - Updated handleQuickAction to use new openFileInExternalEditor backend command with line number support
+  - ✅ **COMPREHENSIVE TESTING** - Added 22 unit tests for external editor store covering all functionality and edge cases
+  - ✅ **PRESET SYSTEM** - Included preset commands for common editors (Emacs, Vim, VSCode, Neovim, etc.)
+  - ✅ **VALIDATION SYSTEM** - Ensures command includes {file} placeholder and provides user-friendly error messages
+  - ✅ **PLACEHOLDER SUPPORT** - Full support for {file}, {line}, {column} placeholders with helpful documentation
+  - ✅ **BUILD VERIFICATION** - Production build succeeds, all existing tests continue to pass
+  - ✅ All acceptance criteria met: customizable command, persistence, app-wide usage, testing, and documentation
 - ✅ **COMPLETED Issue #29: Duplicate Headlines Appear When Toggling Monitored Paths On/Off**
   - ✅ **ROOT CAUSE FIX** - Replaced UUID-based document IDs with file path-based IDs to ensure one document per file
   - ✅ **HIERARCHICAL HEADLINE IDS** - Implemented position-based headline IDs (e.g., "1", "1.1", "1.2") for stability across content edits

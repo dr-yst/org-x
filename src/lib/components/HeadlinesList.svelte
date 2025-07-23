@@ -13,6 +13,7 @@
     import { Badge, badgeVariants } from "$lib/components/ui/badge";
     import { cn } from "$lib/utils";
     import { commands } from "$lib/bindings";
+    import { visibleColumns } from "$lib/viewmodels/table-columns/tableColumns.store";
 
     // Define custom badge classes for TODO status
     const todoBadgeClasses = {
@@ -53,9 +54,10 @@
         if (documentTitleCache[documentId]) {
             return documentTitleCache[documentId];
         }
-        
+
         try {
-            const result = await commands.getOrgDocumentDisplayTitleById(documentId);
+            const result =
+                await commands.getOrgDocumentDisplayTitleById(documentId);
             if (result.status === "ok") {
                 documentTitleCache[documentId] = result.data;
                 return result.data;
@@ -75,7 +77,7 @@
         if (documentPathCache[documentId]) {
             return documentPathCache[documentId];
         }
-        
+
         try {
             const result = await commands.getOrgDocumentPathById(documentId);
             if (result.status === "ok") {
@@ -325,7 +327,9 @@
     }
 
     // Get document color class for visual distinction
-    async function getDocumentColorClass(headline: OrgHeadline): Promise<string> {
+    async function getDocumentColorClass(
+        headline: OrgHeadline,
+    ): Promise<string> {
         const documentPath = await fetchDocumentPath(headline.document_id);
         // Extract filename from path for consistent color assignment
         const filename = documentPath.split("/").pop() || "";
@@ -349,6 +353,64 @@
         const colorIndex = Math.abs(hash) % colors.length;
         return colors[colorIndex];
     }
+
+    // Helper functions for table columns
+    function getColumnDisplayName(columnId: string): string {
+        if (columnId.startsWith("property:")) {
+            return columnId.replace("property:", "");
+        }
+
+        switch (columnId) {
+            case "status":
+                return "Status";
+            case "title":
+                return "Title";
+            case "document":
+                return "Document";
+            case "tags":
+                return "Tags";
+            case "date":
+                return "Date";
+            default:
+                return columnId;
+        }
+    }
+
+    function getColumnWidth(columnId: string): string {
+        switch (columnId) {
+            case "status":
+                return "w-[100px]";
+            case "title":
+                return "";
+            case "document":
+                return "w-[120px]";
+            case "tags":
+                return "w-[120px]";
+            case "date":
+                return "w-[180px]";
+            default:
+                return "w-[100px]";
+        }
+    }
+
+    function shouldShowColumn(columnId: string): boolean {
+        const visibleCols = $visibleColumns;
+        return visibleCols.some((col) => col.id === columnId);
+    }
+
+    // Default columns to show when table columns haven't loaded yet
+    const defaultColumns = [
+        { id: "status", visible: true, order: 0 },
+        { id: "title", visible: true, order: 1 },
+        { id: "document", visible: true, order: 2 },
+        { id: "tags", visible: true, order: 3 },
+        { id: "date", visible: true, order: 4 },
+    ];
+
+    // Get reactive reference to visible columns with fallback to defaults
+    const visibleColumnsList = $derived(
+        $visibleColumns.length > 0 ? $visibleColumns : defaultColumns,
+    );
 </script>
 
 <div class="w-full min-w-0">
@@ -366,15 +428,20 @@
                 class={activeFilter === "today" && filter === "today"
                     ? "bg-orange-500 hover:bg-orange-600"
                     : activeFilter === "overdue" && filter === "overdue"
-                    ? "bg-red-500 hover:bg-red-600"
-                    : ""}
+                      ? "bg-red-500 hover:bg-red-600"
+                      : ""}
                 size="sm"
                 onclick={() => dispatch("filterChanged", index)}
             >
-                {filter === "all" ? "All" : 
-                 filter === "today" ? "Today" :
-                 filter === "week" ? "This Week" :
-                 filter === "overdue" ? "Overdue" : filter}
+                {filter === "all"
+                    ? "All"
+                    : filter === "today"
+                      ? "Today"
+                      : filter === "week"
+                        ? "This Week"
+                        : filter === "overdue"
+                          ? "Overdue"
+                          : filter}
             </Button>
         {/each}
     </div>
@@ -386,17 +453,19 @@
             No headlines found.
         </div>
     {:else}
-        <div class="overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0">
+        <div
+            class="overflow-x-auto overflow-y-auto max-w-full max-h-[80vh] min-w-0"
+        >
             <Table>
                 <TableCaption>Task List View</TableCaption>
 
                 <TableHeader>
                     <TableRow>
-                        <TableHead class="w-[100px]">Status</TableHead>
-                        <TableHead>Task</TableHead>
-                        <TableHead class="w-[120px]">Document</TableHead>
-                        <TableHead>Tags</TableHead>
-                        <TableHead class="w-[180px]">Date</TableHead>
+                        {#each visibleColumnsList as column (column.id)}
+                            <TableHead class={getColumnWidth(column.id)}>
+                                {getColumnDisplayName(column.id)}
+                            </TableHead>
+                        {/each}
                     </TableRow>
                 </TableHeader>
 
@@ -409,87 +478,102 @@
                                 dispatch("headlineSelected", headline);
                             }}
                         >
-                            <TableCell>
-                                {#if headline.title.todo_keyword}
-                                    <Badge
-                                        class={cn(
-                                            getTodoBadgeClass(
-                                                headline.title.todo_keyword,
-                                            ),
-                                            headline.title.todo_keyword ===
-                                                "CANCELLED" && "line-through",
-                                            "text-xs font-medium",
-                                        )}
-                                        variant="secondary"
-                                    >
-                                        {headline.title.todo_keyword}
-                                    </Badge>
-                                {/if}
-                            </TableCell>
+                            {#each visibleColumnsList as column (column.id)}
+                                {#if column.id === "status"}
+                                    <TableCell>
+                                        {#if headline.title.todo_keyword}
+                                            <Badge
+                                                variant="outline"
+                                                class={getTodoBadgeClass(
+                                                    headline.title.todo_keyword,
+                                                )}
+                                            >
+                                                {headline.title.todo_keyword}
+                                            </Badge>
+                                        {/if}
+                                    </TableCell>
+                                {:else if column.id === "title"}
+                                    <TableCell>
+                                        <div class="flex items-start gap-1">
+                                            {#if headline.title.priority}
+                                                <span
+                                                    class={`text-xs font-bold ${getPriorityColorClass(headline.title.priority)}`}
+                                                >
+                                                    {getPriorityIndicator(
+                                                        headline.title.priority,
+                                                    )}
+                                                </span>
+                                            {/if}
+                                            <span class="font-medium">
+                                                {headline.title.raw}
+                                            </span>
+                                        </div>
 
-                            <TableCell>
-                                <div class="flex items-start gap-1">
-                                    {#if headline.title.priority}
+                                        {#if headline.content && headline.content.trim()}
+                                            <div
+                                                class="text-xs text-gray-600 mt-1 line-clamp-2"
+                                            >
+                                                {headline.content.trim()}
+                                            </div>
+                                        {/if}
+                                    </TableCell>
+                                {:else if column.id === "document"}
+                                    <TableCell>
+                                        {#await Promise.all( [fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)], ) then [title, colorClass]}
+                                            <Badge
+                                                variant="outline"
+                                                class={`text-xs ${colorClass}`}
+                                            >
+                                                {title}
+                                            </Badge>
+                                        {:catch}
+                                            <Badge
+                                                variant="outline"
+                                                class="text-xs bg-red-100 text-red-800"
+                                            >
+                                                Error
+                                            </Badge>
+                                        {/await}
+                                    </TableCell>
+                                {:else if column.id === "tags"}
+                                    <TableCell>
+                                        <div class="flex flex-wrap gap-1">
+                                            {#each headline.title.tags as tag}
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="text-xs"
+                                                >
+                                                    {tag}
+                                                </Badge>
+                                            {/each}
+                                        </div>
+                                    </TableCell>
+                                {:else if column.id === "date"}
+                                    <TableCell>
                                         <span
-                                            class="inline-block mr-1 {getPriorityColorClass(
-                                                headline.title.priority,
-                                            )}"
+                                            class={getDateColorClass(headline)}
                                         >
-                                            {getPriorityIndicator(
-                                                headline.title.priority,
-                                            )}
+                                            {formatDateInfo(headline)}
                                         </span>
-                                    {/if}
-                                    <span class="font-medium">
-                                        {headline.title.raw.replace(
-                                            /^\*+\s+(?:\w+\s+)?(?:\[\#.\]\s+)?/,
-                                            "",
-                                        )}
-                                    </span>
-                                </div>
-
-                                {#if headline.content && headline.content.trim()}
-                                    <div
-                                        class="mt-1 text-sm text-gray-600 max-w-prose line-clamp-1"
-                                    >
-                                        {headline.content.trim().split("\n")[0]}
-                                    </div>
+                                    </TableCell>
+                                {:else if column.id.startsWith("property:")}
+                                    <TableCell>
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            <!-- Custom property support will be added later -->
+                                            —
+                                        </span>
+                                    </TableCell>
+                                {:else}
+                                    <TableCell>
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                            >—</span
+                                        >
+                                    </TableCell>
                                 {/if}
-                            </TableCell>
-
-                            <TableCell>
-                                {#await Promise.all([fetchDocumentTitle(headline.document_id), getDocumentColorClass(headline)]) then [title, colorClass]}
-                                    <Badge
-                                        variant="outline"
-                                        class={`text-xs ${colorClass}`}
-                                    >
-                                        {title}
-                                    </Badge>
-                                {:catch}
-                                    <Badge
-                                        variant="outline"
-                                        class="text-xs text-gray-600 border-gray-200 bg-gray-50"
-                                    >
-                                        Unknown Document
-                                    </Badge>
-                                {/await}
-                            </TableCell>
-
-                            <TableCell>
-                                <div class="flex flex-wrap gap-1">
-                                    {#each headline.title.tags as tag}
-                                        <Badge variant="secondary" class="text-xs">
-                                            {tag}
-                                        </Badge>
-                                    {/each}
-                                </div>
-                            </TableCell>
-
-                            <TableCell>
-                                <span class={getDateColorClass(headline)}>
-                                    {formatDateInfo(headline)}
-                                </span>
-                            </TableCell>
+                            {/each}
                         </TableRow>
                     {/each}
                 </TableBody>
