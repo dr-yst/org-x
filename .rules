@@ -2,16 +2,16 @@
 
 ## 📜 Core Philosophy
 
-1.  **Simplicity:** Prioritize simple, clear, and maintainable solutions. Avoid unnecessary complexity or over-engineering.
-2.  **Iterate:** Prefer iterating on existing, working code rather than building entirely new solutions from scratch, unless fundamentally necessary or explicitly requested.
-3.  **Focus & Strict Adherence:**
-    *   Concentrate efforts on the specific task assigned. Avoid unrelated changes or scope creep.
-    *   **Stick strictly to the changes I explicitly request. Before making any other modifications or suggestions, you MUST ask me first.**
-4.  **Quality:** Strive for a clean, organized, well-tested, and secure codebase.
-5.  **Collaboration:** This document guides both human developers and AI assistants for effective teamwork.
-6.  **Documentation-Driven:** Maintain comprehensive documentation to ensure continuity between development sessions and team members.
-7.  **English Only:** All code comments, documentation, commit messages, and project artifacts must be written in English to maintain consistency and accessibility for all team members.
-8.  **Root Cause Resolution:** Always aim to find and solve the **ROOT CAUSE** of a problem, not just the symptoms.
+1. **Simplicity:** Prioritize simple, clear, and maintainable solutions. Avoid unnecessary complexity or over-engineering.
+2. **Iterate:** Prefer iterating on existing, working code rather than building entirely new solutions from scratch, unless fundamentally necessary or explicitly requested.
+3. **Focus & Strict Adherence:**
+   - Concentrate efforts on the specific task assigned. Avoid unrelated changes or scope creep.
+   - **Stick strictly to the changes I explicitly request. Before making any other modifications or suggestions, you MUST ask me first.**
+4. **Quality:** Strive for a clean, organized, well-tested, and secure codebase.
+5. **Collaboration:** This document guides both human developers and AI assistants for effective teamwork.
+6. **Documentation-Driven:** Maintain comprehensive documentation to ensure continuity between development sessions and team members.
+7. **English Only:** All code comments, documentation, commit messages, and project artifacts must be written in English to maintain consistency and accessibility for all team members.
+8. **Root Cause Resolution:** Always aim to find and solve the **ROOT CAUSE** of a problem, not just the symptoms.
 
 ## 📚 Memory System
 
@@ -34,411 +34,209 @@ flowchart TD
 ```
 
 #### Core Files (Required)
-1. **`projectbrief.md`**
-   - Foundation document that shapes all other files
-   - Created at project start if it doesn't exist
-   - Defines core requirements and goals
-   - Source of truth for project scope
+1. **`projectbrief.md`** - Foundation document that shapes all other files
+2. **`productContext.md`** - Why this project exists, problems it solves, user experience goals
+3. **`activeContext.md`** - Current work focus, recent changes, next steps, active decisions
+4. **`systemPatterns.md`** - System architecture, key technical decisions, design patterns
+5. **`techContext.md`** - Technologies used, development setup, technical constraints
+6. **`progress.md`** - What works, what's left to build, current status, known issues
+7. **`adr/`** - Architectural Decision Records documenting significant technical decisions
 
-2. **`productContext.md`**
-   - Why this project exists
-   - Problems it solves
-   - How it should work
-   - User experience goals
-
-3. **`activeContext.md`**
-   - Current work focus
-   - Recent changes
-   - Next steps
-   - Active decisions and considerations
-   - Important patterns and preferences
-   - Learnings and project insights
-
-4. **`systemPatterns.md`**
-   - System architecture
-   - Key technical decisions
-   - Design patterns in use
-   - Component relationships
-   - Critical implementation paths
-
-5. **`techContext.md`**
-   - Technologies used (Tauri, Svelte 5, TypeScript, pnpm)
-   - Development setup
-   - Technical constraints
-   - Dependencies
-   - Tool usage patterns
-
-6. **`progress.md`**
-   - What works
-   - What's left to build
-   - Current status
-   - Known issues
-   - Evolution of project decisions
-
-7. **`adr/`**
-   - Directory containing Architectural Decision Records (ADRs)
-   - Each ADR documents a significant architectural decision and its rationale made during development
-   - ADRs collectively serve as a historical record of key technical choices and their context
-   - Includes context, considered alternatives, and consequences
-   - Provides historical record of key technical choices
-   - Follows a consistent format with title, status, context, decision, and consequences
-
-#### Additional Context
-Create additional files/folders within dev-docs/ when they help organize:
-- Complex feature documentation
-- Integration specifications
-- API documentation
-- Testing strategies
-- Deployment procedures
-- Visual diagrams, flowcharts, architecture overviews, or some UI mockups (image files if necessary)
-
-### Core Workflows
-
-#### Plan/Ask Mode
-```
-flowchart TD
-    Start[Start] --> ReadFiles[Read Memory System]
-    ReadFiles --> CheckFiles{Files Complete?}
-
-    CheckFiles -->|No| Plan[Create Plan]
-    Plan --> Document[Document in Chat]
-
-    CheckFiles -->|Yes| Verify[Verify Context]
-    Verify --> Strategy[Develop Strategy]
-    Strategy --> Present[Present Approach]
-```
-
-When planning work:
-1. Read all Memory System files
-2. Check if files are complete
-   - If not, create a plan and document in chat
-   - If yes, verify context, develop strategy, and present approach
-
-#### Act/Write Mode
-```
-flowchart TD
-    Start[Start] --> Context[Check Memory System]
-    Context --> Update[Update Documentation]
-    Update --> Execute[Execute Task]
-    Execute --> Document[Document Changes]
-```
-
-When executing work:
-1. Check Memory System
-2. Update documentation
-3. Execute task
-4. Document changes
-
-### Documentation Updates
-
+#### Documentation Updates
 Memory System updates occur when:
 1. Discovering new project patterns
 2. After implementing significant changes
 3. When user requests with **update memory system** (MUST review ALL files)
 4. When context needs clarification
 
-```
-flowchart TD
-    Start[Update Process]
+**REMEMBER:** After every memory reset, the AI begins completely fresh. The Memory System is the only link to previous work.
 
-    subgraph Process
-        P1[Review ALL Files]
-        P2[Document Current State]
-        P3[Clarify Next Steps]
-        P4[Document Insights & Patterns]
+## 📚 Project Context & Reference Documentation
 
-        P1 --> P2 --> P3 --> P4
-    end
+### Documentation-First Approach
+**Always** check for and thoroughly review relevant project documentation *before* starting any task:
+- All Memory System files
+- Product Requirements Documents (PRDs)
+- `README.md` (Project overview, setup, patterns, technology stack)
+- Tauri documentation for desktop integration features
+- Svelte 5 documentation for frontend patterns
 
-    Start --> Process
-```
+### Svelte 5 Reference
+- The file `dev-docs/llms-small.txt` contains the abridged developer documentation for Svelte and SvelteKit
+- This file **MUST** be referenced when implementing Svelte 5 code
+- This file **MUST NOT** be edited or modified under any circumstances
+- Always refer to this documentation when working with Svelte 5 components
 
-The update process involves:
-1. Reviewing ALL files
-2. Documenting current state
-3. Clarifying next steps
-4. Documenting insights & patterns
+### Architecture Adherence
+- Understand and respect the Tauri architecture (frontend/backend separation)
+- Follow established patterns for IPC communication between Rust and JavaScript
+- Validate that changes comply with established architecture
 
-Note: When triggered by **update memory system**, the AI MUST review every memory system file, even if some don't require updates. Focus particularly on activeContext.md and progress.md as they track current state.
+## 🏛️ Design Patterns & Architecture
 
-REMEMBER: After every memory reset, the AI begins completely fresh. The Memory System is the only link to previous work. It must be maintained with precision and clarity, as effectiveness depends entirely on its accuracy.
+### 1. MVVM (Model-View-ViewModel) Pattern
+For complex UI modules, adopt the MVVM pattern:
+- **Model:** Backend Rust structs and TypeScript types (generated by tauri-specta)
+- **ViewModel/Store:** Svelte store modules containing business logic, Tauri backend calls, and derived state
+- **View:** Svelte components are presentational only, subscribing to store state and dispatching store actions
 
-## 📚 Project Context & Understanding
+### 2. Container/Presentational Pattern
+- **Container components:** Handle state, store subscriptions, and event wiring
+- **Presentational components:** Stateless, receive data and callbacks via props, focus on rendering
 
-1.  **Documentation First:**
-    *   **Always** check for and thoroughly review relevant project documentation *before* starting any task. This includes:
-        *   All Memory System files
-        *   Product Requirements Documents (PRDs)
-        *   `README.md` (Project overview, setup, patterns, technology stack)
-        *   Tauri documentation for desktop integration features
-        *   Svelte 5 documentation for frontend patterns
-    *   If documentation is missing, unclear, or conflicts with the request, **ask for clarification**.
-2.  **Architecture Adherence:**
-    *   Understand and respect the Tauri architecture, including the separation between frontend (Svelte) and backend (Rust).
-    *   Follow the established patterns for IPC communication between Rust and JavaScript.
-    *   Validate that changes comply with the established architecture. Warn and propose compliant solutions if a violation is detected.
-3.  **Pattern & Tech Stack Awareness:**
-    *   Reference Memory System files to understand and utilize existing patterns and technologies.
-    *   Utilize Svelte 5's runes (signals, effects, etc.) appropriately and consistently.
-    *   Use TypeScript types effectively throughout the project.
-    *   Follow pnpm workspace conventions if the project uses workspaces.
+### 3. Store-Driven State
+- All business logic, backend calls, and derived state should reside in Svelte stores or ViewModel modules
+- Views should not contain direct data-fetching or mutation logic
+- State should be centralized in stores/ViewModels
 
-## 📝 Reference Documentation
-
-1. **Svelte 5 Documentation:**
-   * The file `dev-docs/llms-small.txt` contains the abridged developer documentation for Svelte and SvelteKit.
-   * This file **MUST** be referenced when implementing Svelte 5 code to ensure correct usage of runes and other Svelte 5 features.
-   * This file **MUST NOT** be edited or modified under any circumstances.
-   * Always refer to this documentation when working with Svelte 5 components to maintain consistency and follow best practices.
+### 4. Single Source of Truth & Testability
+- Views should be reactive to store state and never duplicate business logic
+- Write unit tests for ViewModels/stores and pure presentational components
+- Avoid logic in `.svelte` files that cannot be tested independently
 
 ## 📦 Module Organization
 
-1. **Logical Separation:** Organize code into logically separated modules with clear responsibilities.
-2. **Module Structure:** For complex features, use directory-based module organization:
-   * Use `mod.rs` for re-exporting and defining the module's public API
-   * Split implementation details into separate files
-3. **Re-exports:** Provide convenient re-exports in parent modules to simplify imports.
-4. **Visibility Control:** Use appropriate visibility modifiers (`pub`, `pub(crate)`, etc.) to restrict access.
-5. **Module Size:** When a single file exceeds 300 lines, consider splitting it into submodules.
-
-## 🏛️ Design Patterns & Architectural Principles
-
-1. **MVVM (Model-View-ViewModel) Pattern:**
-    - For complex UI modules (e.g., HomeView, Agenda, Document views), adopt the MVVM pattern:
-        - **Model:** Backend Rust structs and TypeScript types (generated by tauri-specta).
-        - **ViewModel/Store:** Svelte store modules (e.g., `src/lib/viewmodels/*.store.ts`) contain all business logic, Tauri backend calls, and derived state.
-        - **View:** Svelte components (`.svelte` files) are presentational only, subscribing to store state and dispatching store actions.
-    - **Benefits:** Separation of concerns, testability, easier maintenance, and clear data flow.
-
-2. **Container/Presentational Pattern:**
-    - Split components into:
-        - **Container components:** Handle state, store subscriptions, and event wiring.
-        - **Presentational components:** Stateless, receive data and callbacks via props, focus on rendering.
-
-3. **Store-Driven State:**
-    - All business logic, backend calls, and derived state should reside in Svelte stores or ViewModel modules.
-    - Views should not contain direct data-fetching or mutation logic.
-
-4. **Single Source of Truth:**
-    - State should be centralized in stores/ViewModels.
-    - Views should be reactive to store state and never duplicate business logic.
-
-5. **Testability:**
-    - Write unit tests for ViewModels/stores and pure presentational components.
-    - Avoid logic in `.svelte` files that cannot be tested independently.
-
-6. **Pattern Consistency:**
-    - When in doubt, prefer established patterns (MVVM, container/presentational, store-driven) over ad-hoc solutions.
-    - Discuss and document any new or project-specific patterns in this section.
-
-**References:**
--  [MVVM Pattern on Wikipedia](https://en.wikipedia.org/wiki/Model–view–viewmodel)
--  [Svelte Store Documentation](https://svelte.dev/docs/svelte-store)
--  [Tauri Command Pattern Guide](https://tauri.app/v1/guides/features/command/)
-
-## 🛡️ Rust Safety Guidelines
-
-1. **Avoid `unsafe` Code:** Only use `unsafe` when absolutely necessary and document thoroughly.
-2. **Thread Safety:** Use appropriate synchronization primitives (`Arc`, `Mutex`, `RwLock`, `OnceLock`).
-3. **Ownership and Borrowing:** Follow Rust's ownership rules carefully, especially in complex data structures.
-4. **Error Handling:** Use `Result` and `Option` types properly; avoid `unwrap()` and `expect()` in production code.
-5. **Memory Management:** Be aware of memory usage patterns, especially for large data structures.
-
-## 🌐 GitHub Repository Guidelines
-
-1. **Repository Location:** The official repository exists at `dr-yst/org-x`.
-2. **Issue-Based Development:**
-   * Utilize GitHub Issues to break down tasks into smaller, manageable units.
-   * Register all development tasks as GitHub Issues before implementation begins.
-   * Make sure to create a design and post its details as comments in the corresponding GitHub Issue for future reference.
-   * Use GitHub Issue templates when available to ensure consistent information capture.
-3. **Memory System Integration:**
-   * Reference GitHub Issue numbers in the Memory System files whenever possible.
-   * Store specific implementation details within the corresponding GitHub Issues rather than duplicating in Memory System.
-   * Link Memory System updates to relevant GitHub Issues for traceability.
-4. **Branch Management:**
-   * Create feature branches named according to the issue they address (e.g., `feature/issue-123`).
-   * Keep branches focused on single issues to maintain clear change history.
-   * Delete branches after merging to maintain a clean repository.
-5. **Pull Requests:**
-   * Create descriptive Pull Requests that reference the GitHub Issues they resolve.
-   * Use the PR description to document implementation decisions not captured in the issue.
-   * Follow the project's PR template if available.
-6. **Commit Practices:**
-   * Write clear commit messages that reference GitHub Issue numbers.
-   * Keep commits atomic and focused on single logical changes.
-   * Use conventional commit format if established for the project.
-7. **Documentation Updates:**
-   * Update relevant documentation as part of the same PR that implements code changes.
-   * Ensure README and other user-facing documentation stays current with implementation.
-
-## ⚙️ Task Execution & Workflow
-
-**For new migrations, make sure to add them to the same file.**
-
-### Problem Solving Strategy & Execution Principles
-
-1.  **Understand Deeply & Clarify Requirements:**
-    *   Carefully read the issue and think critically about what is required. Ensure complete understanding before proceeding.
-    *   **If my instructions are ambiguous, incomplete, or unclear, DO NOT proceed based on assumptions.** You **MUST** ask clarifying questions to confirm the goals, specific requirements, acceptance criteria, and any potential constraints before starting implementation. Do not guess my intent.
-2.  **Investigate Thoroughly:**
-    *   Explore relevant files, search for key functions, and gather context from the codebase.
-    *   **If you are not sure about file content or codebase structure pertaining to my request, use your tools to read files and gather the relevant information: do NOT guess or make up an answer.**
-    *   **If a tool fails or you cannot access the necessary information after trying, report the specific issue encountered and suggest alternative investigation methods or ask for clarification.**
-3.  **Plan Meticulously:**
-    *   Develop a clear, step-by-step plan. Break down the fix into manageable, incremental steps.
-    *   **You MUST plan extensively before each function call.** Identify affected components, dependencies, and potential side effects across both Svelte and Rust code.
-    *   Verify how the change will be tested. Add tests if necessary *before* implementing.
-4.  **Implement Incrementally & Verify:**
-    *   Make small, testable code changes. Tackle one logical change or file at a time.
-    *   **Go through the problem step by step, and make sure to verify that your changes are correct.**
-    *   **When you say you are going to make a tool call, make sure you ACTUALLY make the tool call instead of ending your turn.**
-5.  **Think Critically & Reflect:**
-    *   **Your thinking MUST BE thorough. It's fine if it's very long.**
-    *   **You should think step by step before and after each action you decide to take.**
-    *   **Reflect extensively on the outcomes of the previous function calls.**
-    *   **DO NOT do this entire process by making function calls only, as this can impair your ability to solve the problem and think insightfully.**
-6.  **Iterate Towards Solution:**
-    *   Debug as needed using appropriate techniques.
-    *   Test frequently after each change to verify correctness. (See Testing section).
-    *   **You MUST iterate and keep going until the problem is solved.** Find and solve the **ROOT CAUSE**.
-    *   **NEVER end your turn without having solved the problem.** If you encounter blockers, report them clearly, but continue working towards the solution.
-7.  **Autonomous Resolution:**
-    *   **I want you to fully solve this autonomously before coming back to me**, adhering strictly to the request and these rules. Only ask for clarification when absolutely necessary after exhausting investigation options.
-
-### Task Definition & Progress Tracking
-
-1.  **Task Definition:** Clearly understand the task requirements, acceptance criteria, and any dependencies from the Memory System.
-2.  **Progress Tracking:** Keep Memory System updated with task progress (in-progress, completed, blocked), issues encountered, and completed items. Update task documentation upon completion or if requirements change during implementation.
-
-## ✨ Code Quality & Style
-
-1.  **Language Guidelines:**
-    *   All code comments, variable names, function names, and documentation must be written in English.
-    *   Use clear, concise English for commit messages, PR descriptions, and issue reports.
-    *   Maintain consistent terminology throughout the codebase and documentation.
-2.  **TypeScript Guidelines:**
-    *   Use strict typing (avoid `any`). Document complex logic or public APIs with JSDoc.
-    *   Leverage TypeScript for Svelte components, props, events, and stores.
-    *   Use proper typing for Tauri API calls and IPC communication.
-2.  **Readability & Maintainability:** Write clean, well-organized code.
-3.  **Small Files & Components:**
-    *   Keep files under **300 lines**. Refactor proactively.
-    *   Break down large Svelte components into smaller, single-responsibility components.
-    *   Use Svelte's component composition patterns effectively.
-4.  **Avoid Duplication (DRY):** Actively look for and reuse existing functionality. Refactor to eliminate duplication.
-5.  **Build Tools:** Use the Tauri CLI and pnpm for building and managing the project. Follow the established build configuration.
-6.  **Linting/Formatting:** Ensure all code conforms to project's ESLint/Prettier rules. Use Svelte-specific linting rules.
-7.  **Pattern Consistency:**
-    *   Adhere to established project patterns. Don't introduce new ones without discussion/explicit instruction.
-    *   Follow Svelte 5 runes patterns consistently throughout the codebase.
-    *   Maintain consistency in Rust code for Tauri commands and API.
-8.  **File Naming:**
-    *   Use clear, descriptive names. Avoid \"temp\", \"refactored\", \"improved\", etc., in permanent file names.
-    *   Follow Svelte conventions for component naming (PascalCase for component files).
-9.  **No One-Time Scripts:** Do not commit one-time utility scripts into the main codebase.
+1. **Logical Separation:** Organize code into logically separated modules with clear responsibilities
+2. **Module Structure:** For complex features, use directory-based module organization with `mod.rs` for re-exporting
+3. **Re-exports:** Provide convenient re-exports in parent modules to simplify imports
+4. **Visibility Control:** Use appropriate visibility modifiers (`pub`, `pub(crate)`, etc.)
+5. **Module Size:** When a single file exceeds 300 lines, consider splitting it into submodules
 
 ## ♻️ Refactoring
 
-1.  **Purposeful Refactoring:** Refactor to improve clarity, reduce duplication, simplify complexity, or adhere to architectural goals.
-2.  **Holistic Check:** When refactoring, look for duplicate code, similar components/files, and opportunities for consolidation across the affected area.
-3.  **Edit, Don't Copy:** Modify existing files directly. Do not duplicate files and rename them (e.g., `Component-v2.svelte`).
-4.  **Verify Integrations:** After refactoring, ensure all callers, dependencies, and integration points function correctly. Run relevant tests.
-5.  **Svelte 5 Migrations:** When migrating from older Svelte patterns to Svelte 5 runes, ensure complete and consistent updates across related components.
+1. **Purposeful Refactoring:** Refactor to improve clarity, reduce duplication, simplify complexity, or adhere to architectural goals
+2. **Triggers for Refactoring:**
+   - Files exceeding 300 lines
+   - Functions exceeding 50 lines
+   - Duplicate code blocks (DRY violations)
+   - Deep nesting (>3 levels)
+   - Violation of established patterns
+3. **Refactoring Process:**
+   - **Edit, Don't Copy:** Modify existing files directly. Do not duplicate files and rename them (e.g., `Component-v2.svelte`)
+   - **Holistic Check:** Look for duplicate code, similar components/files, and opportunities for consolidation across the affected area
+   - **Verify Integrations:** After refactoring, ensure all callers, dependencies, and integration points function correctly. Run relevant tests
+4. **Svelte 5 Migrations:** When migrating from older Svelte patterns to Svelte 5 runes, ensure complete and consistent updates across related components
+
+## ✨ Code Quality & Style
+
+### Language & Naming Guidelines
+1. **English Only:** All code comments, variable names, function names, and documentation must be in English
+2. **Clear Naming:** Use descriptive names; avoid "temp", "refactored", "improved" in permanent file names
+3. **Svelte Conventions:** Use PascalCase for component files, follow established naming patterns
+
+### TypeScript Guidelines
+1. **Strict Typing:** Use strict typing (avoid `any`), leverage TypeScript for Svelte components, props, events, and stores
+2. **Documentation:** Document complex logic or public APIs with JSDoc
+3. **Tauri Integration:** Use proper typing for Tauri API calls and IPC communication
+
+### Code Organization
+1. **Small Files & Components:** Keep files under 300 lines, break down large Svelte components
+2. **DRY Principle:** Actively look for and reuse existing functionality, refactor to eliminate duplication
+3. **Pattern Consistency:** Adhere to established project patterns, follow Svelte 5 runes patterns consistently
+4. **Build Tools:** Use Tauri CLI and pnpm, conform to ESLint/Prettier rules
+
+## 🛡️ Rust Safety Guidelines
+
+1. **Avoid `unsafe` Code:** Only use when absolutely necessary and document thoroughly
+2. **Thread Safety:** Use appropriate synchronization primitives (`Arc`, `Mutex`, `RwLock`, `OnceLock`)
+3. **Ownership and Borrowing:** Follow Rust's ownership rules carefully
+4. **Error Handling:** Use `Result` and `Option` types properly; avoid `unwrap()` and `expect()` in production
+5. **Memory Management:** Be aware of memory usage patterns, especially for large data structures
+
+## ⚙️ Task Execution & Workflow
+
+### Problem Solving Strategy
+1. **Understand Deeply & Clarify Requirements:**
+   - Carefully read and think critically about requirements
+   - **If instructions are ambiguous, DO NOT proceed based on assumptions - ask clarifying questions**
+
+2. **Investigate Thoroughly:**
+   - Explore relevant files, search for key functions, gather context
+   - **Use tools to read files and gather information - do NOT guess**
+   - **Report specific issues if tools fail and suggest alternatives**
+
+3. **Plan Meticulously:**
+   - Develop clear, step-by-step plans with manageable incremental steps
+   - **Plan extensively before each function call**
+   - Identify affected components, dependencies, and potential side effects
+
+4. **Implement Incrementally & Verify:**
+   - Make small, testable code changes one at a time
+   - **Verify changes are correct and actually make tool calls when stated**
+
+5. **Think Critically & Reflect:**
+   - **Thinking MUST BE thorough - think step by step before and after each action**
+   - **Reflect extensively on outcomes of previous function calls**
+
+6. **Iterate Towards Solution:**
+   - Debug as needed, test frequently, find and solve the **ROOT CAUSE**
+   - **NEVER end without solving the problem - continue until resolution**
+
+### GitHub Repository Integration
+1. **Repository Location:** Official repository at `dr-yst/org-x`
+2. **Issue-Based Development:** Utilize GitHub Issues, create design details as comments
+3. **Memory System Integration:** Reference GitHub Issue numbers, link updates to issues
+4. **Branch Management:** Create focused feature branches, delete after merging
+5. **Documentation Updates:** Update relevant documentation as part of implementation PRs
 
 ## ✅ Testing & Validation
 
-1.  **Test-Driven Development (TDD):**
-    *   **New Features:** Outline tests, write failing tests, implement code, refactor.
-    *   **Bug Fixes:** Write a test reproducing the bug *before* fixing it.
-2.  **Comprehensive & Rigorous Tests:**
-    *   Write thorough unit, integration, and/or end-to-end tests covering critical paths, edge cases, and major functionality.
-    *   Test both frontend (Svelte) and backend (Rust) components thoroughly.
-    *   Test the integration between frontend and backend via Tauri commands and IPC.
-    *   **Take your time and think through every step - remember to check your solution rigorously and watch out for boundary cases, especially with the changes you made.**
-    *   **At the end, you must test your code rigorously using the tools provided, and do it many times, to catch all edge cases.**
-3.  **Tests Must Pass:** All tests **must** pass before committing or considering a task complete. Notify the human developer immediately if tests fail and cannot be easily fixed.
-4.  **No Mock Data (Except Tests):** Use mock data *only* within test environments. Development and production should use real or realistic data sources.
-5.  **Manual Verification:** Supplement automated tests with manual checks where appropriate, especially for UI changes and cross-platform functionality.
-6.  **Definition of Solved:**
-    *   **Remember, the problem is only considered 'solved' when the original request is fully addressed according to all requirements, the implemented code functions correctly, passes rigorous testing (including edge cases), and adheres to best practices.** Your solution must be perfect. If not, continue working on it.
+### Test-Driven Development
+1. **New Features:** Outline tests, write failing tests, implement code, refactor
+2. **Bug Fixes:** Write a test reproducing the bug *before* fixing it
 
-## 🧪 Testing and Debugging Strategies
+### Comprehensive Testing Strategy
+1. **Coverage:** Write thorough unit, integration, and end-to-end tests covering critical paths and edge cases
+2. **Multi-Layer Testing:** Test both frontend (Svelte) and backend (Rust) components plus their integration
+3. **Rigorous Verification:** Check solutions thoroughly, watch for boundary cases
+4. **All Tests Must Pass:** Tests **must** pass before committing or considering tasks complete
 
-1. **Diagnostic Logging:** Add temporary debug prints when diagnosing complex issues; remove before committing.
-2. **Test Isolation:** Ensure each test can run independently without relying on other tests.
-3. **Test Coverage:**
-   * Aim for comprehensive test coverage of core functionality
-   * Test edge cases and error conditions explicitly
-4. **Circular Dependencies:** Be vigilant about avoiding circular references in data structures.
-5. **Debug Tools for Rust Code:**
-   * Use `cargo check` to verify syntax and types
-   * Use `cargo clippy` to identify common issues
-   * Use `cargo fmt` to maintain consistent code style
-   * Use `RUST_BACKTRACE=1` to get detailed backtraces
-   * Use `dbg!` macro for quick debug output
-   * Use `println!` or proper logging for complex debugging scenarios
-   * Use `cargo expand` to inspect macro expansions
-   * Use `cargo flamegraph` for performance profiling
-6. **Debug Tools for Frontend:**
-   * Use browser developer tools for debugging frontend issues
-   * Use Svelte DevTools extension for inspecting component state
-   * Add temporary debug output using `console.log` or Svelte's `{@debug}` directive
-   * Use Vitest's watch mode for iterative debugging of test failures
-   * Use browser performance tools to identify rendering bottlenecks
-   * Use network monitoring tools to debug API and IPC communication
+### Testing & Debugging Tools
+1. **Rust Tools:** `cargo check`, `cargo clippy`, `cargo fmt`, `RUST_BACKTRACE=1`, `dbg!` macro
+2. **Frontend Tools:** Browser developer tools, Svelte DevTools, `console.log`, `{@debug}`, Vitest watch mode
+3. **Test Quality:** Ensure test isolation, comprehensive coverage, explicit edge case testing
+
+### Definition of Solved
+**The problem is only considered 'solved' when:**
+- Original request is fully addressed according to all requirements
+- Implemented code functions correctly
+- Passes rigorous testing including edge cases
+- Adheres to best practices
 
 ## 🐛 Debugging & Troubleshooting
 
-1.  **Fix the Root Cause:** Prioritize fixing the **underlying** issue causing an error, rather than just masking or handling it, unless a temporary workaround is explicitly agreed upon. **Find and solve the ROOT CAUSE.**
-2.  **Console/Log Analysis:**
-    *   Check browser console for frontend errors.
-    *   Review Tauri logs for backend issues.
-    *   Monitor IPC communication for data transfer problems.
-3.  **Targeted Logging:** For persistent or complex issues, add specific logging statements to trace execution and variable states in both Svelte and Rust code.
-4.  **Check the `fixes/` Directory:** Before deep-diving into a complex or recurring bug, check `fixes/` for documented solutions to similar past issues.
-5.  **Document Complex Fixes:** If a bug requires significant effort (multiple iterations, complex logic) to fix, create a concise `.md` file in the `fixes/` directory detailing the problem, investigation steps, and the solution.
-6.  **Research:** Use available tools (documentation search, Tauri and Svelte resources, etc.) to research solutions or best practices when stuck or unsure.
+1. **Root Cause Focus:** Fix the underlying issue, not just symptoms
+2. **Multi-Layer Analysis:** Check browser console, Tauri logs, and IPC communication
+3. **Documentation:** Check `fixes/` directory for documented solutions, document complex fixes
+4. **Research:** Use available tools and resources when stuck
 
 ## 🔒 Security
 
-1.  **Tauri Security Model:** Understand and respect Tauri's security model, including allowlist APIs, custom commands, and asset serving.
-2.  **Server-Side Authority:** Keep sensitive logic, validation, and data manipulation strictly on the Rust side. Use secure Tauri commands for privileged operations.
-3.  **Input Sanitization/Validation:** Always sanitize and validate user input, especially when passing data between frontend and backend.
-4.  **Dependency Awareness:** Be mindful of the security implications of adding or updating dependencies in both npm and Cargo.
-5.  **Credentials:** Never hardcode secrets or credentials in the codebase. Use environment variables or a secure secrets management solution.
+1. **Tauri Security Model:** Understand allowlist APIs, custom commands, and asset serving
+2. **Server-Side Authority:** Keep sensitive logic on Rust side, use secure Tauri commands
+3. **Input Validation:** Always sanitize and validate user input, especially between frontend/backend
+4. **Dependency Awareness:** Consider security implications of dependencies
+5. **Credentials:** Never hardcode secrets, use environment variables or secure management
 
 ## 🌳 Version Control & Environment
 
-1.  **Git Hygiene:**
-    *   Commit frequently with clear, atomic messages.
-    *   Keep the working directory clean; ensure no unrelated or temporary files are staged or committed.
-    *   Use `.gitignore` effectively for both Rust and Node.js artifacts.
-2.  **Branching Strategy:** Follow the project's established branching strategy. Do not create new branches unless requested or necessary for the workflow (e.g., feature branches).
-3.  **.env Files:** **Never** commit `.env` files. Use `.env.example` for templates. Do not overwrite local `.env` files without confirmation.
-4.  **Environment Awareness:** Code should function correctly across different environments (dev, test, prod) and platforms (Windows, macOS, Linux). Use environment variables for configuration.
-5.  **Development Workflow:**
-    *   Use `pnpm` for package management and scripts.
-    *   Follow Tauri's development workflow for building and testing the application.
-    *   Kill related running processes before starting new ones.
+1. **Git Hygiene:** Commit frequently with clear messages, keep working directory clean
+2. **Environment Files:** Never commit `.env` files, use `.env.example` for templates
+3. **Cross-Platform:** Code should function across different environments and platforms
+4. **Development Workflow:** Use `pnpm` for package management, follow Tauri development workflow
 
 ## 📄 Documentation Maintenance
 
-1.  **Update Memory System:** Keep all Memory System files updated with the latest project state, patterns, decisions, and progress.
-2.  **Rules Updates:** This rules file should be reviewed and updated periodically to reflect learned best practices and project evolution.
-3.  **Document Size Management:** When Memory System files become overly large (typically > 2000 lines):
-    - Remove implementation details that can be found in the actual code
-    - Focus on high-level concepts, patterns, and relationships instead of detailed implementations that can be understood by reading the source code
-    - Use diagrams and concise explanations instead of lengthy code snippets
-    - Document "why" decisions were made rather than just "how" they were implemented
-    - For code structures, document their purpose and relationships rather than internal details
-    - Use code references rather than duplicating code in documentation
-    - Reference external files (e.g., images, code files) when appropriate
-    - Maintain a balance between completeness and readability
+1. **Keep Updated:** Maintain Memory System files with latest project state and decisions
+2. **Size Management:** When files become large (>2000 lines):
+   - Remove implementation details that can be found in code
+   - Focus on high-level concepts, patterns, and relationships
+   - Document "why" decisions were made rather than just "how"
+3. **Rules Evolution:** Review and update this rules file periodically
 
 ## 🔄 Long-Running Commands
 
-1.  **Avoid Long-Running Development Servers:** When using commands like `cargo run`, `pnpm run dev`, or other commands that start development servers or interactive processes, only run them to verify that the command works. Once you've confirmed the command executes without errors, cancel the process rather than letting it continue running.
-2.  **Check and Report Results Promptly:** After starting a long-running process, quickly check for initial output/errors and report these to the user before canceling the process.
-3.  **Alternative Approaches:** When possible, use one-off commands like `cargo check` or `cargo build` instead of `cargo run` to verify code without starting interactive processes.
-4.  **Clear Status Messages:** When canceling a long-running process, inform the user that the process was manually cancelled after verifying it launched successfully.
+1. **Avoid Long-Running Processes:** Use commands like `cargo run` only to verify they work, then cancel
+2. **Quick Verification:** Check for initial output/errors and report before canceling
+3. **Alternative Approaches:** Use one-off commands like `cargo check` when possible
+4. **Clear Communication:** Inform when processes are manually cancelled after verification
