@@ -36,7 +36,9 @@ describe("SettingsDialog", () => {
 
       // Check that all setting sections are present
       expect(screen.getByText("TODO Keywords")).toBeInTheDocument();
-      expect(screen.getByText("Custom Properties")).toBeInTheDocument();
+      expect(
+        screen.getByText("Custom Headline Properties"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Date Format")).toBeInTheDocument();
       expect(screen.getByText("External Editor Command")).toBeInTheDocument();
       expect(screen.getByText("Table Columns")).toBeInTheDocument();
@@ -44,36 +46,28 @@ describe("SettingsDialog", () => {
       expect(screen.getByText("Appearance")).toBeInTheDocument();
     });
 
-    it('should display "Coming Soon" badges for all sections', () => {
+    it('should display "Coming Soon" badges for placeholder sections', () => {
       render(SettingsDialog);
 
       const comingSoonBadges = screen.getAllByText("Coming Soon");
-      expect(comingSoonBadges).toHaveLength(7); // All 7 sections should have "Coming Soon"
+      expect(comingSoonBadges).toHaveLength(3); // Only 3 placeholder sections have Coming Soon badges
     });
 
     it("should display section descriptions", () => {
       render(SettingsDialog);
 
-      expect(
-        screen.getByText("Configure custom TODO states and keywords"),
-      ).toBeInTheDocument();
+      // Check descriptions from actual sections (rendered by child components)
       expect(
         screen.getByText(
-          "Define custom org-mode properties for filtering and display",
+          /Configure custom TODO states and keywords for your org-mode files/,
         ),
       ).toBeInTheDocument();
+
+      // Check descriptions from placeholder sections (Coming Soon sections)
       expect(
         screen.getByText(
           "Customize date display format throughout the application",
         ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(
-          "Set the command to open files in your preferred editor",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText("Configure which columns to display in task lists"),
       ).toBeInTheDocument();
       expect(
         screen.getByText("Customize keybindings and shortcuts"),
@@ -139,7 +133,7 @@ describe("SettingsDialog", () => {
       // All section titles should be present
       const sectionTitles = [
         "TODO Keywords",
-        "Custom Properties",
+        "Custom Headline Properties",
         "Date Format",
         "External Editor Command",
         "Table Columns",
@@ -161,10 +155,10 @@ describe("SettingsDialog", () => {
     it("should apply correct opacity to coming soon sections", () => {
       render(SettingsDialog);
 
-      // Check that sections have the opacity class applied
-      const todoSection = screen.getByText("TODO Keywords").closest("div");
+      // Check that placeholder sections have the opacity class applied
+      const dateFormatSection = screen.getByText("Date Format").closest("div");
       // Find the parent container that has the opacity class
-      const sectionContainer = todoSection?.closest(".opacity-60");
+      const sectionContainer = dateFormatSection?.closest(".opacity-60");
       expect(sectionContainer).toBeInTheDocument();
     });
 

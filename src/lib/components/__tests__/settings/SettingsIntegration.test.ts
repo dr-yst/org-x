@@ -85,16 +85,18 @@ describe("Settings Integration", () => {
 
       // Verify all settings sections are present
       expect(screen.getByText("TODO Keywords")).toBeInTheDocument();
-      expect(screen.getByText("Custom Properties")).toBeInTheDocument();
+      expect(
+        screen.getByText("Custom Headline Properties"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Date Format")).toBeInTheDocument();
       expect(screen.getByText("External Editor Command")).toBeInTheDocument();
       expect(screen.getByText("Table Columns")).toBeInTheDocument();
       expect(screen.getByText("Keyboard Shortcuts")).toBeInTheDocument();
       expect(screen.getByText("Appearance")).toBeInTheDocument();
 
-      // Verify all sections show "Coming Soon"
+      // Verify placeholder sections show "Coming Soon" badges
       const comingSoonBadges = screen.getAllByText("Coming Soon");
-      expect(comingSoonBadges).toHaveLength(7);
+      expect(comingSoonBadges).toHaveLength(3); // Only placeholder sections have Coming Soon badges
 
       // Verify main UI elements
       expect(screen.getByText("Settings")).toBeInTheDocument();
@@ -178,7 +180,7 @@ describe("Settings Integration", () => {
 
     it("should maintain store consistency", () => {
       // Ensure we start with a fresh state
-      closeDialog(); // Force close first
+      settingsDialogOpen.set(false); // Force close first
 
       // Test various state transitions
       expect(get(settingsDialogOpen)).toBe(false);
@@ -212,7 +214,7 @@ describe("Settings Integration", () => {
       // Verify placeholder structure exists for each future setting
       const expectedSections = [
         "TODO Keywords",
-        "Custom Properties",
+        "Custom Headline Properties",
         "Date Format",
         "External Editor Command",
         "Table Columns",
@@ -274,15 +276,19 @@ describe("Settings Integration", () => {
       // View components should render without requiring direct model access
       expect(() => render(SidebarFooterSettingsButton)).not.toThrow();
       expect(() => render(SettingsDialog)).not.toThrow();
+      // Ensure clean initial state
+      settingsDialogOpen.set(false);
+      const currentState = get(settingsDialogOpen);
+      expect(currentState).toBe(false);
 
       // State changes should be handled through ViewModel
       openDialog();
-      expect(get(settingsDialogOpen)).not.toBe(initialState);
+      expect(get(settingsDialogOpen)).toBe(true);
     });
 
     it("should maintain reactive data flow", async () => {
       // Ensure clean state
-      closeDialog();
+      settingsDialogOpen.set(false);
 
       let stateChanges: boolean[] = [];
 
