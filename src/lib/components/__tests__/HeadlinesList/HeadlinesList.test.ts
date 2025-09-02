@@ -172,7 +172,7 @@ describe("HeadlinesList Component", () => {
 
     // Table headers should be present
     expect(screen.getByText("Status")).toBeInTheDocument();
-    expect(screen.getByText("Task")).toBeInTheDocument();
+    expect(screen.getByText("Title")).toBeInTheDocument();
     expect(screen.getByText("Tags")).toBeInTheDocument();
     expect(screen.getByText("Date")).toBeInTheDocument();
   });

@@ -72,6 +72,99 @@ beforeAll(() => {
         .fn()
         .mockResolvedValue({ status: "ok", data: false }),
       getTodoKeywords: vi.fn().mockResolvedValue({ status: "ok", data: [] }),
+      getUserTodoKeywords: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: { active: [], closed: [] } }),
+      updateTodoKeywords: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      addActiveTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      addClosedTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      removeActiveTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      removeClosedTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      editActiveTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      editClosedTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      moveActiveTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      moveClosedTodoKeyword: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      resetTodoKeywordsToDefaults: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      reloadDocumentsWithSettings: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: "Documents reloaded" }),
+      getCustomProperties: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: [] }),
+      addCustomProperty: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      editCustomProperty: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      removeCustomProperty: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      moveCustomProperty: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      resetCustomPropertiesToDefaults: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      getExternalEditorCommand: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: "" }),
+      setExternalEditorCommand: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      resetExternalEditorCommand: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      openFileInExternalEditor: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      getTableColumns: vi.fn().mockResolvedValue({
+        status: "ok",
+        data: [
+          { id: "status", visible: true, order: 0 },
+          { id: "title", visible: true, order: 1 },
+          { id: "document", visible: true, order: 2 },
+          { id: "tags", visible: true, order: 3 },
+          { id: "date", visible: true, order: 4 },
+        ],
+      }),
+      getAvailableTableColumns: vi.fn().mockResolvedValue({
+        status: "ok",
+        data: ["status", "title", "document", "tags", "date"],
+      }),
+      updateTableColumns: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      addTableColumn: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+      removeTableColumn: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      setColumnVisibility: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
+      resetTableColumnsToDefaults: vi
+        .fn()
+        .mockResolvedValue({ status: "ok", data: null }),
     },
   }));
 });
@@ -117,5 +210,84 @@ vi.mock("$lib/bindings", () => ({
       .fn()
       .mockResolvedValue({ status: "ok", data: false }),
     getTodoKeywords: vi.fn().mockResolvedValue({ status: "ok", data: [] }),
+    getUserTodoKeywords: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: { active: [], closed: [] } }),
+    updateTodoKeywords: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    addActiveTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    addClosedTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    removeActiveTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    removeClosedTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    editActiveTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    editClosedTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    moveActiveTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    moveClosedTodoKeyword: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    resetTodoKeywordsToDefaults: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    reloadDocumentsWithSettings: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: "Documents reloaded" }),
+    getCustomProperties: vi.fn().mockResolvedValue({ status: "ok", data: [] }),
+    addCustomProperty: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    editCustomProperty: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    removeCustomProperty: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    moveCustomProperty: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    resetCustomPropertiesToDefaults: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    getExternalEditorCommand: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: "" }),
+    setExternalEditorCommand: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    resetExternalEditorCommand: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    openFileInExternalEditor: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    getTableColumns: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: [
+        { id: "status", visible: true, order: 0 },
+        { id: "title", visible: true, order: 1 },
+        { id: "document", visible: true, order: 2 },
+        { id: "tags", visible: true, order: 3 },
+        { id: "date", visible: true, order: 4 },
+      ],
+    }),
+    getAvailableTableColumns: vi.fn().mockResolvedValue({
+      status: "ok",
+      data: ["status", "title", "document", "tags", "date"],
+    }),
+    updateTableColumns: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    addTableColumn: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    removeTableColumn: vi.fn().mockResolvedValue({ status: "ok", data: null }),
+    setColumnVisibility: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
+    resetTableColumnsToDefaults: vi
+      .fn()
+      .mockResolvedValue({ status: "ok", data: null }),
   },
 }));

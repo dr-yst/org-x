@@ -374,9 +374,10 @@ export function getColumnsByType(): {
   console.log(
     "getColumnsByType: This function is deprecated, use availableBuiltInColumnsToAdd and availableCustomPropertiesToAdd derived stores instead",
   );
+  const allAvailable = get(availableColumns);
   return {
-    builtIn: get(availableBuiltInColumnsToAdd),
-    customProperties: get(availableCustomPropertiesToAdd),
+    builtIn: allAvailable.filter((id) => !id.startsWith("property:")),
+    customProperties: allAvailable.filter((id) => id.startsWith("property:")),
   };
 }
 

@@ -23,7 +23,7 @@ import todoKeywords, {
   setEditingClosedIndex,
   resetToDefaults,
   clearError,
-} from "../todoKeywords.store";
+} from "../todo-keywords/todoKeywords.store";
 
 // Mock the homeview store
 vi.mock("$lib/viewmodels/homeview.store", () => ({

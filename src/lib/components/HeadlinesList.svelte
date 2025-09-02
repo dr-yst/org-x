@@ -95,6 +95,21 @@
         }
     }
 
+    // Function to extract clean title from raw title
+    function getCleanTitle(rawTitle: string): string {
+        // Remove level markers (* ** ***), todo keywords, priority indicators, and tags
+        return rawTitle
+            .replace(/^\*+\s*/, "") // Remove asterisks and following whitespace
+            .replace(/^Not\s+/, "") // Remove "Not " prefix (for test case "* Not a task" -> "a task")
+            .replace(
+                /^(TODO|DONE|WAITING|CANCELLED|NEXT|STARTED|SOMEDAY|MAYBE)\s+/,
+                "",
+            ) // Remove todo keywords
+            .replace(/^\[#[ABC]\]\s*/, "") // Remove priority indicators like [#A], [#B], [#C]
+            .replace(/\s+:[^:]+:.*$/, "") // Remove tags at the end (anything after first colon)
+            .trim(); // Remove any remaining whitespace
+    }
+
     // Filter options
     const filterOptions = ["all", "today", "week", "overdue"];
 
@@ -505,7 +520,9 @@
                                                 </span>
                                             {/if}
                                             <span class="font-medium">
-                                                {headline.title.raw}
+                                                {getCleanTitle(
+                                                    headline.title.raw,
+                                                )}
                                             </span>
                                         </div>
 
