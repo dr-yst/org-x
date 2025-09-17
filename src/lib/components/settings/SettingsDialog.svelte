@@ -19,6 +19,7 @@
         Table,
         Palette,
     } from "@lucide/svelte";
+    import InfoTooltip from "$lib/components/ui/info-tooltip/InfoTooltip.svelte";
 
     // Reactive binding to the settings dialog open state
     let dialogOpen = $state(false);
@@ -111,21 +112,23 @@
                             />
                         </div>
                         <div class="flex-1 space-y-1">
-                            <h3
-                                class="font-medium text-sm flex items-center gap-2"
-                            >
-                                {section.title}
-                                {#if section.comingSoon}
-                                    <span
-                                        class="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground"
-                                    >
-                                        Coming Soon
-                                    </span>
-                                {/if}
-                            </h3>
-                            <p class="text-sm text-muted-foreground">
-                                {section.description}
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <h3
+                                    class="font-medium text-sm flex items-center gap-2"
+                                >
+                                    {section.title}
+                                    {#if section.comingSoon}
+                                        <span
+                                            class="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground"
+                                        >
+                                            Coming Soon
+                                        </span>
+                                    {/if}
+                                </h3>
+                                <InfoTooltip
+                                    description={section.description}
+                                />
+                            </div>
                         </div>
                     </div>
                     {#if index < settingSections.length - 1}
