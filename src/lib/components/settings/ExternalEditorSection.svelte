@@ -14,6 +14,7 @@
         Info,
         Copy,
     } from "@lucide/svelte";
+    import InfoTooltip from "$lib/components/ui/info-tooltip/InfoTooltip.svelte";
     import externalEditor, {
         command,
         isLoading,
@@ -128,16 +129,14 @@
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="space-y-2">
+    <div class="flex items-center gap-2">
         <h3 class="text-lg font-semibold flex items-center gap-2">
             <ExternalLink class="h-5 w-5" />
             External Editor Command
         </h3>
-        <p class="text-sm text-muted-foreground">
-            Configure the shell command used to open files in your preferred
-            external editor. Use placeholders to specify file location and
-            cursor position.
-        </p>
+        <InfoTooltip
+            description="Configure the shell command used to open files in your preferred external editor. Use placeholders to specify file location and cursor position. When you click 'Open in Editor' on any file, Org-X will execute this command with the placeholders replaced by actual values. The &#123;file&#125; placeholder is required, while &#123;line&#125; and &#123;column&#125; are optional but recommended for precise cursor positioning."
+        />
     </div>
 
     <!-- Error Alert -->
@@ -232,10 +231,15 @@
 
     <!-- Placeholder Information -->
     <div class="space-y-3">
-        <h4 class="font-medium text-sm flex items-center gap-2">
-            <Info class="h-4 w-4" />
-            Available Placeholders
-        </h4>
+        <div class="flex items-center gap-2">
+            <h4 class="font-medium text-sm flex items-center gap-2">
+                <Info class="h-4 w-4" />
+                Available Placeholders
+            </h4>
+            <InfoTooltip
+                description="These placeholders will be replaced with actual values when opening files. &#123;file&#125; is required, while &#123;line&#125; and &#123;column&#125; are optional for cursor positioning."
+            />
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             {#each placeholders as placeholder}
                 <div class="border rounded-lg p-3 bg-muted/10">
@@ -318,20 +322,5 @@
         <div class="text-xs text-muted-foreground">
             Changes are saved automatically
         </div>
-    </div>
-
-    <!-- Help Text -->
-    <div class="mt-6 p-4 bg-muted/20 rounded-lg">
-        <p class="text-sm text-muted-foreground">
-            <strong>How it works:</strong> When you click "Open in Editor" on
-            any file, Org-X will execute this command with the placeholders
-            replaced by actual values. The
-            <code class="bg-muted px-1 rounded">{"{file}"}</code>
-            placeholder is required, while
-            <code class="bg-muted px-1 rounded">{"{line}"}</code>
-            and
-            <code class="bg-muted px-1 rounded">{"{column}"}</code> are optional
-            but recommended for precise cursor positioning.
-        </p>
     </div>
 </div>
