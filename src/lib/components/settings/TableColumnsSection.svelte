@@ -16,6 +16,7 @@
         Eye,
         EyeOff,
     } from "@lucide/svelte";
+    import InfoTooltip from "$lib/components/ui/info-tooltip/InfoTooltip.svelte";
     import tableColumns, {
         columns,
         availableColumns,
@@ -146,15 +147,14 @@
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="space-y-2">
+    <div class="flex items-center gap-2">
         <h3 class="text-lg font-semibold flex items-center gap-2">
             <Table class="h-5 w-5" />
             Table Columns
         </h3>
-        <p class="text-sm text-muted-foreground">
-            Configure which columns are displayed in the task list table. You
-            can add, remove, and reorder columns to customize your view.
-        </p>
+        <InfoTooltip
+            description="Configure which columns are displayed in the task list table. You can add, remove, and reorder columns to customize your view. Table columns determine what information is displayed in the task list. Built-in columns include Status, Title, Document, Tags, and Date. Custom properties defined in your org files can also be added as columns. Use the eye icons to show/hide columns, and the arrow buttons to reorder them."
+        />
     </div>
 
     <!-- Error Alert -->
@@ -429,16 +429,5 @@
                 Changes are saved automatically
             {/if}
         </div>
-    </div>
-
-    <!-- Help Text -->
-    <div class="mt-6 p-4 bg-muted/20 rounded-lg">
-        <p class="text-sm text-muted-foreground">
-            <strong>Table columns</strong> determine what information is displayed
-            in the task list. Built-in columns include Status, Title, Document, Tags,
-            and Date. Custom properties defined in your org files can also be added
-            as columns. Use the eye icons to show/hide columns, and the arrow buttons
-            to reorder them.
-        </p>
     </div>
 </div>
