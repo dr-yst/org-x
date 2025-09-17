@@ -16,6 +16,7 @@
         X,
         AlertCircle,
     } from "@lucide/svelte";
+    import InfoTooltip from "$lib/components/ui/info-tooltip/InfoTooltip.svelte";
     import todoKeywords, {
         activeKeywords,
         closedKeywords,
@@ -161,13 +162,11 @@
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="space-y-2">
+    <div class="flex items-center gap-2">
         <h3 class="text-lg font-semibold">TODO Keywords</h3>
-        <p class="text-sm text-muted-foreground">
-            Configure custom TODO states and keywords for your org-mode files.
-            These keywords will be used to recognize headlines as TODO items,
-            and be used to filter them from the sidebar.
-        </p>
+        <InfoTooltip
+            description="Configure custom TODO states and keywords for your org-mode files. These keywords will be used to recognize headlines as TODO items, and be used to filter them from the sidebar. Active keywords represent open tasks (like TODO, IN-PROGRESS, WAITING). Closed keywords represent completed tasks (like DONE, CANCELLED). Use the buttons to edit, remove, or reorder keywords. New keywords are added at the end of each list."
+        />
     </div>
 
     <!-- Error Alert -->
@@ -474,16 +473,5 @@
                 Changes are saved automatically
             {/if}
         </div>
-    </div>
-
-    <!-- Help Text -->
-    <div class="mt-6 p-4 bg-muted/20 rounded-lg">
-        <p class="text-sm text-muted-foreground">
-            <strong>Active keywords</strong> represent open tasks (like TODO,
-            IN-PROGRESS, WAITING).
-            <strong>Closed keywords</strong> represent completed tasks (like DONE,
-            CANCELLED). Use the buttons to edit, remove, or reorder keywords. New
-            keywords are added at the end of each list.
-        </p>
     </div>
 </div>
