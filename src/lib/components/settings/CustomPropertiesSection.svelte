@@ -15,6 +15,7 @@
         X,
         AlertCircle,
     } from "@lucide/svelte";
+    import InfoTooltip from "$lib/components/ui/info-tooltip/InfoTooltip.svelte";
     import customProperties, {
         properties,
         isLoading,
@@ -116,12 +117,11 @@
 
 <div class="space-y-6">
     <!-- Header -->
-    <div class="space-y-2">
+    <div class="flex items-center gap-2">
         <h3 class="text-lg font-semibold">Custom Headline Properties</h3>
-        <p class="text-sm text-muted-foreground">
-            Configure custom properties that can be used in org-mode headlines.
-            These properties will be used to filter headlines from the sidebar.
-        </p>
+        <InfoTooltip
+            description="Configure custom properties that can be used in org-mode headlines. These properties will be used to filter headlines from the sidebar. Custom properties can be used in org-mode headlines to add metadata like Effort, Priority, or custom tags. Use the buttons to edit, remove, or reorder properties. New properties are added at the end of the list."
+        />
     </div>
 
     <!-- Error Alert -->
@@ -310,15 +310,5 @@
                 Changes are saved automatically
             {/if}
         </div>
-    </div>
-
-    <!-- Help Text -->
-    <div class="mt-6 p-4 bg-muted/20 rounded-lg">
-        <p class="text-sm text-muted-foreground">
-            <strong>Custom properties</strong> can be used in org-mode headlines
-            to add metadata like Effort, Priority, or custom tags. Use the buttons
-            to edit, remove, or reorder properties. New properties are added at the
-            end of the list.
-        </p>
     </div>
 </div>
