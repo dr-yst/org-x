@@ -1,5 +1,7 @@
 # Org-X
 
+> **Note:** This is a work-in-progress project and is not yet ready for production use. It also serves as an experiment in agentic coding, with the vast majority of the code being written by an AI. Features are incomplete and may change.
+
 ![screen-shot](./dev-docs/ss.png "screen shot")
 
 Org-X is a cross-platform desktop application built with Tauri and Svelte to view Org-mode files in a modern, Notion-like interface. It aims to manage text-based Org-mode files with a visually rich and keyboard-centric experience.
