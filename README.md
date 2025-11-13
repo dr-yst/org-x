@@ -4,7 +4,7 @@
 
 ![screen-shot](./dev-docs/ss.png "screen shot")
 
-Org-X is a cross-platform desktop application built with Tauri and Svelte to view Org-mode files in a modern, Notion-like interface. It aims to manage text-based Org-mode files with a visually rich and keyboard-centric experience.
+Org-X is a cross-platform desktop application built with Tauri and Svelte to view Org-mode files in a modern, interface. It aims to manage text-based Org-mode files with a visually rich and keyboard-centric experience.
 
 ## ✨ Key Features
 
