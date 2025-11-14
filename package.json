@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",
     "@tauri-apps/plugin-dialog": "~2.2.2",

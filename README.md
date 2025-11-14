@@ -90,3 +90,14 @@ Org-X is a Tauri application that combines a fast Rust backend with a reactive S
 *   **MVVM Pattern**: Complex UI components are structured using the Model-View-ViewModel (MVVM) pattern to separate business logic from the view.
 
 For more detailed information on the project's design principles and architectural decisions, please refer to the documents in the `dev-docs/` directory.
+
+
+## Contributing
+
+We welcome contributions to Org-X! If you're interested in helping, please feel free to fork the repository and submit a pull request.
+
+## License
+
+This project is licensed under the **Apache License 2.0**.
+
+See the [LICENSE](LICENSE) file for the full license text.
