@@ -153,9 +153,8 @@ pub async fn parse_org_document_with_settings(
     let todo_config = extract_todo_configuration(&org, &config);
     println!("TODO config extracted");
 
-    // Extract headlines
     println!("Extracting headlines");
-    let mut headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines_with_content(&org, content);
     println!("Headlines extracted: {} headlines", headlines.len());
 
     // Post-process headlines to detect custom TODO keywords with spaces
@@ -177,7 +176,7 @@ pub async fn parse_org_document_with_settings(
         properties,
         category,
         etag: generate_document_etag(content),
-        todo_config,
+        todo_config: None,
     };
 
     // Update document_id in all headlines
@@ -187,7 +186,6 @@ pub async fn parse_org_document_with_settings(
     Ok(updated_document)
 }
 
-/// Load user TODO keywords from settings
 async fn load_user_todo_keywords(
     app_handle: &tauri::AppHandle,
 ) -> Result<(Vec<String>, Vec<String>), Box<dyn std::error::Error>> {
@@ -197,7 +195,6 @@ async fn load_user_todo_keywords(
     let active = settings.todo_keywords.active;
     let closed = settings.todo_keywords.closed;
 
-    // Ensure we have at least default keywords
     let active = if active.is_empty() {
         vec!["TODO".to_string()]
     } else {
@@ -214,7 +211,6 @@ async fn load_user_todo_keywords(
     Ok((active, closed))
 }
 
-/// Function to parse an org-mode document
 pub fn parse_org_document(content: &str, file_path: Option<&str>) -> Result<OrgDocument, OrgError> {
     // First try to extract TODO keywords from content (for backward compatibility)
     let content_todo_keywords = extract_todo_keywords_from_content(content);
@@ -262,19 +258,15 @@ pub fn parse_org_document_with_keywords(
     let todo_config = extract_todo_configuration(&org, &config);
     println!("TODO config extracted");
 
-    // Extract headlines
     println!("Extracting headlines");
-    let mut headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines_with_content(&org, content);
     println!("Headlines extracted: {} headlines", headlines.len());
 
-    // Post-process headlines to detect custom TODO keywords with spaces
     post_process_custom_todo_keywords(&mut headlines, &todo_keywords);
     println!("Custom TODO keyword post-processing complete");
 
-    // Generate document ID based on file path
     let id = file_path.unwrap_or("").to_string();
 
-    // Create document with all extracted information
     let document = OrgDocument {
         id: id.clone(),
         title,
@@ -467,24 +459,54 @@ fn extract_todo_configuration(
 }
 
 /// Function to extract headlines with proper hierarchy
-fn extract_headlines(org: &Org) -> Vec<OrgHeadline> {
-    // First, get all headlines in a flat list
-    println!("Starting extract_headlines");
+fn extract_headlines_with_content(org: &Org, content: &str) -> Vec<OrgHeadline> {
     let mut all_headlines = Vec::new();
 
-    // Process each headline and extract information
     for headline in org.headlines() {
-        println!("Processing headline: {}", headline.title(org).raw);
-        let headline_obj = extract_headline(org, headline);
+        let mut headline_obj = extract_headline(org, headline);
+        headline_obj.content = extract_content_for_headline(content, &headline, org);
         all_headlines.push(headline_obj);
     }
-    println!("Extracted {} headlines in flat list", all_headlines.len());
 
-    // Now build the hierarchy
-    println!("Building headline hierarchy");
-    let result = build_headline_hierarchy(all_headlines);
-    println!("Hierarchy built with {} root headlines", result.len());
-    result
+    build_headline_hierarchy(all_headlines)
+}
+
+fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org: &Org) -> String {
+    let title = headline.title(org);
+    let headline_line = format!("{} {}", "*".repeat(headline.level()), title.raw);
+
+    if let Some(start_pos) = content.find(&headline_line) {
+        let after_headline = &content[start_pos + headline_line.len()..];
+        let end_pos = find_next_headline_or_end(after_headline, headline.level());
+        let section_content = &after_headline[..end_pos];
+        clean_content(section_content)
+    } else {
+        String::new()
+    }
+}
+
+fn find_next_headline_or_end(content: &str, current_level: usize) -> usize {
+    for (i, line) in content.lines().enumerate() {
+        if line.trim_start().starts_with("*") {
+            let stars = line.chars().take_while(|&c| c == '*').count();
+            if stars > 0 && stars <= current_level {
+                let total_chars: usize = content.lines().take(i).map(|l| l.len() + 1).sum();
+                return total_chars.saturating_sub(1);
+            }
+        }
+    }
+    content.len()
+}
+
+fn clean_content(content: &str) -> String {
+    let mut lines: Vec<&str> = content.lines().collect();
+    while !lines.is_empty() && lines[0].trim().is_empty() {
+        lines.remove(0);
+    }
+    while !lines.is_empty() && lines.last().unwrap().trim().is_empty() {
+        lines.pop();
+    }
+    lines.join("\n").trim().to_string()
 }
 
 /// Function to build a hierarchy of headlines from a flat list
@@ -767,16 +789,8 @@ fn extract_headline_properties(org: &Org, headline: &orgize::Headline) -> HashMa
     properties
 }
 
-/// Extract content from a headline
-fn extract_headline_content(org: &Org, headline: &orgize::Headline) -> String {
-    // This is a simplified version that extracts basic content
-    // A production implementation would do more sophisticated processing
-
-    // For test purposes, use a simple content extraction approach
-    let title = headline.title(org);
-    let content = format!("Content for '{}'", title.raw);
-
-    content
+fn extract_headline_content(_org: &Org, _headline: &orgize::Headline) -> String {
+    String::new()
 }
 
 /// Simple function to parse a sample org-mode document (for testing/demo)
@@ -1081,28 +1095,24 @@ This is a quote.
         // Check number of headlines
         assert_eq!(doc.headlines.len(), 4);
 
-        // Check content of first headline
         let h1 = &doc.headlines[0];
-        assert_eq!(h1.title, "Headline with Content");
+        assert_eq!(h1.title.raw, "Headline with Content");
+        assert!(h1.content.contains("This is some content."));
+        assert!(h1.content.contains("It spans multiple lines."));
 
-        // With our simplified implementation, we only check that content is not empty
-        // Once we implement the full content extraction, we can use the more detailed checks
-        assert!(!h1.content.is_empty());
-
-        // Check content of second headline
         let h2 = &doc.headlines[1];
-        assert_eq!(h2.title, "Headline with List");
-        assert!(!h2.content.is_empty());
+        assert_eq!(h2.title.raw, "Headline with List");
+        assert!(h2.content.contains("Item 1"));
+        assert!(h2.content.contains("Item 2"));
 
-        // Check content of third headline
         let h3 = &doc.headlines[2];
-        assert_eq!(h3.title, "Headline with no content");
-        assert!(!h3.content.is_empty()); // Our simplistic implementation still generates content
+        assert_eq!(h3.title.raw, "Headline with no content");
+        assert!(h3.content.is_empty() || h3.content.trim().is_empty());
 
-        // Check content of fourth headline with special elements
         let h4 = &doc.headlines[3];
-        assert_eq!(h4.title, "Headline with special elements");
-        assert!(!h4.content.is_empty());
+        assert_eq!(h4.title.raw, "Headline with special elements");
+        assert!(h4.content.contains("fn hello()"));
+        assert!(h4.content.contains("This is a quote."));
     }
 
     #[test]
