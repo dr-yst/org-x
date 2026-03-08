@@ -3,964 +3,682 @@
 
 /** user-defined commands **/
 
+
 export const commands = {
-  /**
-   * Get a sample org document for testing
-   */
-  async getSampleOrg(): Promise<OrgDocument> {
+/**
+ * Get a sample org document for testing
+ */
+async getSampleOrg() : Promise<OrgDocument> {
     return await TAURI_INVOKE("get_sample_org");
-  },
-  /**
-   * Parse org document content
-   */
-  async parseOrgContent(content: string): Promise<Result<OrgDocument, string>> {
+},
+/**
+ * Parse org document content
+ */
+async parseOrgContent(content: string) : Promise<Result<OrgDocument, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("parse_org_content", { content }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Run the datetime test program
-   */
-  async runDatetimeTest(): Promise<string> {
+    return { status: "ok", data: await TAURI_INVOKE("parse_org_content", { content }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Run the datetime test program
+ */
+async runDatetimeTest() : Promise<string> {
     return await TAURI_INVOKE("run_datetime_test");
-  },
-  /**
-   * Start monitoring files based on user settings
-   */
-  async startFileMonitoring(): Promise<Result<string, string>> {
+},
+/**
+ * Start monitoring files based on user settings
+ */
+async startFileMonitoring() : Promise<Result<string, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("start_file_monitoring"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Stop file monitoring
-   */
-  async stopFileMonitoring(): Promise<Result<string, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("start_file_monitoring") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stop file monitoring
+ */
+async stopFileMonitoring() : Promise<Result<string, string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("stop_file_monitoring") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get all documents from the repository
-   */
-  async getAllDocuments(): Promise<Result<OrgDocument[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("stop_file_monitoring") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get all documents from the repository
+ */
+async getAllDocuments() : Promise<Result<OrgDocument[], string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("get_all_documents") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get document by ID
-   */
-  async getOrgDocumentById(
-    documentId: string,
-  ): Promise<Result<OrgDocument | null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_all_documents") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get document by ID
+ */
+async getOrgDocumentById(documentId: string) : Promise<Result<OrgDocument | null, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_org_document_by_id", { documentId }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get document display title by ID
-   */
-  async getOrgDocumentDisplayTitleById(
-    documentId: string,
-  ): Promise<Result<string, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_org_document_by_id", { documentId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get document display title by ID
+ */
+async getOrgDocumentDisplayTitleById(documentId: string) : Promise<Result<string, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_org_document_display_title_by_id", {
-          documentId,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get document file path by ID
-   */
-  async getOrgDocumentPathById(
-    documentId: string,
-  ): Promise<Result<string, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_org_document_display_title_by_id", { documentId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get document file path by ID
+ */
+async getOrgDocumentPathById(documentId: string) : Promise<Result<string, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_org_document_path_by_id", { documentId }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Load user settings
-   */
-  async loadUserSettings(): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_org_document_path_by_id", { documentId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Load user settings
+ */
+async loadUserSettings() : Promise<Result<UserSettings, string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("load_user_settings") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Save user settings
-   */
-  async saveUserSettings(
-    settings: UserSettings,
-  ): Promise<Result<null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("load_user_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Save user settings
+ */
+async saveUserSettings(settings: UserSettings) : Promise<Result<null, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("save_user_settings", { settings }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Add a monitored path to settings
-   */
-  async addMonitoredPath(
-    path: MonitoredPath,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("save_user_settings", { settings }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Add a monitored path to settings
+ */
+async addMonitoredPath(path: MonitoredPath) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("add_monitored_path", { path }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove a monitored path from settings
-   */
-  async removeMonitoredPath(
-    path: string,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("add_monitored_path", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove a monitored path from settings
+ */
+async removeMonitoredPath(path: string) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_monitored_path", { path }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Update a monitored path in settings
-   */
-  async updateMonitoredPath(
-    oldPath: string,
-    newPath: MonitoredPath,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("remove_monitored_path", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Update a monitored path in settings
+ */
+async updateMonitoredPath(oldPath: string, newPath: MonitoredPath) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("update_monitored_path", { oldPath, newPath }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Set whether parsing is enabled for a monitored path
-   */
-  async setPathParseEnabled(
-    path: string,
-    parseEnabled: boolean,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("update_monitored_path", { oldPath, newPath }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Set whether parsing is enabled for a monitored path
+ */
+async setPathParseEnabled(path: string, parseEnabled: boolean) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_path_parse_enabled", {
-          path,
-          parseEnabled,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Clear user settings
-   */
-  async clearUserSettings(): Promise<Result<null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("set_path_parse_enabled", { path, parseEnabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Clear user settings
+ */
+async clearUserSettings() : Promise<Result<null, string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("clear_user_settings") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Check if a file path is covered by current monitoring configuration
-   */
-  async checkPathMonitoringStatus(
-    filePath: string,
-  ): Promise<Result<boolean, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("clear_user_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Check if a file path is covered by current monitoring configuration
+ */
+async checkPathMonitoringStatus(filePath: string) : Promise<Result<boolean, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("check_path_monitoring_status", { filePath }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get TODO keywords as TodoStatus objects for UI display
-   */
-  async getTodoKeywords(): Promise<Result<TodoStatus[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("check_path_monitoring_status", { filePath }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get TODO keywords as TodoStatus objects for UI display
+ */
+async getTodoKeywords() : Promise<Result<TodoStatus[], string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("get_todo_keywords") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get current TODO keywords configuration from user settings
-   */
-  async getUserTodoKeywords(): Promise<Result<TodoKeywords, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_todo_keywords") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get current TODO keywords configuration from user settings
+ */
+async getUserTodoKeywords() : Promise<Result<TodoKeywords, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_user_todo_keywords"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Update TODO keywords in user settings
-   */
-  async updateTodoKeywords(
-    todoKeywords: TodoKeywords,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_user_todo_keywords") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Update TODO keywords in user settings
+ */
+async updateTodoKeywords(todoKeywords: TodoKeywords) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("update_todo_keywords", { todoKeywords }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Add active TODO keyword
-   */
-  async addActiveTodoKeyword(
-    keyword: string,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("update_todo_keywords", { todoKeywords }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Add active TODO keyword
+ */
+async addActiveTodoKeyword(keyword: string) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("add_active_todo_keyword", { keyword }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Add closed TODO keyword
-   */
-  async addClosedTodoKeyword(
-    keyword: string,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("add_active_todo_keyword", { keyword }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Add closed TODO keyword
+ */
+async addClosedTodoKeyword(keyword: string) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("add_closed_todo_keyword", { keyword }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove active TODO keyword by index
-   */
-  async removeActiveTodoKeyword(
-    index: number,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("add_closed_todo_keyword", { keyword }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove active TODO keyword by index
+ */
+async removeActiveTodoKeyword(index: number) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_active_todo_keyword", { index }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove closed TODO keyword by index
-   */
-  async removeClosedTodoKeyword(
-    index: number,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("remove_active_todo_keyword", { index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove closed TODO keyword by index
+ */
+async removeClosedTodoKeyword(index: number) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_closed_todo_keyword", { index }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Edit active TODO keyword by index
-   */
-  async editActiveTodoKeyword(
-    index: number,
-    newKeyword: string,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("remove_closed_todo_keyword", { index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Edit active TODO keyword by index
+ */
+async editActiveTodoKeyword(index: number, newKeyword: string) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("edit_active_todo_keyword", {
-          index,
-          newKeyword,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Edit closed TODO keyword by index
-   */
-  async editClosedTodoKeyword(
-    index: number,
-    newKeyword: string,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("edit_active_todo_keyword", { index, newKeyword }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Edit closed TODO keyword by index
+ */
+async editClosedTodoKeyword(index: number, newKeyword: string) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("edit_closed_todo_keyword", {
-          index,
-          newKeyword,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Move active TODO keyword
-   */
-  async moveActiveTodoKeyword(
-    index: number,
-    direction: number,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("edit_closed_todo_keyword", { index, newKeyword }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Move active TODO keyword
+ */
+async moveActiveTodoKeyword(index: number, direction: number) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("move_active_todo_keyword", {
-          index,
-          direction,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Move closed TODO keyword
-   */
-  async moveClosedTodoKeyword(
-    index: number,
-    direction: number,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("move_active_todo_keyword", { index, direction }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Move closed TODO keyword
+ */
+async moveClosedTodoKeyword(index: number, direction: number) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("move_closed_todo_keyword", {
-          index,
-          direction,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Reset TODO keywords to defaults
-   */
-  async resetTodoKeywordsToDefaults(): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("move_closed_todo_keyword", { index, direction }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reset TODO keywords to defaults
+ */
+async resetTodoKeywordsToDefaults() : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("reset_todo_keywords_to_defaults"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Reload all documents with updated TODO keywords settings
-   */
-  async reloadDocumentsWithSettings(): Promise<Result<string, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("reset_todo_keywords_to_defaults") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reload all documents with updated TODO keywords settings
+ */
+async reloadDocumentsWithSettings() : Promise<Result<string, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("reload_documents_with_settings"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get current custom headline properties from user settings
-   */
-  async getCustomProperties(): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("reload_documents_with_settings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get current custom headline properties from user settings
+ */
+async getCustomProperties() : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_custom_properties"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Add a custom headline property
-   */
-  async addCustomProperty(property: string): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_custom_properties") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Add a custom headline property
+ */
+async addCustomProperty(property: string) : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("add_custom_property", { property }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Edit a custom headline property by index
-   */
-  async editCustomProperty(
-    index: number,
-    newProperty: string,
-  ): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("add_custom_property", { property }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Edit a custom headline property by index
+ */
+async editCustomProperty(index: number, newProperty: string) : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("edit_custom_property", {
-          index,
-          newProperty,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove a custom headline property by index
-   */
-  async removeCustomProperty(index: number): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("edit_custom_property", { index, newProperty }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove a custom headline property by index
+ */
+async removeCustomProperty(index: number) : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_custom_property", { index }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Move a custom headline property up/down in the list
-   */
-  async moveCustomProperty(
-    index: number,
-    direction: number,
-  ): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("remove_custom_property", { index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Move a custom headline property up/down in the list
+ */
+async moveCustomProperty(index: number, direction: number) : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("move_custom_property", { index, direction }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Reset custom headline properties to empty
-   */
-  async resetCustomPropertiesToDefaults(): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("move_custom_property", { index, direction }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reset custom headline properties to empty
+ */
+async resetCustomPropertiesToDefaults() : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("reset_custom_properties_to_defaults"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get the external editor command from user settings
-   */
-  async getExternalEditorCommand(): Promise<Result<string, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("reset_custom_properties_to_defaults") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get the external editor command from user settings
+ */
+async getExternalEditorCommand() : Promise<Result<string, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_external_editor_command"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Set the external editor command in user settings
-   */
-  async setExternalEditorCommand(
-    command: string,
-  ): Promise<Result<null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_external_editor_command") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Set the external editor command in user settings
+ */
+async setExternalEditorCommand(command: string) : Promise<Result<null, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_external_editor_command", { command }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Reset the external editor command to default in user settings
-   */
-  async resetExternalEditorCommand(): Promise<Result<null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("set_external_editor_command", { command }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reset the external editor command to default in user settings
+ */
+async resetExternalEditorCommand() : Promise<Result<null, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("reset_external_editor_command"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Open a file in external editor using the configured command
-   */
-  async openFileInExternalEditor(
-    filePath: string,
-    line: number | null,
-    column: number | null,
-  ): Promise<Result<null, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("reset_external_editor_command") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Open a file in external editor using the configured command
+ */
+async openFileInExternalEditor(filePath: string, line: number | null, column: number | null) : Promise<Result<null, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("open_file_in_external_editor", {
-          filePath,
-          line,
-          column,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get table columns configuration
-   */
-  async getTableColumns(): Promise<Result<TableColumnConfig[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("open_file_in_external_editor", { filePath, line, column }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get table columns configuration
+ */
+async getTableColumns() : Promise<Result<TableColumnConfig[], string>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("get_table_columns") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Get available table columns (built-in + custom properties)
-   */
-  async getAvailableTableColumns(): Promise<Result<string[], string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_table_columns") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Get available table columns (built-in + custom properties)
+ */
+async getAvailableTableColumns() : Promise<Result<string[], string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("get_available_table_columns"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Update table columns configuration
-   */
-  async updateTableColumns(
-    tableColumns: TableColumnConfig[],
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("get_available_table_columns") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Update table columns configuration
+ */
+async updateTableColumns(tableColumns: TableColumnConfig[]) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("update_table_columns", { tableColumns }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Add table column
-   */
-  async addTableColumn(
-    column: TableColumnConfig,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("update_table_columns", { tableColumns }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Add table column
+ */
+async addTableColumn(column: TableColumnConfig) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("add_table_column", { column }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Remove table column by index
-   */
-  async removeTableColumn(
-    index: number,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("add_table_column", { column }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Remove table column by index
+ */
+async removeTableColumn(index: number) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("remove_table_column", { index }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Set table column visibility
-   */
-  async setColumnVisibility(
-    columnId: string,
-    visible: boolean,
-  ): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("remove_table_column", { index }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Set table column visibility
+ */
+async setColumnVisibility(columnId: string, visible: boolean) : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_column_visibility", {
-          columnId,
-          visible,
-        }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  /**
-   * Reset table columns to defaults
-   */
-  async resetTableColumnsToDefaults(): Promise<Result<UserSettings, string>> {
+    return { status: "ok", data: await TAURI_INVOKE("set_column_visibility", { columnId, visible }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Reset table columns to defaults
+ */
+async resetTableColumnsToDefaults() : Promise<Result<UserSettings, string>> {
     try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("reset_table_columns_to_defaults"),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-};
+    return { status: "ok", data: await TAURI_INVOKE("reset_table_columns_to_defaults") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+}
+}
 
 /** user-defined events **/
 
+
+
 /** user-defined constants **/
+
+
 
 /** user-defined types **/
 
 /**
  * Structure to represent a monitored path
  */
-export type MonitoredPath = {
-  /**
-   * The path to monitor (file or directory)
-   */
-  path: string;
-  /**
-   * Type of the path (file or directory)
-   */
-  path_type: PathType;
-  /**
-   * Whether this path should be parsed for org-mode content
-   */
-  parse_enabled: boolean;
-};
+export type MonitoredPath = { 
+/**
+ * The path to monitor (file or directory)
+ */
+path: string; 
+/**
+ * Type of the path (file or directory)
+ */
+path_type: PathType; 
+/**
+ * Whether this path should be parsed for org-mode content
+ */
+parse_enabled: boolean }
 /**
  * OrgDatetime represents a date/time in an org-mode file
  * This is similar to Orgize's Datetime but designed to be owned and serializable
  */
-export type OrgDatetime = {
-  year: number;
-  month: number;
-  day: number;
-  dayname: string;
-  hour: number | null;
-  minute: number | null;
-};
+export type OrgDatetime = { year: number; month: number; day: number; dayname: string; hour: number | null; minute: number | null }
 /**
  * Basic org-mode document structure
  */
-export type OrgDocument = {
-  id: string;
-  title: string;
-  content: string;
-  headlines: OrgHeadline[];
-  filetags: string[];
-  file_path: string;
-  properties: Partial<{ [key in string]: string }>;
-  category: string;
-  etag: string;
-  todo_config: TodoConfiguration | null;
-};
+export type OrgDocument = { id: string; title: string; content: string; headlines: OrgHeadline[]; filetags: string[]; file_path: string; properties: Partial<{ [key in string]: string }>; category: string; etag: string; todo_config: TodoConfiguration | null }
 /**
  * Basic headline structure
  */
-export type OrgHeadline = {
-  id: string;
-  document_id: string;
-  title: OrgTitle;
-  content: string;
-  children: OrgHeadline[];
-  etag: string;
-};
-export type OrgPlanning = {
-  deadline: OrgTimestamp | null;
-  scheduled: OrgTimestamp | null;
-  closed: OrgTimestamp | null;
-};
+export type OrgHeadline = { id: string; document_id: string; title: OrgTitle; content: string; children: OrgHeadline[]; etag: string }
+export type OrgPlanning = { deadline: OrgTimestamp | null; scheduled: OrgTimestamp | null; closed: OrgTimestamp | null }
 /**
  * OrgTimestamp represents an org-mode timestamp
  */
-export type OrgTimestamp =
-  | {
-      Active: {
-        start: OrgDatetime;
-        repeater: string | null;
-        delay: string | null;
-      };
-    }
-  | {
-      Inactive: {
-        start: OrgDatetime;
-        repeater: string | null;
-        delay: string | null;
-      };
-    }
-  | {
-      ActiveRange: {
-        start: OrgDatetime;
-        end: OrgDatetime;
-        repeater: string | null;
-        delay: string | null;
-      };
-    }
-  | {
-      InactiveRange: {
-        start: OrgDatetime;
-        end: OrgDatetime;
-        repeater: string | null;
-        delay: string | null;
-      };
-    }
-  | { Diary: { value: string } };
+export type OrgTimestamp = { Active: { start: OrgDatetime; repeater: string | null; delay: string | null } } | { Inactive: { start: OrgDatetime; repeater: string | null; delay: string | null } } | { ActiveRange: { start: OrgDatetime; end: OrgDatetime; repeater: string | null; delay: string | null } } | { InactiveRange: { start: OrgDatetime; end: OrgDatetime; repeater: string | null; delay: string | null } } | { Diary: { value: string } }
 /**
  * Represents a headline title in org-mode
  */
-export type OrgTitle = {
-  raw: string;
-  level: number;
-  priority: string | null;
-  tags: string[];
-  todo_keyword: string | null;
-  properties: Partial<{ [key in string]: string }>;
-  planning: OrgPlanning | null;
-};
+export type OrgTitle = { raw: string; level: number; priority: string | null; tags: string[]; todo_keyword: string | null; properties: Partial<{ [key in string]: string }>; planning: OrgPlanning | null }
 /**
  * Type of path being monitored
  */
-export type PathType = "File" | "Directory";
-export type StateType = "Active" | "Closed";
+export type PathType = "File" | "Directory"
+export type StateType = "Active" | "Closed"
 /**
  * Configuration for table columns
  */
-export type TableColumnConfig = {
-  /**
-   * Column identifier (e.g. "status", "title", "property:Effort")
-   */
-  id: string;
-  /**
-   * Whether the column is visible
-   */
-  visible: boolean;
-  /**
-   * Display order of the column
-   */
-  order: number;
-};
-export type TodoConfiguration = {
-  sequences: TodoSequence[];
-  default_sequence: string;
-};
+export type TableColumnConfig = { 
+/**
+ * Column identifier (e.g. "status", "title", "property:Effort")
+ */
+id: string; 
+/**
+ * Whether the column is visible
+ */
+visible: boolean; 
+/**
+ * Display order of the column
+ */
+order: number }
+export type TodoConfiguration = { sequences: TodoSequence[]; default_sequence: string }
 /**
  * Configuration for TODO keywords
  */
-export type TodoKeywords = {
-  /**
-   * Active (open) TODO keywords
-   */
-  active: string[];
-  /**
-   * Closed (completed) TODO keywords
-   */
-  closed: string[];
-};
-export type TodoSequence = { name: string; statuses: TodoStatus[] };
-export type TodoStatus = {
-  keyword: string;
-  state_type: StateType;
-  order: number;
-  color: string | null;
-};
+export type TodoKeywords = { 
+/**
+ * Active (open) TODO keywords
+ */
+active: string[]; 
+/**
+ * Closed (completed) TODO keywords
+ */
+closed: string[] }
+export type TodoSequence = { name: string; statuses: TodoStatus[] }
+export type TodoStatus = { keyword: string; state_type: StateType; order: number; color: string | null }
 /**
  * Main user settings structure
  */
-export type UserSettings = {
-  /**
-   * List of monitored paths
-   */
-  monitored_paths: MonitoredPath[];
-  /**
-   * TODO keyword configuration
-   */
-  todo_keywords: TodoKeywords;
-  /**
-   * Custom headline properties
-   */
-  custom_properties: string[];
-  /**
-   * Command to open files in an external editor
-   */
-  external_editor_command: string;
-  /**
-   * Table column configuration
-   */
-  table_columns: TableColumnConfig[];
-};
+export type UserSettings = { 
+/**
+ * List of monitored paths
+ */
+monitored_paths: MonitoredPath[]; 
+/**
+ * TODO keyword configuration
+ */
+todo_keywords: TodoKeywords; 
+/**
+ * Custom headline properties
+ */
+custom_properties: string[]; 
+/**
+ * Command to open files in an external editor
+ */
+external_editor_command: string; 
+/**
+ * Table column configuration
+ */
+table_columns: TableColumnConfig[] }
 
 /** tauri-specta globals **/
 
 import {
-  invoke as TAURI_INVOKE,
-  Channel as TAURI_CHANNEL,
+	invoke as TAURI_INVOKE,
+	Channel as TAURI_CHANNEL,
 } from "@tauri-apps/api/core";
 import * as TAURI_API_EVENT from "@tauri-apps/api/event";
 import { type WebviewWindow as __WebviewWindow__ } from "@tauri-apps/api/webviewWindow";
 
 type __EventObj__<T> = {
-  listen: (
-    cb: TAURI_API_EVENT.EventCallback<T>,
-  ) => ReturnType<typeof TAURI_API_EVENT.listen<T>>;
-  once: (
-    cb: TAURI_API_EVENT.EventCallback<T>,
-  ) => ReturnType<typeof TAURI_API_EVENT.once<T>>;
-  emit: null extends T
-    ? (payload?: T) => ReturnType<typeof TAURI_API_EVENT.emit>
-    : (payload: T) => ReturnType<typeof TAURI_API_EVENT.emit>;
+	listen: (
+		cb: TAURI_API_EVENT.EventCallback<T>,
+	) => ReturnType<typeof TAURI_API_EVENT.listen<T>>;
+	once: (
+		cb: TAURI_API_EVENT.EventCallback<T>,
+	) => ReturnType<typeof TAURI_API_EVENT.once<T>>;
+	emit: null extends T
+		? (payload?: T) => ReturnType<typeof TAURI_API_EVENT.emit>
+		: (payload: T) => ReturnType<typeof TAURI_API_EVENT.emit>;
 };
 
 export type Result<T, E> =
-  | { status: "ok"; data: T }
-  | { status: "error"; error: E };
+	| { status: "ok"; data: T }
+	| { status: "error"; error: E };
 
 function __makeEvents__<T extends Record<string, any>>(
-  mappings: Record<keyof T, string>,
+	mappings: Record<keyof T, string>,
 ) {
-  return new Proxy(
-    {} as unknown as {
-      [K in keyof T]: __EventObj__<T[K]> & {
-        (handle: __WebviewWindow__): __EventObj__<T[K]>;
-      };
-    },
-    {
-      get: (_, event) => {
-        const name = mappings[event as keyof T];
+	return new Proxy(
+		{} as unknown as {
+			[K in keyof T]: __EventObj__<T[K]> & {
+				(handle: __WebviewWindow__): __EventObj__<T[K]>;
+			};
+		},
+		{
+			get: (_, event) => {
+				const name = mappings[event as keyof T];
 
-        return new Proxy((() => {}) as any, {
-          apply: (_, __, [window]: [__WebviewWindow__]) => ({
-            listen: (arg: any) => window.listen(name, arg),
-            once: (arg: any) => window.once(name, arg),
-            emit: (arg: any) => window.emit(name, arg),
-          }),
-          get: (_, command: keyof __EventObj__<any>) => {
-            switch (command) {
-              case "listen":
-                return (arg: any) => TAURI_API_EVENT.listen(name, arg);
-              case "once":
-                return (arg: any) => TAURI_API_EVENT.once(name, arg);
-              case "emit":
-                return (arg: any) => TAURI_API_EVENT.emit(name, arg);
-            }
-          },
-        });
-      },
-    },
-  );
+				return new Proxy((() => {}) as any, {
+					apply: (_, __, [window]: [__WebviewWindow__]) => ({
+						listen: (arg: any) => window.listen(name, arg),
+						once: (arg: any) => window.once(name, arg),
+						emit: (arg: any) => window.emit(name, arg),
+					}),
+					get: (_, command: keyof __EventObj__<any>) => {
+						switch (command) {
+							case "listen":
+								return (arg: any) => TAURI_API_EVENT.listen(name, arg);
+							case "once":
+								return (arg: any) => TAURI_API_EVENT.once(name, arg);
+							case "emit":
+								return (arg: any) => TAURI_API_EVENT.emit(name, arg);
+						}
+					},
+				});
+			},
+		},
+	);
 }
