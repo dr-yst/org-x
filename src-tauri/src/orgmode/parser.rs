@@ -473,15 +473,42 @@ fn extract_headlines_with_content(org: &Org, content: &str) -> Vec<OrgHeadline> 
 
 fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org: &Org) -> String {
     let title = headline.title(org);
-    let headline_line = format!("{} {}", "*".repeat(headline.level()), title.raw);
-
-    if let Some(start_pos) = content.find(&headline_line) {
-        let after_headline = &content[start_pos + headline_line.len()..];
+    
+    // Build the full headline line pattern
+    let mut headline_pattern = "*".repeat(headline.level());
+    
+    // Add TODO keyword if present
+    if let Some(ref keyword) = title.keyword {
+        headline_pattern.push_str(" ");
+        headline_pattern.push_str(keyword);
+    }
+    
+    // Add priority if present
+    if let Some(priority) = title.priority {
+        headline_pattern.push_str(&format!(" [#{}]", priority));
+    }
+    
+    // Add the title text
+    headline_pattern.push_str(" ");
+    headline_pattern.push_str(&title.raw);
+    
+    // Try to find the headline in the content
+    if let Some(start_pos) = content.find(&headline_pattern) {
+        let after_headline = &content[start_pos + headline_pattern.len()..];
         let end_pos = find_next_headline_or_end(after_headline, headline.level());
         let section_content = &after_headline[..end_pos];
         clean_content(section_content)
     } else {
-        String::new()
+        // Fallback: try without priority (sometimes orgize normalizes it)
+        let simple_pattern = format!("{} {}", "*".repeat(headline.level()), title.raw);
+        if let Some(start_pos) = content.find(&simple_pattern) {
+            let after_headline = &content[start_pos + simple_pattern.len()..];
+            let end_pos = find_next_headline_or_end(after_headline, headline.level());
+            let section_content = &after_headline[..end_pos];
+            clean_content(section_content)
+        } else {
+            String::new()
+        }
     }
 }
 
@@ -1113,6 +1140,56 @@ This is a quote.
         assert_eq!(h4.title.raw, "Headline with special elements");
         assert!(h4.content.contains("fn hello()"));
         assert!(h4.content.contains("This is a quote."));
+    }
+
+    #[test]
+    fn test_task_under_note_content() {
+        let content = r#"#+TITLE: Task Layer Test
+
+* Note
+** TODO Task under note
+   This task should be shown in Task List mode because its parent is a note (not a task).
+
+* TODO Top-level task
+  This task should be shown in Task List mode because it's at the top level.
+"#;
+
+        let doc = parse_org_document(content, None).unwrap();
+        
+        // Should have 2 top-level headlines
+        assert_eq!(doc.headlines.len(), 2);
+        
+        // First headline: Note
+        let note = &doc.headlines[0];
+        assert_eq!(note.title.raw, "Note");
+        assert!(note.children.len() > 0);
+        
+        // Child of Note: Task under note
+        let task_under_note = &note.children[0];
+        assert_eq!(task_under_note.title.raw, "Task under note");
+        assert_eq!(task_under_note.title.todo_keyword, Some("TODO".to_string()));
+        
+        // This is the key test - the content should be extracted
+        assert!(
+            task_under_note.content.contains("This task should be shown"),
+            "Expected content to contain 'This task should be shown', but got: '{}'",
+            task_under_note.content
+        );
+        assert!(
+            task_under_note.content.contains("parent is a note"),
+            "Expected content to contain 'parent is a note', but got: '{}'",
+            task_under_note.content
+        );
+        
+        // Second headline: Top-level task
+        let top_level_task = &doc.headlines[1];
+        assert_eq!(top_level_task.title.raw, "Top-level task");
+        assert_eq!(top_level_task.title.todo_keyword, Some("TODO".to_string()));
+        assert!(
+            top_level_task.content.contains("top level"),
+            "Expected content to contain 'top level', but got: '{}'",
+            top_level_task.content
+        );
     }
 
     #[test]
