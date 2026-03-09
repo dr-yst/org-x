@@ -472,14 +472,20 @@ fn extract_headlines_with_content(org: &Org, content: &str) -> Vec<OrgHeadline> 
 }
 
 fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org: &Org) -> String {
+    // First check if this headline has a section using orgize
+    if headline.section_node().is_none() {
+        return String::new();
+    }
+    
     let title = headline.title(org);
+    let headline_level = headline.level();
     
     // Build the full headline line pattern
-    let mut headline_pattern = "*".repeat(headline.level());
+    let mut headline_pattern = "*".repeat(headline_level);
     
     // Add TODO keyword if present
     if let Some(ref keyword) = title.keyword {
-        headline_pattern.push_str(" ");
+        headline_pattern.push(' ');
         headline_pattern.push_str(keyword);
     }
     
@@ -489,40 +495,37 @@ fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org:
     }
     
     // Add the title text
-    headline_pattern.push_str(" ");
+    headline_pattern.push(' ');
     headline_pattern.push_str(&title.raw);
     
-    // Try to find the headline in the content
-    if let Some(start_pos) = content.find(&headline_pattern) {
-        let after_headline = &content[start_pos + headline_pattern.len()..];
-        let end_pos = find_next_headline_or_end(after_headline, headline.level());
-        let section_content = &after_headline[..end_pos];
-        clean_content(section_content)
+    // Find the headline position
+    let after_headline = if let Some(start_pos) = content.find(&headline_pattern) {
+        &content[start_pos + headline_pattern.len()..]
     } else {
-        // Fallback: try without priority (sometimes orgize normalizes it)
-        let simple_pattern = format!("{} {}", "*".repeat(headline.level()), title.raw);
+        // Fallback: try without priority
+        let simple_pattern = format!("{} {}", "*".repeat(headline_level), title.raw);
         if let Some(start_pos) = content.find(&simple_pattern) {
-            let after_headline = &content[start_pos + simple_pattern.len()..];
-            let end_pos = find_next_headline_or_end(after_headline, headline.level());
-            let section_content = &after_headline[..end_pos];
-            clean_content(section_content)
+            &content[start_pos + simple_pattern.len()..]
         } else {
-            String::new()
+            return String::new();
         }
-    }
-}
-
-fn find_next_headline_or_end(content: &str, current_level: usize) -> usize {
-    for (i, line) in content.lines().enumerate() {
-        if line.trim_start().starts_with("*") {
-            let stars = line.chars().take_while(|&c| c == '*').count();
-            if stars > 0 && stars <= current_level {
-                let total_chars: usize = content.lines().take(i).map(|l| l.len() + 1).sum();
-                return total_chars.saturating_sub(1);
+    };
+    
+    // Extract content until we hit any headline (child, sibling, etc.)
+    let mut content_lines = Vec::new();
+    for line in after_headline.lines() {
+        let trimmed = line.trim_start();
+        // Check if this line starts a headline (asterisks followed by space)
+        if let Some(rest) = trimmed.strip_prefix("*") {
+            let asterisk_count = 1 + rest.chars().take_while(|&c| c == '*').count();
+            if rest.chars().nth(asterisk_count - 1).map_or(false, |c| c == ' ') {
+                break;
             }
         }
+        content_lines.push(line);
     }
-    content.len()
+    
+    clean_content(&content_lines.join("\n"))
 }
 
 fn clean_content(content: &str) -> String {
