@@ -767,16 +767,9 @@ fn extract_headline_properties(org: &Org, headline: &orgize::Headline) -> HashMa
     properties
 }
 
-/// Extract content from a headline
-fn extract_headline_content(org: &Org, headline: &orgize::Headline) -> String {
-    // This is a simplified version that extracts basic content
-    // A production implementation would do more sophisticated processing
-
-    // For test purposes, use a simple content extraction approach
-    let title = headline.title(org);
-    let content = format!("Content for '{}'", title.raw);
-
-    content
+fn extract_headline_content(_org: &Org, headline: &orgize::Headline) -> String {
+    let title = headline.title(_org);
+    format!("Content for '{}'", title.raw)
 }
 
 /// Simple function to parse a sample org-mode document (for testing/demo)
@@ -1050,59 +1043,77 @@ Second level 1 content
     }
 
     #[test]
-    fn test_headline_content() {
+    fn test_headline_content_extraction() {
         let content = r#"#+TITLE: Content Test
 
 * Headline with Content
 This is some content.
 It spans multiple lines.
 
-* Headline with List
-- Item 1
-- Item 2
-  - Subitem 2.1
-
 * Headline with no content
 
-* Headline with special elements
-#+BEGIN_SRC rust
-fn hello() {
-    println!("Hello, world!");
-}
-#+END_SRC
-
-#+BEGIN_QUOTE
-This is a quote.
-#+END_QUOTE
+* Another Headline
+More content here.
 "#;
 
         let doc = parse_org_document(content, None).unwrap();
 
-        // Check number of headlines
-        assert_eq!(doc.headlines.len(), 4);
+        assert_eq!(doc.headlines.len(), 3);
 
-        // Check content of first headline
         let h1 = &doc.headlines[0];
-        assert_eq!(h1.title, "Headline with Content");
+        assert_eq!(h1.title.raw, "Headline with Content");
+        assert!(h1.content.contains("This is some content."));
+        assert!(h1.content.contains("It spans multiple lines."));
 
-        // With our simplified implementation, we only check that content is not empty
-        // Once we implement the full content extraction, we can use the more detailed checks
-        assert!(!h1.content.is_empty());
-
-        // Check content of second headline
         let h2 = &doc.headlines[1];
-        assert_eq!(h2.title, "Headline with List");
-        assert!(!h2.content.is_empty());
+        assert_eq!(h2.title.raw, "Headline with no content");
+        assert!(h2.content.is_empty() || h2.content.trim().is_empty());
 
-        // Check content of third headline
         let h3 = &doc.headlines[2];
-        assert_eq!(h3.title, "Headline with no content");
-        assert!(!h3.content.is_empty()); // Our simplistic implementation still generates content
+        assert_eq!(h3.title.raw, "Another Headline");
+        assert!(h3.content.contains("More content here."));
+    }
 
-        // Check content of fourth headline with special elements
-        let h4 = &doc.headlines[3];
-        assert_eq!(h4.title, "Headline with special elements");
-        assert!(!h4.content.is_empty());
+    #[test]
+    fn test_issue_59_content_in_detail_view() {
+        let content = r#"#+TITLE: Task Layer Test
+
+* Note
+** TODO Task under note
+   This task should be shown in Task List mode because its parent is a note (not a task).
+
+* TODO Top-level task
+  This task should be shown in Task List mode because it's at the top level.
+"#;
+
+        let doc = parse_org_document(content, None).unwrap();
+
+        assert_eq!(doc.headlines.len(), 2);
+
+        let note = &doc.headlines[0];
+        assert_eq!(note.title.raw, "Note");
+        assert!(note.children.len() > 0);
+
+        let task_under_note = &note.children[0];
+        assert_eq!(task_under_note.title.raw, "TODO Task under note");
+        assert!(
+            task_under_note.content.contains("This task should be shown"),
+            "Expected content to contain 'This task should be shown', but got: {}",
+            task_under_note.content
+        );
+        assert!(
+            task_under_note.content.contains("parent is a note"),
+            "Expected content to contain 'parent is a note', but got: {}",
+            task_under_note.content
+        );
+
+        let top_level_task = &doc.headlines[1];
+        assert_eq!(top_level_task.title.raw, "TODO Top-level task");
+        assert!(
+            top_level_task.content.contains("top level"),
+            "Expected content to contain 'top level', but got: {}",
+            top_level_task.content
+        );
     }
 
     #[test]
