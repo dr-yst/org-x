@@ -53,8 +53,73 @@ export const displayModes: {
   { value: "headline-list", label: "Headline List", shortcut: "⌘2" },
 ];
 
-// Filter options constant
+// Filter options constant (legacy date filter - kept for backward compatibility)
 export const filterOptions = ["all", "today", "week", "overdue"];
+
+// Sidebar filter state types
+export type TodoFilterValue = "all" | "todo" | "done" | "in-progress" | "waiting";
+export type DateFilterValue = "all" | "today" | "this-week" | "this-month" | "overdue" | "scheduled" | "no-date";
+
+// Sidebar filter state stores
+export const todoFilter = writable<TodoFilterValue>("all");
+export const dateFilter = writable<DateFilterValue>("all");
+export const searchQuery = writable("");
+export const selectedTags = writable<string[]>([]);
+export const selectedCategories = writable<string[]>([]);
+
+// Available filter options for sidebar
+export const todoFilterOptions: { value: TodoFilterValue; label: string }[] = [
+  { value: "all", label: "All Items" },
+  { value: "todo", label: "TODO" },
+  { value: "done", label: "DONE" },
+  { value: "in-progress", label: "IN-PROGRESS" },
+  { value: "waiting", label: "WAITING" },
+];
+
+export const dateFilterOptions: { value: DateFilterValue; label: string }[] = [
+  { value: "all", label: "All Dates" },
+  { value: "today", label: "Today" },
+  { value: "this-week", label: "This Week" },
+  { value: "this-month", label: "This Month" },
+  { value: "overdue", label: "Overdue" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "no-date", label: "No Date" },
+];
+
+// Filter setter functions
+export function setTodoFilter(value: TodoFilterValue): void {
+  todoFilter.set(value);
+  focusedIndex.set(-1);
+}
+
+export function setDateFilter(value: DateFilterValue): void {
+  dateFilter.set(value);
+  focusedIndex.set(-1);
+}
+
+export function setSearchQuery(value: string): void {
+  searchQuery.set(value);
+  focusedIndex.set(-1);
+}
+
+export function setTags(tags: string[]): void {
+  selectedTags.set(tags);
+  focusedIndex.set(-1);
+}
+
+export function setCategories(categories: string[]): void {
+  selectedCategories.set(categories);
+  focusedIndex.set(-1);
+}
+
+export function clearAllFilters(): void {
+  todoFilter.set("all");
+  dateFilter.set("all");
+  searchQuery.set("");
+  selectedTags.set([]);
+  selectedCategories.set([]);
+  focusedIndex.set(-1);
+}
 
 // Derived state
 export const documentMap = derived(
@@ -100,81 +165,164 @@ export const displayModeFilteredHeadlines = derived(
   },
 );
 
-export const filteredHeadlines = derived(
-  [displayModeFilteredHeadlines, activeFilterIndex],
-  ([$headlines, $filterIndex]) => {
-    const filterType = filterOptions[$filterIndex];
+// Helper function to check if a date matches the filter
+function matchesDateFilter(
+  headline: OrgHeadline,
+  filter: DateFilterValue,
+): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    switch (filterType) {
-      case "today":
-        return $headlines.filter((headline) => {
-          const scheduled = headline.title.planning?.scheduled;
-          if (!scheduled) return false;
+  switch (filter) {
+    case "all":
+      return true;
 
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          if ("Active" in scheduled) {
-            const schedDate = new Date(
-              scheduled.Active.start.year,
-              scheduled.Active.start.month - 1,
-              scheduled.Active.start.day,
-            );
-            schedDate.setHours(0, 0, 0, 0);
-            return schedDate.getTime() === today.getTime();
-          }
-
-          return false;
-        });
-
-      case "week":
-        return $headlines.filter((headline) => {
-          const scheduled = headline.title.planning?.scheduled;
-          if (!scheduled) return false;
-
-          const today = new Date();
-          const weekFromNow = new Date(
-            today.getTime() + 7 * 24 * 60 * 60 * 1000,
-          );
-          today.setHours(0, 0, 0, 0);
-          weekFromNow.setHours(23, 59, 59, 999);
-
-          if ("Active" in scheduled) {
-            const schedDate = new Date(
-              scheduled.Active.start.year,
-              scheduled.Active.start.month - 1,
-              scheduled.Active.start.day,
-            );
-            return schedDate >= today && schedDate <= weekFromNow;
-          }
-
-          return false;
-        });
-
-      case "overdue":
-        return $headlines.filter((headline) => {
-          const deadline = headline.title.planning?.deadline;
-          if (!deadline) return false;
-
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          if ("Active" in deadline) {
-            const deadlineDate = new Date(
-              deadline.Active.start.year,
-              deadline.Active.start.month - 1,
-              deadline.Active.start.day,
-            );
-            deadlineDate.setHours(23, 59, 59, 999);
-            return deadlineDate < today;
-          }
-
-          return false;
-        });
-
-      default: // "all"
-        return $headlines;
+    case "today": {
+      const scheduled = headline.title.planning?.scheduled;
+      if (!scheduled || !("Active" in scheduled)) return false;
+      const schedDate = new Date(
+        scheduled.Active.start.year,
+        scheduled.Active.start.month - 1,
+        scheduled.Active.start.day,
+      );
+      schedDate.setHours(0, 0, 0, 0);
+      return schedDate.getTime() === today.getTime();
     }
+
+    case "this-week": {
+      const scheduled = headline.title.planning?.scheduled;
+      if (!scheduled || !("Active" in scheduled)) return false;
+      const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      weekFromNow.setHours(23, 59, 59, 999);
+      const schedDate = new Date(
+        scheduled.Active.start.year,
+        scheduled.Active.start.month - 1,
+        scheduled.Active.start.day,
+      );
+      return schedDate >= today && schedDate <= weekFromNow;
+    }
+
+    case "this-month": {
+      const scheduled = headline.title.planning?.scheduled;
+      if (!scheduled || !("Active" in scheduled)) return false;
+      const monthFromNow = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        today.getDate(),
+      );
+      monthFromNow.setHours(23, 59, 59, 999);
+      const schedDate = new Date(
+        scheduled.Active.start.year,
+        scheduled.Active.start.month - 1,
+        scheduled.Active.start.day,
+      );
+      return schedDate >= today && schedDate <= monthFromNow;
+    }
+
+    case "overdue": {
+      const deadline = headline.title.planning?.deadline;
+      if (!deadline || !("Active" in deadline)) return false;
+      const deadlineDate = new Date(
+        deadline.Active.start.year,
+        deadline.Active.start.month - 1,
+        deadline.Active.start.day,
+      );
+      deadlineDate.setHours(23, 59, 59, 999);
+      return deadlineDate < today;
+    }
+
+    case "scheduled":
+      return headline.title.planning?.scheduled !== null;
+
+    case "no-date":
+      return (
+        headline.title.planning?.scheduled === null &&
+        headline.title.planning?.deadline === null
+      );
+
+    default:
+      return true;
+  }
+}
+
+// Helper function to check if a headline matches the TODO filter
+function matchesTodoFilter(
+  headline: OrgHeadline,
+  filter: TodoFilterValue,
+): boolean {
+  if (filter === "all") return true;
+
+  const todoKeyword = headline.title.todo_keyword;
+  if (!todoKeyword) return false;
+
+  const keyword = todoKeyword.toLowerCase();
+
+  switch (filter) {
+    case "todo":
+      return keyword === "todo";
+    case "done":
+      return keyword === "done";
+    case "in-progress":
+      return keyword === "in-progress" || keyword === "in_progress";
+    case "waiting":
+      return keyword === "waiting";
+    default:
+      return true;
+  }
+}
+
+// Helper function to check if a headline matches the search query
+function matchesSearchQuery(headline: OrgHeadline, query: string): boolean {
+  if (!query || query.trim() === "") return true;
+
+  const lowerQuery = query.toLowerCase();
+  const titleMatch = headline.title.raw.toLowerCase().includes(lowerQuery);
+  const contentMatch = headline.content.toLowerCase().includes(lowerQuery);
+
+  return titleMatch || contentMatch;
+}
+
+// Helper function to check if a headline matches the selected tags
+function matchesTags(headline: OrgHeadline, tags: string[]): boolean {
+  if (tags.length === 0) return true;
+  return tags.some((tag) => headline.title.tags.includes(tag));
+}
+
+// Helper function to check if a headline matches the selected categories
+function matchesCategories(headline: OrgHeadline, categories: string[]): boolean {
+  if (categories.length === 0) return true;
+  const category = headline.title.properties["CATEGORY"];
+  return category !== undefined && categories.includes(category);
+}
+
+export const filteredHeadlines = derived(
+  [
+    displayModeFilteredHeadlines,
+    todoFilter,
+    dateFilter,
+    searchQuery,
+    selectedTags,
+    selectedCategories,
+  ],
+  ([$headlines, $todoFilter, $dateFilter, $searchQuery, $selectedTags, $selectedCategories]) => {
+    return $headlines.filter((headline) => {
+      // Apply TODO filter
+      if (!matchesTodoFilter(headline, $todoFilter)) return false;
+
+      // Apply date filter
+      if (!matchesDateFilter(headline, $dateFilter)) return false;
+
+      // Apply search query
+      if (!matchesSearchQuery(headline, $searchQuery)) return false;
+
+      // Apply tags filter
+      if (!matchesTags(headline, $selectedTags)) return false;
+
+      // Apply categories filter
+      if (!matchesCategories(headline, $selectedCategories)) return false;
+
+      return true;
+    });
   },
 );
 
@@ -496,6 +644,15 @@ const listViewStore = {
   headlineCount: { subscribe: headlineCount.subscribe },
   displayMode: { subscribe: displayMode.subscribe },
   filterOptions,
+  // New sidebar filter stores
+  todoFilter: { subscribe: todoFilter.subscribe },
+  dateFilter: { subscribe: dateFilter.subscribe },
+  searchQuery: { subscribe: searchQuery.subscribe },
+  selectedTags: { subscribe: selectedTags.subscribe },
+  selectedCategories: { subscribe: selectedCategories.subscribe },
+  todoFilterOptions,
+  dateFilterOptions,
+  // Actions
   refresh,
   setFilter,
   cycleFilter,
@@ -510,6 +667,13 @@ const listViewStore = {
   handleQuickAction,
   exposeGlobalRefresh,
   triggerRefresh,
+  // New filter actions
+  setTodoFilter,
+  setDateFilter,
+  setSearchQuery,
+  setTags,
+  setCategories,
+  clearAllFilters,
 };
 
 export default listViewStore;

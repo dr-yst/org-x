@@ -14,6 +14,21 @@
         displayModes,
         setDisplayMode,
         type DisplayMode,
+        // Filter stores
+        todoFilter,
+        dateFilter,
+        searchQuery,
+        selectedTags,
+        selectedCategories,
+        // Filter actions
+        setTodoFilter,
+        setDateFilter,
+        setSearchQuery,
+        setTags,
+        setCategories,
+        clearAllFilters,
+        // Documents store for extracting tags/categories
+        documents,
     } from "$lib/viewmodels/homeview.store";
     import { Settings, Filter, FolderOpen, List } from "@lucide/svelte";
 
@@ -22,6 +37,32 @@
     let settings: UserSettings | null = $state(null);
     let loading = $state(false);
     let error: string | null = $state(null);
+
+    // Extract available tags and categories from documents
+    let availableTags = $derived(() => {
+        const tags = new Set<string>();
+        for (const doc of $documents) {
+            for (const headline of doc.headlines) {
+                for (const tag of headline.title.tags) {
+                    tags.add(tag);
+                }
+            }
+        }
+        return Array.from(tags).sort();
+    });
+
+    let availableCategories = $derived(() => {
+        const categories = new Set<string>();
+        for (const doc of $documents) {
+            for (const headline of doc.headlines) {
+                const category = headline.title.properties["CATEGORY"];
+                if (category) {
+                    categories.add(category);
+                }
+            }
+        }
+        return Array.from(categories).sort();
+    });
 
     onMount(async () => {
         await loadSettings();
@@ -54,6 +95,31 @@
             );
             await (window as any).refreshListView();
         }
+    }
+
+    // Filter event handlers
+    function handleTodoFilterChange(event: CustomEvent<string>) {
+        setTodoFilter(event.detail as typeof $todoFilter);
+    }
+
+    function handleDateFilterChange(event: CustomEvent<string>) {
+        setDateFilter(event.detail as typeof $dateFilter);
+    }
+
+    function handleSearchQueryChange(event: CustomEvent<string>) {
+        setSearchQuery(event.detail);
+    }
+
+    function handleTagsChange(event: CustomEvent<string[]>) {
+        setTags(event.detail);
+    }
+
+    function handleCategoriesChange(event: CustomEvent<string[]>) {
+        setCategories(event.detail);
+    }
+
+    function handleClearAll() {
+        clearAllFilters();
     }
 </script>
 
@@ -161,7 +227,21 @@
                         Filters
                     </Sidebar.GroupLabel>
                     <Sidebar.GroupContent class="pl-6">
-                        <FilterSection />
+                        <FilterSection
+                            todoFilter={$todoFilter}
+                            dateFilter={$dateFilter}
+                            searchQuery={$searchQuery}
+                            selectedTags={$selectedTags}
+                            selectedCategories={$selectedCategories}
+                            availableTags={availableTags()}
+                            availableCategories={availableCategories()}
+                            on:todoFilterChange={handleTodoFilterChange}
+                            on:dateFilterChange={handleDateFilterChange}
+                            on:searchQueryChange={handleSearchQueryChange}
+                            on:tagsChange={handleTagsChange}
+                            on:categoriesChange={handleCategoriesChange}
+                            on:clearAll={handleClearAll}
+                        />
                     </Sidebar.GroupContent>
                 </Sidebar.Group>
             {/if}
