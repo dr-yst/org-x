@@ -155,7 +155,7 @@ pub async fn parse_org_document_with_settings(
 
     // Extract headlines
     println!("Extracting headlines");
-    let mut headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines_with_content(&org, content);
     println!("Headlines extracted: {} headlines", headlines.len());
 
     // Post-process headlines to detect custom TODO keywords with spaces
@@ -264,7 +264,7 @@ pub fn parse_org_document_with_keywords(
 
     // Extract headlines
     println!("Extracting headlines");
-    let mut headlines = extract_headlines(&org);
+    let mut headlines = extract_headlines_with_content(&org, content);
     println!("Headlines extracted: {} headlines", headlines.len());
 
     // Post-process headlines to detect custom TODO keywords with spaces
@@ -466,25 +466,98 @@ fn extract_todo_configuration(
     })
 }
 
-/// Function to extract headlines with proper hierarchy
-fn extract_headlines(org: &Org) -> Vec<OrgHeadline> {
-    // First, get all headlines in a flat list
-    println!("Starting extract_headlines");
+/// Function to extract headlines with proper hierarchy and content
+fn extract_headlines_with_content(org: &Org, content: &str) -> Vec<OrgHeadline> {
+    println!("Starting extract_headlines_with_content");
     let mut all_headlines = Vec::new();
 
-    // Process each headline and extract information
     for headline in org.headlines() {
         println!("Processing headline: {}", headline.title(org).raw);
-        let headline_obj = extract_headline(org, headline);
+        let mut headline_obj = extract_headline(org, headline);
+        headline_obj.content = extract_content_for_headline(content, &headline, org);
         all_headlines.push(headline_obj);
     }
     println!("Extracted {} headlines in flat list", all_headlines.len());
 
-    // Now build the hierarchy
     println!("Building headline hierarchy");
     let result = build_headline_hierarchy(all_headlines);
     println!("Hierarchy built with {} root headlines", result.len());
     result
+}
+
+fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org: &Org) -> String {
+    if headline.section_node().is_none() {
+        return String::new();
+    }
+    
+    let title = headline.title(org);
+    let headline_level = headline.level();
+    
+    let mut headline_pattern = "*".repeat(headline_level);
+    
+    if let Some(ref keyword) = title.keyword {
+        headline_pattern.push(' ');
+        headline_pattern.push_str(keyword);
+    }
+    
+    if let Some(priority) = title.priority {
+        headline_pattern.push_str(&format!(" [#{}]", priority));
+    }
+    
+    headline_pattern.push(' ');
+    headline_pattern.push_str(&title.raw);
+    
+    let after_headline = if let Some(start_pos) = content.find(&headline_pattern) {
+        &content[start_pos + headline_pattern.len()..]
+    } else {
+        let simple_pattern = format!("{} {}", "*".repeat(headline_level), title.raw);
+        if let Some(start_pos) = content.find(&simple_pattern) {
+            &content[start_pos + simple_pattern.len()..]
+        } else {
+            return String::new();
+        }
+    };
+    
+    let mut content_lines = Vec::new();
+    let mut in_properties_drawer = false;
+    
+    for line in after_headline.lines() {
+        let trimmed = line.trim_start();
+        
+        if let Some(rest) = trimmed.strip_prefix("*") {
+            let asterisk_count = 1 + rest.chars().take_while(|&c| c == '*').count();
+            if rest.chars().nth(asterisk_count - 1).map_or(false, |c| c == ' ') {
+                break;
+            }
+        }
+        
+        if trimmed == ":PROPERTIES:" {
+            in_properties_drawer = true;
+            continue;
+        }
+        if trimmed == ":END:" && in_properties_drawer {
+            in_properties_drawer = false;
+            continue;
+        }
+        if in_properties_drawer {
+            continue;
+        }
+        
+        content_lines.push(line);
+    }
+    
+    clean_content(&content_lines.join("\n"))
+}
+
+fn clean_content(content: &str) -> String {
+    let mut lines: Vec<&str> = content.lines().collect();
+    while !lines.is_empty() && lines[0].trim().is_empty() {
+        lines.remove(0);
+    }
+    while !lines.is_empty() && lines.last().unwrap().trim().is_empty() {
+        lines.pop();
+    }
+    lines.join("\n").trim().to_string()
 }
 
 /// Function to build a hierarchy of headlines from a flat list
@@ -1095,7 +1168,8 @@ More content here.
         assert!(note.children.len() > 0);
 
         let task_under_note = &note.children[0];
-        assert_eq!(task_under_note.title.raw, "TODO Task under note");
+        assert_eq!(task_under_note.title.raw, "Task under note");
+        assert_eq!(task_under_note.title.todo_keyword, Some("TODO".to_string()));
         assert!(
             task_under_note.content.contains("This task should be shown"),
             "Expected content to contain 'This task should be shown', but got: {}",
@@ -1108,7 +1182,8 @@ More content here.
         );
 
         let top_level_task = &doc.headlines[1];
-        assert_eq!(top_level_task.title.raw, "TODO Top-level task");
+        assert_eq!(top_level_task.title.raw, "Top-level task");
+        assert_eq!(top_level_task.title.todo_keyword, Some("TODO".to_string()));
         assert!(
             top_level_task.content.contains("top level"),
             "Expected content to contain 'top level', but got: {}",

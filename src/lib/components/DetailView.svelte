@@ -131,6 +131,15 @@
         return Object.keys(result).length > 0 ? result : null;
     }
 
+    // Debug: Log headline data
+    $effect(() => {
+        if (headline) {
+            console.log("DetailView headline:", headline);
+            console.log("DetailView headline.content:", headline?.content);
+            console.log("DetailView hasContent:", hasContent);
+        }
+    });
+
     // Derived values - computed from props
     const formattedPlanning = $derived(
         headline?.title?.planning
