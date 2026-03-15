@@ -1,79 +1,89 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import * as Checkbox from "$lib/components/ui/checkbox";
     import * as Input from "$lib/components/ui/input";
     import * as Label from "$lib/components/ui/label";
     import * as Button from "$lib/components/ui/button";
     import { Badge } from "$lib/components/ui/badge";
     import { Search, X, Calendar, Tag, CheckSquare } from "@lucide/svelte";
+    import type {
+        TodoFilterValue,
+        DateFilterValue,
+    } from "$lib/viewmodels/homeview.store";
+    import {
+        todoFilterOptions,
+        dateFilterOptions,
+    } from "$lib/viewmodels/homeview.store";
 
-    // Filter state
-    let todoFilter = $state("all");
-    let dateFilter = $state("all");
-    let searchQuery = $state("");
-    let selectedTags = $state<string[]>([]);
-    let selectedCategories = $state<string[]>([]);
+    // Props - controlled by parent via store
+    const {
+        todoFilter = "all",
+        dateFilter = "all",
+        searchQuery = "",
+        selectedTags = [],
+        selectedCategories = [],
+        availableTags = [],
+        availableCategories = [],
+    } = $props<{
+        todoFilter: TodoFilterValue;
+        dateFilter: DateFilterValue;
+        searchQuery: string;
+        selectedTags: string[];
+        selectedCategories: string[];
+        availableTags?: string[];
+        availableCategories?: string[];
+    }>();
 
-    // Sample data - in real implementation, these would come from backend
-    let availableTags = $state([
-        "work",
-        "personal",
-        "urgent",
-        "project",
-        "meeting",
-    ]);
-    let availableCategories = $state(["tasks", "notes", "ideas", "goals"]);
+    // Event dispatcher
+    const dispatch = createEventDispatcher<{
+        todoFilterChange: TodoFilterValue;
+        dateFilterChange: DateFilterValue;
+        searchQueryChange: string;
+        tagsChange: string[];
+        categoriesChange: string[];
+        clearAll: void;
+    }>();
 
-    // Filter options
-    const todoOptions = [
-        { value: "all", label: "All Items" },
-        { value: "todo", label: "TODO" },
-        { value: "done", label: "DONE" },
-        { value: "in-progress", label: "IN-PROGRESS" },
-        { value: "waiting", label: "WAITING" },
-    ];
+    // Event handlers
+    function handleTodoFilterChange(value: TodoFilterValue) {
+        dispatch("todoFilterChange", value);
+    }
 
-    const dateOptions = [
-        { value: "all", label: "All Dates" },
-        { value: "today", label: "Today" },
-        { value: "this-week", label: "This Week" },
-        { value: "this-month", label: "This Month" },
-        { value: "overdue", label: "Overdue" },
-        { value: "scheduled", label: "Scheduled" },
-        { value: "no-date", label: "No Date" },
-    ];
+    function handleDateFilterChange(value: DateFilterValue) {
+        dispatch("dateFilterChange", value);
+    }
+
+    function handleSearchQueryChange(value: string) {
+        dispatch("searchQueryChange", value);
+    }
 
     function toggleTag(tag: string) {
-        if (selectedTags.includes(tag)) {
-            selectedTags = selectedTags.filter((t) => t !== tag);
-        } else {
-            selectedTags = [...selectedTags, tag];
-        }
+        const newTags = selectedTags.includes(tag)
+            ? selectedTags.filter((t: string) => t !== tag)
+            : [...selectedTags, tag];
+        dispatch("tagsChange", newTags);
     }
 
     function toggleCategory(category: string) {
-        if (selectedCategories.includes(category)) {
-            selectedCategories = selectedCategories.filter(
-                (c) => c !== category,
-            );
-        } else {
-            selectedCategories = [...selectedCategories, category];
-        }
+        const newCategories = selectedCategories.includes(category)
+            ? selectedCategories.filter((c: string) => c !== category)
+            : [...selectedCategories, category];
+        dispatch("categoriesChange", newCategories);
     }
 
     function clearAllFilters() {
-        todoFilter = "all";
-        dateFilter = "all";
-        searchQuery = "";
-        selectedTags = [];
-        selectedCategories = [];
+        dispatch("clearAll");
     }
 
     function removeTag(tag: string) {
-        selectedTags = selectedTags.filter((t) => t !== tag);
+        dispatch("tagsChange", selectedTags.filter((t: string) => t !== tag));
     }
 
     function removeCategory(category: string) {
-        selectedCategories = selectedCategories.filter((c) => c !== category);
+        dispatch(
+            "categoriesChange",
+            selectedCategories.filter((c: string) => c !== category),
+        );
     }
 
     // Reactive filter summary
@@ -99,13 +109,15 @@
             />
             <Input.Root
                 id="search"
-                bind:value={searchQuery}
+                value={searchQuery}
+                oninput={(e) =>
+                    handleSearchQueryChange((e.target as HTMLInputElement).value)}
                 placeholder="Search headlines..."
                 class="pl-7 h-8 text-sm"
             />
             {#if searchQuery}
                 <button
-                    onclick={() => (searchQuery = "")}
+                    onclick={() => handleSearchQueryChange("")}
                     class="absolute right-2 top-1/2 transform -translate-y-1/2"
                 >
                     <X
@@ -122,13 +134,13 @@
             >TODO Status</Label.Root
         >
         <div class="flex flex-wrap gap-1">
-            {#each todoOptions as option}
+            {#each todoFilterOptions as option}
                 <Button.Root
                     variant={todoFilter === option.value
                         ? "default"
                         : "outline"}
                     size="sm"
-                    onclick={() => (todoFilter = option.value)}
+                    onclick={() => handleTodoFilterChange(option.value)}
                     class="text-xs h-7 px-2"
                 >
                     <CheckSquare class="h-3 w-3 mr-1" />
@@ -144,13 +156,13 @@
             >Date Range</Label.Root
         >
         <div class="flex flex-wrap gap-1">
-            {#each dateOptions as option}
+            {#each dateFilterOptions as option}
                 <Button.Root
                     variant={dateFilter === option.value
                         ? "default"
                         : "outline"}
                     size="sm"
-                    onclick={() => (dateFilter = option.value)}
+                    onclick={() => handleDateFilterChange(option.value)}
                     class="text-xs h-7 px-2"
                 >
                     <Calendar class="h-3 w-3 mr-1" />
@@ -161,53 +173,57 @@
     </div>
 
     <!-- Tags Filter -->
-    <div class="space-y-1">
-        <Label.Root class="text-xs font-medium text-muted-foreground"
-            >Tags</Label.Root
-        >
+    {#if availableTags.length > 0}
         <div class="space-y-1">
-            {#each availableTags as tag}
-                <div class="flex items-center space-x-2">
-                    <Checkbox.Root
-                        id="tag-{tag}"
-                        checked={selectedTags.includes(tag)}
-                        onCheckedChange={() => toggleTag(tag)}
-                    />
-                    <Label.Root
-                        for="tag-{tag}"
-                        class="text-xs font-normal cursor-pointer flex items-center gap-1"
-                    >
-                        <Tag class="h-3 w-3" />
-                        {tag}
-                    </Label.Root>
-                </div>
-            {/each}
+            <Label.Root class="text-xs font-medium text-muted-foreground"
+                >Tags</Label.Root
+            >
+            <div class="space-y-1">
+                {#each availableTags as tag}
+                    <div class="flex items-center space-x-2">
+                        <Checkbox.Root
+                            id="tag-{tag}"
+                            checked={selectedTags.includes(tag)}
+                            onCheckedChange={() => toggleTag(tag)}
+                        />
+                        <Label.Root
+                            for="tag-{tag}"
+                            class="text-xs font-normal cursor-pointer flex items-center gap-1"
+                        >
+                            <Tag class="h-3 w-3" />
+                            {tag}
+                        </Label.Root>
+                    </div>
+                {/each}
+            </div>
         </div>
-    </div>
+    {/if}
 
     <!-- Categories Filter -->
-    <div class="space-y-1">
-        <Label.Root class="text-xs font-medium text-muted-foreground"
-            >Categories</Label.Root
-        >
+    {#if availableCategories.length > 0}
         <div class="space-y-1">
-            {#each availableCategories as category}
-                <div class="flex items-center space-x-2">
-                    <Checkbox.Root
-                        id="category-{category}"
-                        checked={selectedCategories.includes(category)}
-                        onCheckedChange={() => toggleCategory(category)}
-                    />
-                    <Label.Root
-                        for="category-{category}"
-                        class="text-xs font-normal cursor-pointer"
-                    >
-                        {category}
-                    </Label.Root>
-                </div>
-            {/each}
+            <Label.Root class="text-xs font-medium text-muted-foreground"
+                >Categories</Label.Root
+            >
+            <div class="space-y-1">
+                {#each availableCategories as category}
+                    <div class="flex items-center space-x-2">
+                        <Checkbox.Root
+                            id="category-{category}"
+                            checked={selectedCategories.includes(category)}
+                            onCheckedChange={() => toggleCategory(category)}
+                        />
+                        <Label.Root
+                            for="category-{category}"
+                            class="text-xs font-normal cursor-pointer"
+                        >
+                            {category}
+                        </Label.Root>
+                    </div>
+                {/each}
+            </div>
         </div>
-    </div>
+    {/if}
 
     <!-- Active Filters Summary -->
     {#if hasActiveFilters}
@@ -228,13 +244,13 @@
             <div class="flex flex-wrap gap-1">
                 {#if todoFilter !== "all"}
                     <Badge variant="secondary" class="text-xs h-5">
-                        TODO: {todoOptions.find((o) => o.value === todoFilter)
+                        TODO: {todoFilterOptions.find((o) => o.value === todoFilter)
                             ?.label}
                     </Badge>
                 {/if}
                 {#if dateFilter !== "all"}
                     <Badge variant="secondary" class="text-xs h-5">
-                        Date: {dateOptions.find((o) => o.value === dateFilter)
+                        Date: {dateFilterOptions.find((o) => o.value === dateFilter)
                             ?.label}
                     </Badge>
                 {/if}
