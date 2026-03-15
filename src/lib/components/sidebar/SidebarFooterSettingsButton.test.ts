@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
-import SidebarFooterSettingsButton from "../../sidebar/SidebarFooterSettingsButton.svelte";
-import { openDialog } from "../../../viewmodels/settings.store";
+import SidebarFooterSettingsButton from "./SidebarFooterSettingsButton.svelte";
+import { openDialog } from "../../viewmodels/settings.store";
 
 // Mock the settings store functions
-vi.mock("../../../viewmodels/settings.store", () => ({
+vi.mock("../../viewmodels/settings.store", () => ({
   openDialog: vi.fn(),
 }));
 

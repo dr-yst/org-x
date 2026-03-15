@@ -21,7 +21,7 @@ import {
   handleHomeClick,
   handleBackFromChild,
   handleChildBreadcrumbClick,
-} from "../detailview.store";
+} from "./detailview.store";
 import type { OrgHeadline, OrgTimestamp } from "$lib/bindings";
 
 // Mock test data
@@ -603,7 +603,7 @@ describe("DetailView Store", () => {
 
   describe("Store Object Export", () => {
     it("should export store object with all required properties", async () => {
-      const detailViewStore = await import("../detailview.store");
+      const detailViewStore = await import("./detailview.store");
 
       expect(detailViewStore.default).toBeDefined();
       expect(detailViewStore.default.currentHeadline).toBeDefined();

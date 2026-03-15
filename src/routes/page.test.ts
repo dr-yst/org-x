@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
-import Page from "../+page.svelte";
+import Page from "./+page.svelte";
 import {
   displayMode,
   documents,

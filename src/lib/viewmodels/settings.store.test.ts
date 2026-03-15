@@ -5,7 +5,7 @@ import settingsStore, {
     openDialog,
     closeDialog,
     toggleDialog,
-} from '../settings.store';
+} from './settings.store';
 
 describe('Settings Store', () => {
     beforeEach(() => {

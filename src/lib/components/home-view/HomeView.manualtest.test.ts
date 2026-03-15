@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
 import { get } from "svelte/store";
-import HomeView from "../../HomeView.svelte";
+import HomeView from "../HomeView.svelte";
 import {
   displayMode,
   documents,

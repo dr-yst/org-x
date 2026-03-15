@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
-import SettingsDialog from "../../settings/SettingsDialog.svelte";
-import { settingsDialogOpen } from "../../../viewmodels/settings.store";
+import SettingsDialog from "../settings/SettingsDialog.svelte";
+import { settingsDialogOpen } from "../../viewmodels/settings.store";
 
 describe("SettingsDialog", () => {
   beforeEach(() => {

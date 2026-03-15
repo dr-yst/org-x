@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, it, expect, beforeEach } from "vitest";
-import DetailView from "../../DetailView.svelte";
+import DetailView from "../DetailView.svelte";
 import {
   currentHeadline,
   parentChain,

@@ -1,6 +1,6 @@
 import { render } from "@testing-library/svelte";
 import { describe, it, expect, vi } from "vitest";
-import HeadlinesList from "../../HeadlinesList.svelte";
+import HeadlinesList from "./HeadlinesList.svelte";
 
 describe("HeadlinesList Styling Tests", () => {
   const mockHeadlines = [
