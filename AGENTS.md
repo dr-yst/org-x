@@ -1,242 +1,149 @@
-# Development Rules & AI Collaboration Guide for Tauri + Svelte 5 Project
+# Agent Guidelines for Org-X (Tauri + Svelte 5)
 
-## 📜 Core Philosophy
+## Build & Development Commands
 
-1. **Simplicity:** Prioritize simple, clear, and maintainable solutions. Avoid unnecessary complexity or over-engineering.
-2. **Iterate:** Prefer iterating on existing, working code rather than building entirely new solutions from scratch, unless fundamentally necessary or explicitly requested.
-3. **Focus & Strict Adherence:**
-   - Concentrate efforts on the specific task assigned. Avoid unrelated changes or scope creep.
-   - **Stick strictly to the changes I explicitly request. Before making any other modifications or suggestions, you MUST ask me first.**
-4. **Quality:** Strive for a clean, organized, well-tested, and secure codebase.
-5. **Collaboration:** This document guides both human developers and AI assistants for effective teamwork.
-6. **Documentation-Driven:** Maintain comprehensive documentation to ensure continuity between development sessions and team members.
-7. **English Only:** All code comments, documentation, commit messages, and project artifacts must be written in English to maintain consistency and accessibility for all team members.
-8. **Root Cause Resolution:** Always aim to find and solve the **ROOT CAUSE** of a problem, not just the symptoms.
+### Frontend (Svelte/TypeScript)
+```bash
+# Development
+pnpm dev              # Start Vite dev server
+pnpm build            # Production build
+pnpm check            # Svelte type checking
+pnpm check:watch      # Svelte type checking (watch mode)
 
-## 📚 Memory System
+# Testing
+pnpm test             # Run all Vitest tests
+pnpm test:watch       # Run tests in watch mode
+pnpm test:coverage    # Run tests with coverage
 
-The memory system is designed to maintain perfect continuity between development sessions. The AI assistant must read ALL memory files at the start of EVERY task - this is not optional.
+# Run single test file:
+pnpx vitest run src/lib/viewmodels/homeview.store.test.ts
 
-### Memory System Structure
-The Memory System consists of core files and optional context files, all in Markdown format. The files are located in the `dev-docs/` directory. Files build upon each other in a clear hierarchy:
-
-```
-flowchart TD
-    PB[projectbrief.md] --> PC[productContext.md]
-    PB --> SP[systemPatterns.md]
-    PB --> TC[techContext.md]
-
-    PC --> AC[activeContext.md]
-    SP --> AC
-    TC --> AC
-
-    AC --> P[progress.md]
+# Tauri
+pnpm tauri dev        # Run Tauri dev mode
+pnpm tauri build      # Build Tauri app
 ```
 
-#### Core Files (Required)
-1. **`projectbrief.md`** - Foundation document that shapes all other files
-2. **`productContext.md`** - Why this project exists, problems it solves, user experience goals
-3. **`activeContext.md`** - Current work focus, recent changes, next steps, active decisions
-4. **`systemPatterns.md`** - System architecture, key technical decisions, design patterns
-5. **`techContext.md`** - Technologies used, development setup, technical constraints
-6. **`progress.md`** - What works, what's left to build, current status, known issues
-7. **`adr/`** - Architectural Decision Records documenting significant technical decisions
+### Backend (Rust)
+```bash
+cd src-tauri
 
-#### Documentation Updates
-Memory System updates occur when:
-1. Discovering new project patterns
-2. After implementing significant changes
-3. When user requests with **update memory system** (MUST review ALL files)
-4. When context needs clarification
+# Build & Run
+cargo build           # Debug build
+cargo build --release # Release build
+cargo run             # Run the app
 
-**REMEMBER:** After every memory reset, the AI begins completely fresh. The Memory System is the only link to previous work.
+# Testing
+cargo test            # Run all tests
+cargo test test_name  # Run specific test
+cargo test -- --nocapture  # Show println! output
 
-## 📚 Project Context & Reference Documentation
+# Linting & Formatting
+cargo fmt             # Format code
+cargo clippy          # Run linter
+cargo check           # Fast syntax/type check
+```
 
-### Documentation-First Approach
-**Always** check for and thoroughly review relevant project documentation *before* starting any task:
-- All Memory System files
-- Product Requirements Documents (PRDs)
-- `README.md` (Project overview, setup, patterns, technology stack)
-- Tauri documentation for desktop integration features
-- Svelte 5 documentation for frontend patterns
+## Code Style Guidelines
 
-### Svelte 5 Reference
-- The file `dev-docs/llms-small.txt` contains the abridged developer documentation for Svelte and SvelteKit
-- This file **MUST** be referenced when implementing Svelte 5 code
-- This file **MUST NOT** be edited or modified under any circumstances
-- Always refer to this documentation when working with Svelte 5 components
+### TypeScript/Svelte
 
-### Architecture Adherence
-- Understand and respect the Tauri architecture (frontend/backend separation)
-- Follow established patterns for IPC communication between Rust and JavaScript
-- Validate that changes comply with established architecture
+**Imports:** Group by: 1) External libs, 2) `$lib/` aliases, 3) Relative imports. Use `$lib/` for project imports.
+```typescript
+import { writable } from "svelte/store";
+import { commands } from "$lib/bindings";
+import type { OrgDocument } from "$lib/bindings";
+import HeadlinesList from "./HeadlinesList.svelte";
+```
 
-## 🏛️ Design Patterns & Architecture
+**Formatting:** 2 spaces, single quotes, no semicolons. Use Prettier defaults.
 
-### 1. MVVM (Model-View-ViewModel) Pattern
-For complex UI modules, adopt the MVVM pattern:
-- **Model:** Backend Rust structs and TypeScript types (generated by tauri-specta)
-- **ViewModel/Store:** Svelte store modules containing business logic, Tauri backend calls, and derived state
-- **View:** Svelte components are presentational only, subscribing to store state and dispatching store actions
+**Types:** Strict TypeScript. Avoid `any`. Use explicit return types on exported functions.
+```typescript
+// Good
+function formatDate(date: Date): string {
+  return date.toISOString();
+}
 
-### 2. Container/Presentational Pattern
-- **Container components:** Handle state, store subscriptions, and event wiring
-- **Presentational components:** Stateless, receive data and callbacks via props, focus on rendering
+// Bad
+function formatDate(date: any): any {
+  return date.toISOString();
+}
+```
 
-### 3. Store-Driven State
-- All business logic, backend calls, and derived state should reside in Svelte stores or ViewModel modules
-- Views should not contain direct data-fetching or mutation logic
-- State should be centralized in stores/ViewModels
+**Naming:**
+- Components: PascalCase (`HomeView.svelte`)
+- Stores: camelCase with suffix (`homeview.store.ts`)
+- Types/Interfaces: PascalCase (`OrgDocument`)
+- Functions: camelCase (`loadDocuments`)
+- Constants: UPPER_SNAKE_CASE for true constants
 
-### 4. Single Source of Truth & Testability
-- Views should be reactive to store state and never duplicate business logic
-- Write unit tests for ViewModels/stores and pure presentational components
-- Avoid logic in `.svelte` files that cannot be tested independently
+**Svelte 5 Runes:** Use runes syntax exclusively.
+```svelte
+<script lang="ts">
+  let count = $state(0);
+  let doubled = $derived(count * 2);
+  
+  function increment() {
+    count++;
+  }
+</script>
+```
 
-## 📦 Module Organization
+**Error Handling:** Use Result types from bindings. Check `status === "ok"` before accessing data.
+```typescript
+const result = await commands.getAllDocuments();
+if (result.status === "ok") {
+  documents.set(result.data);
+} else {
+  error.set(result.error);
+}
+```
 
-1. **Logical Separation:** Organize code into logically separated modules with clear responsibilities
-2. **Module Structure:** For complex features, use directory-based module organization with `mod.rs` for re-exporting
-3. **Re-exports:** Provide convenient re-exports in parent modules to simplify imports
-4. **Visibility Control:** Use appropriate visibility modifiers (`pub`, `pub(crate)`, etc.)
-5. **Module Size:** When a single file exceeds 300 lines, consider splitting it into submodules
+### Rust
 
-## ♻️ Refactoring
+**Safety:** No `unsafe` code. Avoid `unwrap()`/`expect()` in production; use `?` operator or match on `Result`.
 
-1. **Purposeful Refactoring:** Refactor to improve clarity, reduce duplication, simplify complexity, or adhere to architectural goals
-2. **Triggers for Refactoring:**
-   - Files exceeding 300 lines
-   - Functions exceeding 50 lines
-   - Duplicate code blocks (DRY violations)
-   - Deep nesting (>3 levels)
-   - Violation of established patterns
-3. **Refactoring Process:**
-   - **Edit, Don't Copy:** Modify existing files directly. Do not duplicate files and rename them (e.g., `Component-v2.svelte`)
-   - **Holistic Check:** Look for duplicate code, similar components/files, and opportunities for consolidation across the affected area
-   - **Verify Integrations:** After refactoring, ensure all callers, dependencies, and integration points function correctly. Run relevant tests
-4. **Svelte 5 Migrations:** When migrating from older Svelte patterns to Svelte 5 runes, ensure complete and consistent updates across related components
+**Error Handling:** Use `thiserror` for custom errors. Return `Result<T, Error>` from fallible functions.
+```rust
+use thiserror::Error;
 
-## ✨ Code Quality & Style
+#[derive(Error, Debug)]
+pub enum AppError {
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+}
 
-### Language & Naming Guidelines
-1. **English Only:** All code comments, variable names, function names, and documentation must be in English
-2. **Clear Naming:** Use descriptive names; avoid "temp", "refactored", "improved" in permanent file names
-3. **Svelte Conventions:** Use PascalCase for component files, follow established naming patterns
+pub fn load_file(path: &str) -> Result<String, AppError> {
+    std::fs::read_to_string(path)?;
+    Ok(content)
+}
+```
 
-### TypeScript Guidelines
-1. **Strict Typing:** Use strict typing (avoid `any`), leverage TypeScript for Svelte components, props, events, and stores
-2. **Documentation:** Document complex logic or public APIs with JSDoc
-3. **Tauri Integration:** Use proper typing for Tauri API calls and IPC communication
+**Naming:** Follow Rust conventions (`snake_case` for functions/variables, `PascalCase` for types/traits, `SCREAMING_SNAKE_CASE` for constants).
 
-### Code Organization
-1. **Small Files & Components:** Keep files under 300 lines, break down large Svelte components
-2. **DRY Principle:** Actively look for and reuse existing functionality, refactor to eliminate duplication
-3. **Pattern Consistency:** Adhere to established project patterns, follow Svelte 5 runes patterns consistently
-4. **Build Tools:** Use Tauri CLI and pnpm, conform to ESLint/Prettier rules
+**Modules:** Use directory structure with `mod.rs` for complex modules. Keep files under 300 lines.
 
-## 🛡️ Rust Safety Guidelines
+**Testing:** Write tests in `#[cfg(test)]` modules or separate test files. Mock Tauri commands in `test-setup.ts`.
 
-1. **Avoid `unsafe` Code:** Only use when absolutely necessary and document thoroughly
-2. **Thread Safety:** Use appropriate synchronization primitives (`Arc`, `Mutex`, `RwLock`, `OnceLock`)
-3. **Ownership and Borrowing:** Follow Rust's ownership rules carefully
-4. **Error Handling:** Use `Result` and `Option` types properly; avoid `unwrap()` and `expect()` in production
-5. **Memory Management:** Be aware of memory usage patterns, especially for large data structures
+## Key Architecture Patterns
 
-## ⚙️ Task Execution & Workflow
+1. **MVVM Pattern:** Stores contain business logic (ViewModels). Components are presentational only.
+2. **Store-Driven State:** All state mutations happen in stores, components subscribe via `$store`.
+3. **Tauri Commands:** All backend communication goes through `$lib/bindings.ts` (auto-generated).
+4. **Single Source of Truth:** Components never duplicate business logic from stores.
 
-### Problem Solving Strategy
-1. **Understand Deeply & Clarify Requirements:**
-   - Carefully read and think critically about requirements
-   - **If instructions are ambiguous, DO NOT proceed based on assumptions - ask clarifying questions**
+## Testing Guidelines
 
-2. **Investigate Thoroughly:**
-   - Explore relevant files, search for key functions, gather context
-   - **Use tools to read files and gather information - do NOT guess**
-   - **Report specific issues if tools fail and suggest alternatives**
+- Test stores/ViewModels thoroughly (business logic)
+- Test presentational components in isolation
+- Mock Tauri API calls in `test-setup.ts`
+- Run tests before committing: `pnpm test && cargo test`
 
-3. **Plan Meticulously:**
-   - Develop clear, step-by-step plans with manageable incremental steps
-   - **Plan extensively before each function call**
-   - Identify affected components, dependencies, and potential side effects
+## Memory System
 
-4. **Implement Incrementally & Verify:**
-   - Make small, testable code changes one at a time
-   - **Verify changes are correct and actually make tool calls when stated**
+Read all files in `dev-docs/` before starting work:
+1. `projectbrief.md` → Foundation
+2. `activeContext.md` → Current focus
+3. Other core files as needed
 
-5. **Think Critically & Reflect:**
-   - **Thinking MUST BE thorough - think step by step before and after each action**
-   - **Reflect extensively on outcomes of previous function calls**
-
-6. **Iterate Towards Solution:**
-   - Debug as needed, test frequently, find and solve the **ROOT CAUSE**
-   - **NEVER end without solving the problem - continue until resolution**
-
-### GitHub Repository Integration
-1. **Repository Location:** Official repository at `dr-yst/org-x`
-2. **Issue-Based Development:** Utilize GitHub Issues, create design details as comments
-3. **Memory System Integration:** Reference GitHub Issue numbers, link updates to issues
-4. **Branch Management:** Create focused feature branches, delete after merging
-5. **Documentation Updates:** Update relevant documentation as part of implementation PRs
-
-## ✅ Testing & Validation
-
-### Test-Driven Development
-1. **New Features:** Outline tests, write failing tests, implement code, refactor
-2. **Bug Fixes:** Write a test reproducing the bug *before* fixing it
-
-### Comprehensive Testing Strategy
-1. **Coverage:** Write thorough unit, integration, and end-to-end tests covering critical paths and edge cases
-2. **Multi-Layer Testing:** Test both frontend (Svelte) and backend (Rust) components plus their integration
-3. **Rigorous Verification:** Check solutions thoroughly, watch for boundary cases
-4. **All Tests Must Pass:** Tests **must** pass before committing or considering tasks complete
-
-### Testing & Debugging Tools
-1. **Rust Tools:** `cargo check`, `cargo clippy`, `cargo fmt`, `RUST_BACKTRACE=1`, `dbg!` macro
-2. **Frontend Tools:** Browser developer tools, Svelte DevTools, `console.log`, `{@debug}`, Vitest watch mode
-3. **Test Quality:** Ensure test isolation, comprehensive coverage, explicit edge case testing
-
-### Definition of Solved
-**The problem is only considered 'solved' when:**
-- Original request is fully addressed according to all requirements
-- Implemented code functions correctly
-- Passes rigorous testing including edge cases
-- Adheres to best practices
-
-## 🐛 Debugging & Troubleshooting
-
-1. **Root Cause Focus:** Fix the underlying issue, not just symptoms
-2. **Multi-Layer Analysis:** Check browser console, Tauri logs, and IPC communication
-3. **Documentation:** Check `fixes/` directory for documented solutions, document complex fixes
-4. **Research:** Use available tools and resources when stuck
-
-## 🔒 Security
-
-1. **Tauri Security Model:** Understand allowlist APIs, custom commands, and asset serving
-2. **Server-Side Authority:** Keep sensitive logic on Rust side, use secure Tauri commands
-3. **Input Validation:** Always sanitize and validate user input, especially between frontend/backend
-4. **Dependency Awareness:** Consider security implications of dependencies
-5. **Credentials:** Never hardcode secrets, use environment variables or secure management
-
-## 🌳 Version Control & Environment
-
-1. **Git Hygiene:** Commit frequently with clear messages, keep working directory clean
-2. **Environment Files:** Never commit `.env` files, use `.env.example` for templates
-3. **Cross-Platform:** Code should function across different environments and platforms
-4. **Development Workflow:** Use `pnpm` for package management, follow Tauri development workflow
-
-## 📄 Documentation Maintenance
-
-1. **Keep Updated:** Maintain Memory System files with latest project state and decisions
-2. **Size Management:** When files become large (>2000 lines):
-   - Remove implementation details that can be found in code
-   - Focus on high-level concepts, patterns, and relationships
-   - Document "why" decisions were made rather than just "how"
-3. **Rules Evolution:** Review and update this rules file periodically
-
-## 🔄 Long-Running Commands
-
-1. **Avoid Long-Running Processes:** Use commands like `cargo run` only to verify they work, then cancel
-2. **Quick Verification:** Check for initial output/errors and report before canceling
-3. **Alternative Approaches:** Use one-off commands like `cargo check` when possible
-4. **Clear Communication:** Inform when processes are manually cancelled after verification
+Update memory system after significant changes.
