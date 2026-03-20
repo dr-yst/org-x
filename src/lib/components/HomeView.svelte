@@ -92,6 +92,8 @@
         headline: OrgHeadline,
         parentChain: OrgHeadline[] = [],
     ) {
+        console.log("HomeView: opening detail for headline:", headline);
+        console.log("HomeView: headline.content =", headline?.content);
         currentDetailHeadline = headline;
         detailParentChain = parentChain;
         detailSelectedChild = null;

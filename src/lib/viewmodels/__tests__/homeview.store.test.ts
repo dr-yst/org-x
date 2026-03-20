@@ -32,6 +32,22 @@ import {
   exposeGlobalRefresh,
   triggerRefresh,
   refreshTrigger,
+  // New filter stores
+  todoFilter,
+  dateFilter,
+  searchQuery,
+  selectedTags,
+  selectedCategories,
+  // New filter actions
+  setTodoFilter,
+  setDateFilter,
+  setSearchQuery,
+  setTags,
+  setCategories,
+  clearAllFilters,
+  // Filter options
+  todoFilterOptions,
+  dateFilterOptions,
 } from "../homeview.store";
 import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
@@ -674,6 +690,246 @@ describe("ListView Store", () => {
         "Successfully opened file in external editor:",
         mockDocument.file_path,
       );
+    });
+  });
+
+  describe("Sidebar Filter State", () => {
+    beforeEach(() => {
+      documents.set([mockDocument]);
+      // Reset all filter states
+      todoFilter.set("all");
+      dateFilter.set("all");
+      searchQuery.set("");
+      selectedTags.set([]);
+      selectedCategories.set([]);
+    });
+
+    it("should have correct initial filter state", () => {
+      expect(get(todoFilter)).toBe("all");
+      expect(get(dateFilter)).toBe("all");
+      expect(get(searchQuery)).toBe("");
+      expect(get(selectedTags)).toEqual([]);
+      expect(get(selectedCategories)).toEqual([]);
+    });
+
+    it("should have correct filter options", () => {
+      expect(todoFilterOptions).toHaveLength(5);
+      expect(todoFilterOptions[0]).toEqual({ value: "all", label: "All Items" });
+      expect(todoFilterOptions[1]).toEqual({ value: "todo", label: "TODO" });
+
+      expect(dateFilterOptions).toHaveLength(7);
+      expect(dateFilterOptions[0]).toEqual({ value: "all", label: "All Dates" });
+      expect(dateFilterOptions[1]).toEqual({ value: "today", label: "Today" });
+    });
+
+    it("should set todo filter correctly", () => {
+      setTodoFilter("todo");
+      expect(get(todoFilter)).toBe("todo");
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+
+      setTodoFilter("done");
+      expect(get(todoFilter)).toBe("done");
+    });
+
+    it("should set date filter correctly", () => {
+      setDateFilter("today");
+      expect(get(dateFilter)).toBe("today");
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+
+      setDateFilter("overdue");
+      expect(get(dateFilter)).toBe("overdue");
+    });
+
+    it("should set search query correctly", () => {
+      setSearchQuery("test");
+      expect(get(searchQuery)).toBe("test");
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+
+      setSearchQuery("");
+      expect(get(searchQuery)).toBe("");
+    });
+
+    it("should set tags correctly", () => {
+      setTags(["work", "urgent"]);
+      expect(get(selectedTags)).toEqual(["work", "urgent"]);
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+
+      setTags([]);
+      expect(get(selectedTags)).toEqual([]);
+    });
+
+    it("should set categories correctly", () => {
+      setCategories(["tasks"]);
+      expect(get(selectedCategories)).toEqual(["tasks"]);
+      expect(get(focusedIndex)).toBe(-1); // Should reset focus
+
+      setCategories([]);
+      expect(get(selectedCategories)).toEqual([]);
+    });
+
+    it("should clear all filters", () => {
+      // Set some filters
+      setTodoFilter("todo");
+      setDateFilter("today");
+      setSearchQuery("test");
+      setTags(["work"]);
+      setCategories(["tasks"]);
+
+      // Clear all
+      clearAllFilters();
+
+      expect(get(todoFilter)).toBe("all");
+      expect(get(dateFilter)).toBe("all");
+      expect(get(searchQuery)).toBe("");
+      expect(get(selectedTags)).toEqual([]);
+      expect(get(selectedCategories)).toEqual([]);
+      expect(get(focusedIndex)).toBe(-1);
+    });
+  });
+
+  describe("Sidebar Filter Integration", () => {
+    // Mock document with tags and categories for filter testing
+    const mockDocumentWithTags: OrgDocument = {
+      id: "doc-tags",
+      title: "Document with Tags",
+      content: "Content",
+      headlines: [
+        {
+          id: "headline-todo",
+          document_id: "doc-tags",
+          title: {
+            raw: "TODO Task with tags",
+            level: 1,
+            priority: null,
+            tags: ["work", "urgent"],
+            todo_keyword: "TODO",
+            properties: { CATEGORY: "tasks" },
+            planning: null,
+          },
+          content: "Task content",
+          children: [],
+          etag: "etag-todo",
+        },
+        {
+          id: "headline-done",
+          document_id: "doc-tags",
+          title: {
+            raw: "DONE Task",
+            level: 1,
+            priority: null,
+            tags: ["personal"],
+            todo_keyword: "DONE",
+            properties: {},
+            planning: null,
+          },
+          content: "Done content",
+          children: [],
+          etag: "etag-done",
+        },
+        {
+          id: "headline-note",
+          document_id: "doc-tags",
+          title: {
+            raw: "Note without todo",
+            level: 1,
+            priority: null,
+            tags: ["ideas"],
+            todo_keyword: null,
+            properties: { CATEGORY: "notes" },
+            planning: null,
+          },
+          content: "Note content",
+          children: [],
+          etag: "etag-note",
+        },
+      ],
+      filetags: [],
+      file_path: "/test/tags.org",
+      properties: {},
+      category: "test",
+      etag: "doc-etag-tags",
+      todo_config: null,
+    };
+
+    beforeEach(() => {
+      documents.set([mockDocumentWithTags]);
+      displayMode.set("task-list");
+      // Reset all filter states
+      todoFilter.set("all");
+      dateFilter.set("all");
+      searchQuery.set("");
+      selectedTags.set([]);
+      selectedCategories.set([]);
+    });
+
+    it("should filter by TODO status", () => {
+      // Show only TODO items
+      setTodoFilter("todo");
+      const filtered = get(filteredHeadlines);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].title.todo_keyword).toBe("TODO");
+
+      // Show only DONE items
+      setTodoFilter("done");
+      const doneFiltered = get(filteredHeadlines);
+      expect(doneFiltered).toHaveLength(1);
+      expect(doneFiltered[0].title.todo_keyword).toBe("DONE");
+
+      // Show all
+      setTodoFilter("all");
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2); // TODO and DONE
+    });
+
+    it("should filter by search query", () => {
+      setSearchQuery("tags");
+      const filtered = get(filteredHeadlines);
+      // Should match headlines containing "tags" in title or content
+      expect(filtered.length).toBeGreaterThan(0);
+      expect(filtered.some((h) => h.title.raw.includes("tags"))).toBe(true);
+
+      setSearchQuery("");
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2); // All tasks
+    });
+
+    it("should filter by tags", () => {
+      setTags(["work"]);
+      const filtered = get(filteredHeadlines);
+      // Should only show headlines with "work" tag
+      expect(filtered.every((h) => h.title.tags.includes("work"))).toBe(true);
+
+      setTags([]);
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2);
+    });
+
+    it("should filter by categories", () => {
+      setCategories(["tasks"]);
+      const filtered = get(filteredHeadlines);
+      // Should only show headlines with CATEGORY property set to "tasks"
+      expect(filtered.every((h) => h.title.properties["CATEGORY"] === "tasks")).toBe(true);
+
+      setCategories([]);
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2);
+    });
+
+    it("should combine multiple filters", () => {
+      // Set multiple filters
+      setTodoFilter("todo");
+      setTags(["work"]);
+
+      const filtered = get(filteredHeadlines);
+      // Should only show TODO items with "work" tag
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].title.todo_keyword).toBe("TODO");
+      expect(filtered[0].title.tags).toContain("work");
+
+      // Clear filters
+      clearAllFilters();
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2);
     });
   });
 });
