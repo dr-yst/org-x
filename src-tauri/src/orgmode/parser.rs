@@ -1,5 +1,6 @@
 use crate::orgmode::document::OrgDocument;
 use crate::orgmode::headline::OrgHeadline;
+use crate::orgmode::planning::OrgPlanning;
 use crate::orgmode::title::OrgTitle;
 use crate::orgmode::todo::StateType;
 use crate::orgmode::todo::TodoConfiguration;
@@ -520,6 +521,7 @@ fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org:
     
     let mut content_lines = Vec::new();
     let mut in_properties_drawer = false;
+    let mut in_planning = true; // Start true to skip initial planning lines
     
     for line in after_headline.lines() {
         let trimmed = line.trim_start();
@@ -541,6 +543,16 @@ fn extract_content_for_headline(content: &str, headline: &orgize::Headline, org:
         }
         if in_properties_drawer {
             continue;
+        }
+        
+        // Skip planning lines (DEADLINE:, SCHEDULED:, CLOSED:)
+        if in_planning {
+            if trimmed.starts_with("DEADLINE:") || trimmed.starts_with("SCHEDULED:") || trimmed.starts_with("CLOSED:") {
+                continue;
+            } else if !trimmed.is_empty() {
+                // First non-empty, non-planning line ends the planning section
+                in_planning = false;
+            }
         }
         
         content_lines.push(line);
@@ -770,6 +782,9 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
     // Extract priority and convert to string
     let _priority = title_element.priority.map(|p| p.to_string());
 
+    // Extract planning information from title
+    let planning = extract_planning(&title_element);
+
     // Create OrgTitle
     let org_title = OrgTitle {
         raw: raw_title,
@@ -778,7 +793,7 @@ fn extract_headline(org: &Org, headline: orgize::Headline) -> OrgHeadline {
         tags: tags.clone(),                 // Clone for backward compatibility
         todo_keyword: todo_keyword.clone(), // Clone for backward compatibility
         properties: extract_properties_from_title(&title_element),
-        planning: None, // Add planning field
+        planning,
     };
 
     // Extract content from the headline
@@ -811,6 +826,25 @@ fn extract_properties_from_title(title: &orgize::elements::Title) -> HashMap<Str
     }
 
     properties
+}
+
+/// Extract planning information (DEADLINE, SCHEDULED, CLOSED) from a title element
+fn extract_planning(title: &orgize::elements::Title) -> Option<Box<OrgPlanning>> {
+    use crate::orgmode::timestamp::OrgTimestamp;
+
+    let deadline = title.deadline().map(OrgTimestamp::from);
+    let scheduled = title.scheduled().map(OrgTimestamp::from);
+    let closed = title.closed().map(OrgTimestamp::from);
+
+    if deadline.is_some() || scheduled.is_some() || closed.is_some() {
+        Some(Box::new(OrgPlanning {
+            deadline,
+            scheduled,
+            closed,
+        }))
+    } else {
+        None
+    }
 }
 
 /// Extract properties from a headline
@@ -1285,5 +1319,73 @@ Content for WIP task
         let h4 = &doc.headlines[3];
         assert_eq!(h4.title.todo_keyword, Some("[WIP]".to_string()));
         assert_eq!(h4.title.raw, "Work in progress");
+    }
+
+    #[test]
+    fn test_planning_extraction() {
+        // Note: Orgize expects all planning keywords on the SAME LINE
+        let content = r#"#+TITLE: Planning Test
+
+* TODO Test Headline
+   DEADLINE: <2025-04-15 Tue> SCHEDULED: <2025-04-10 Thu> CLOSED: [2025-04-14 Mon]
+   Some content here
+
+* Another Headline
+   Just regular content
+"#;
+
+        let doc = parse_org_document(content, Some("test.org")).unwrap();
+
+        // First headline should have planning
+        let h1 = &doc.headlines[0];
+        println!("H1 raw: {:?}", h1.title.raw);
+        println!("H1 planning: {:?}", h1.title.planning);
+        assert!(h1.title.planning.is_some(), "Planning should be extracted");
+        
+        let planning = h1.title.planning.as_ref().unwrap();
+        assert!(planning.deadline.is_some(), "Deadline should be extracted");
+        assert!(planning.scheduled.is_some(), "Scheduled should be extracted");
+        assert!(planning.closed.is_some(), "Closed should be extracted");
+
+        // Verify the deadline timestamp
+        let deadline = planning.deadline.as_ref().unwrap();
+        assert_eq!(deadline.format(), "<2025-04-15 Tue>");
+
+        // Second headline should not have planning
+        let h2 = &doc.headlines[1];
+        println!("H2 raw: {:?}", h2.title.raw);
+        assert!(h2.title.planning.is_none(), "No planning for second headline");
+    }
+
+    #[test]
+    fn test_planning_not_in_content() {
+        // Verify that planning lines are not included in content
+        let content = r#"#+TITLE: Content Test
+
+* TODO Task with Planning
+   DEADLINE: <2025-04-15 Tue> SCHEDULED: <2025-04-10 Thu>
+   This is the actual content.
+   More content here.
+
+* TODO Task without Planning
+   This task has no planning.
+"#;
+
+        let doc = parse_org_document(content, Some("test.org")).unwrap();
+
+        let h1 = &doc.headlines[0];
+        println!("H1 content: {:?}", h1.content);
+        
+        // Content should not contain DEADLINE or SCHEDULED
+        assert!(!h1.content.contains("DEADLINE:"), "Content should not contain DEADLINE");
+        assert!(!h1.content.contains("SCHEDULED:"), "Content should not contain SCHEDULED");
+        assert!(h1.content.contains("This is the actual content"), "Content should have actual text");
+        
+        // But planning should still be extracted
+        assert!(h1.title.planning.is_some(), "Planning should be extracted");
+
+        let h2 = &doc.headlines[1];
+        println!("H2 content: {:?}", h2.content);
+        assert!(h2.content.contains("This task has no planning"), "H2 should have content");
     }
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import { get } from "svelte/store";
-import TodoKeywordsSection from "../../settings/TodoKeywordsSection.svelte";
+import TodoKeywordsSection from "../settings/TodoKeywordsSection.svelte";
 import { commands } from "$lib/bindings";
 import type { TodoKeywords, UserSettings } from "$lib/bindings";
 

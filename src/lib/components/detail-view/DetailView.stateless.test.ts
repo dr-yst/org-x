@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { expect, test, describe, vi } from "vitest";
-import DetailView from "../../DetailView.svelte";
+import DetailView from "../DetailView.svelte";
 import type { OrgHeadline } from "$lib/bindings";
 
 // Mock headline data

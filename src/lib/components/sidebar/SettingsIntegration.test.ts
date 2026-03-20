@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import "@testing-library/jest-dom";
-import SettingsDialog from "../../settings/SettingsDialog.svelte";
-import SidebarFooterSettingsButton from "../../sidebar/SidebarFooterSettingsButton.svelte";
+import SettingsDialog from "../settings/SettingsDialog.svelte";
+import SidebarFooterSettingsButton from "./SidebarFooterSettingsButton.svelte";
 import { get } from "svelte/store";
 import {
   settingsDialogOpen,
   openDialog,
   closeDialog,
-} from "../../../viewmodels/settings.store";
+} from "../../viewmodels/settings.store";
 
 describe("Settings Integration", () => {
   beforeEach(() => {

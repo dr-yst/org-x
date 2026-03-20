@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import HomeView from "../../HomeView.svelte";
+import HomeView from "../HomeView.svelte";
 import { commands } from "$lib/bindings";
 import type { OrgDocument, OrgHeadline, UserSettings } from "$lib/bindings";
 

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/svelte';
-import OrgDocument from '../OrgDocument.svelte';
-import type { OrgDocument as OrgDocumentType } from '../../bindings';
+import OrgDocument from './OrgDocument.svelte';
+import type { OrgDocument as OrgDocumentType } from '$lib/bindings';
 
 // Mock the Tauri commands
-vi.mock('../../bindings', () => ({
+vi.mock('$lib/bindings', () => ({
   commands: {
     getSampleOrg: vi.fn().mockResolvedValue({
       id: 'test-doc-1',
@@ -22,7 +22,7 @@ vi.mock('../../bindings', () => ({
 }));
 
 // Mock the OrgHeadline component to avoid rendering actual component
-vi.mock('../OrgHeadline.svelte', () => ({
+vi.mock('./OrgHeadline.svelte', () => ({
   default: vi.fn().mockImplementation(() => ({
     $$render: () => '<div data-testid="mocked-headline"></div>'
   }))

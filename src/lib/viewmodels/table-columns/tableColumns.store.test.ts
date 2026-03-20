@@ -17,7 +17,7 @@ import tableColumns, {
   getColumnsByType,
   clearError,
   type TableColumnConfig,
-} from "../table-columns/tableColumns.store";
+} from "./tableColumns.store";
 
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({

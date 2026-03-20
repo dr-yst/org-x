@@ -9,7 +9,7 @@ import externalEditor, {
   resetExternalEditorCommand,
   clearError,
   editorPresets,
-} from "../externalEditor.store";
+} from "./externalEditor.store";
 
 // Mock the commands module
 vi.mock("$lib/bindings", () => ({

@@ -48,7 +48,7 @@ import {
   // Filter options
   todoFilterOptions,
   dateFilterOptions,
-} from "../homeview.store";
+} from "./homeview.store";
 import type { OrgDocument, OrgHeadline } from "$lib/bindings";
 
 // Mock the commands module
