@@ -14,6 +14,7 @@
         displayModes,
         setDisplayMode,
         type DisplayMode,
+        type TodoFilterValue,
         // Filter stores
         todoFilter,
         dateFilter,
@@ -98,8 +99,8 @@
     }
 
     // Filter event handlers
-    function handleTodoFilterChange(event: CustomEvent<string>) {
-        setTodoFilter(event.detail as typeof $todoFilter);
+    function handleTodoFilterChange(event: CustomEvent<TodoFilterValue>) {
+        setTodoFilter(event.detail);
     }
 
     function handleDateFilterChange(event: CustomEvent<string>) {
@@ -235,6 +236,7 @@
                             selectedCategories={$selectedCategories}
                             availableTags={availableTags()}
                             availableCategories={availableCategories()}
+                            todoKeywords={settings?.todo_keywords ?? { active: [], closed: [] }}
                             on:todoFilterChange={handleTodoFilterChange}
                             on:dateFilterChange={handleDateFilterChange}
                             on:searchQueryChange={handleSearchQueryChange}

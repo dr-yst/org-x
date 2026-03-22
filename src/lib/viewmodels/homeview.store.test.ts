@@ -46,7 +46,6 @@ import {
   setCategories,
   clearAllFilters,
   // Filter options
-  todoFilterOptions,
   dateFilterOptions,
 } from "./homeview.store";
 import type { OrgDocument, OrgHeadline } from "$lib/bindings";
@@ -310,15 +309,18 @@ describe("ListView Store", () => {
     it("should filter headlines correctly", () => {
       documents.set([mockDocument]);
 
-      // Test "all" filter with default task-list mode (should show only headlines with TODO keywords)
-      activeFilterIndex.set(0);
+      // Test with default filters (should show only headlines with TODO keywords in task-list mode)
       expect(get(filteredHeadlines)).toHaveLength(2); // Both TODO and DONE headlines
       expect(get(filteredHeadlines)[0].title.todo_keyword).toBe("TODO");
       expect(get(filteredHeadlines)[1].title.todo_keyword).toBe("DONE");
 
-      // Test other filters (they should filter out our mock headline since it doesn't have proper dates)
-      activeFilterIndex.set(1); // today
+      // Test date filter (should filter out our mock headline since they don't have proper dates)
+      setDateFilter("today");
       expect(get(filteredHeadlines)).toEqual([]);
+
+      // Reset date filter
+      setDateFilter("all");
+      expect(get(filteredHeadlines)).toHaveLength(2);
     });
   });
 
@@ -363,9 +365,14 @@ describe("ListView Store", () => {
       setDisplayMode("headline-list");
 
       // Set to "today" filter (should filter out our mock headlines since they don't have proper dates)
-      activeFilterIndex.set(1);
+      setDateFilter("today");
       const filtered = get(filteredHeadlines);
       expect(filtered).toHaveLength(0);
+
+      // Reset date filter
+      setDateFilter("all");
+      const allFiltered = get(filteredHeadlines);
+      expect(allFiltered).toHaveLength(2);
     });
 
     it("should have correctly structured displayModes array", () => {
@@ -697,7 +704,7 @@ describe("ListView Store", () => {
     beforeEach(() => {
       documents.set([mockDocument]);
       // Reset all filter states
-      todoFilter.set("all");
+      todoFilter.set([]);
       dateFilter.set("all");
       searchQuery.set("");
       selectedTags.set([]);
@@ -705,7 +712,7 @@ describe("ListView Store", () => {
     });
 
     it("should have correct initial filter state", () => {
-      expect(get(todoFilter)).toBe("all");
+      expect(get(todoFilter)).toEqual([]);
       expect(get(dateFilter)).toBe("all");
       expect(get(searchQuery)).toBe("");
       expect(get(selectedTags)).toEqual([]);
@@ -713,9 +720,6 @@ describe("ListView Store", () => {
     });
 
     it("should have correct filter options", () => {
-      expect(todoFilterOptions).toHaveLength(5);
-      expect(todoFilterOptions[0]).toEqual({ value: "all", label: "All Items" });
-      expect(todoFilterOptions[1]).toEqual({ value: "todo", label: "TODO" });
 
       expect(dateFilterOptions).toHaveLength(7);
       expect(dateFilterOptions[0]).toEqual({ value: "all", label: "All Dates" });
@@ -723,12 +727,12 @@ describe("ListView Store", () => {
     });
 
     it("should set todo filter correctly", () => {
-      setTodoFilter("todo");
-      expect(get(todoFilter)).toBe("todo");
+      setTodoFilter(["TODO"]);
+      expect(get(todoFilter)).toEqual(["TODO"]);
       expect(get(focusedIndex)).toBe(-1); // Should reset focus
 
-      setTodoFilter("done");
-      expect(get(todoFilter)).toBe("done");
+      setTodoFilter(["DONE"]);
+      expect(get(todoFilter)).toEqual(["DONE"]);
     });
 
     it("should set date filter correctly", () => {
@@ -769,7 +773,7 @@ describe("ListView Store", () => {
 
     it("should clear all filters", () => {
       // Set some filters
-      setTodoFilter("todo");
+      setTodoFilter(["TODO"]);
       setDateFilter("today");
       setSearchQuery("test");
       setTags(["work"]);
@@ -778,7 +782,7 @@ describe("ListView Store", () => {
       // Clear all
       clearAllFilters();
 
-      expect(get(todoFilter)).toBe("all");
+      expect(get(todoFilter)).toEqual([]);
       expect(get(dateFilter)).toBe("all");
       expect(get(searchQuery)).toBe("");
       expect(get(selectedTags)).toEqual([]);
@@ -855,7 +859,7 @@ describe("ListView Store", () => {
       documents.set([mockDocumentWithTags]);
       displayMode.set("task-list");
       // Reset all filter states
-      todoFilter.set("all");
+      todoFilter.set([]);
       dateFilter.set("all");
       searchQuery.set("");
       selectedTags.set([]);
@@ -864,19 +868,19 @@ describe("ListView Store", () => {
 
     it("should filter by TODO status", () => {
       // Show only TODO items
-      setTodoFilter("todo");
+      setTodoFilter(["TODO"]);
       const filtered = get(filteredHeadlines);
       expect(filtered).toHaveLength(1);
       expect(filtered[0].title.todo_keyword).toBe("TODO");
 
       // Show only DONE items
-      setTodoFilter("done");
+      setTodoFilter(["DONE"]);
       const doneFiltered = get(filteredHeadlines);
       expect(doneFiltered).toHaveLength(1);
       expect(doneFiltered[0].title.todo_keyword).toBe("DONE");
 
-      // Show all
-      setTodoFilter("all");
+      // Show all (empty array means no filter)
+      setTodoFilter([]);
       const allFiltered = get(filteredHeadlines);
       expect(allFiltered).toHaveLength(2); // TODO and DONE
     });
@@ -917,7 +921,7 @@ describe("ListView Store", () => {
 
     it("should combine multiple filters", () => {
       // Set multiple filters
-      setTodoFilter("todo");
+      setTodoFilter(["TODO"]);
       setTags(["work"]);
 
       const filtered = get(filteredHeadlines);
