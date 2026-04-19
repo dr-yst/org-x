@@ -10,20 +10,18 @@
         TodoFilterValue,
         DateFilterValue,
     } from "$lib/viewmodels/homeview.store";
-    import {
-        todoFilterOptions,
-        dateFilterOptions,
-    } from "$lib/viewmodels/homeview.store";
+    import { dateFilterOptions } from "$lib/viewmodels/homeview.store";
 
     // Props - controlled by parent via store
     const {
-        todoFilter = "all",
+        todoFilter = [],
         dateFilter = "all",
         searchQuery = "",
         selectedTags = [],
         selectedCategories = [],
         availableTags = [],
         availableCategories = [],
+        todoKeywords = { active: [], closed: [] },
     } = $props<{
         todoFilter: TodoFilterValue;
         dateFilter: DateFilterValue;
@@ -32,6 +30,7 @@
         selectedCategories: string[];
         availableTags?: string[];
         availableCategories?: string[];
+        todoKeywords?: { active: string[]; closed: string[] };
     }>();
 
     // Event dispatcher
@@ -55,6 +54,17 @@
 
     function handleSearchQueryChange(value: string) {
         dispatch("searchQueryChange", value);
+    }
+
+    function toggleTodoKeyword(keyword: string) {
+        const newFilter = todoFilter.includes(keyword)
+            ? todoFilter.filter((k: string) => k !== keyword)
+            : [...todoFilter, keyword];
+        handleTodoFilterChange(newFilter);
+    }
+
+    function removeTodoKeyword(keyword: string) {
+        handleTodoFilterChange(todoFilter.filter((k: string) => k !== keyword));
     }
 
     function toggleTag(tag: string) {
@@ -86,9 +96,15 @@
         );
     }
 
+    // Combine active and closed keywords for display
+    let allTodoKeywords = $derived([
+        ...todoKeywords.active,
+        ...todoKeywords.closed,
+    ]);
+
     // Reactive filter summary
     let hasActiveFilters = $derived(
-        todoFilter !== "all" ||
+        todoFilter.length > 0 ||
             dateFilter !== "all" ||
             searchQuery.length > 0 ||
             selectedTags.length > 0 ||
@@ -129,26 +145,31 @@
     </div>
 
     <!-- TODO Status Filter -->
-    <div class="space-y-1">
-        <Label.Root class="text-xs font-medium text-muted-foreground"
-            >TODO Status</Label.Root
-        >
-        <div class="flex flex-wrap gap-1">
-            {#each todoFilterOptions as option}
-                <Button.Root
-                    variant={todoFilter === option.value
-                        ? "default"
-                        : "outline"}
-                    size="sm"
-                    onclick={() => handleTodoFilterChange(option.value)}
-                    class="text-xs h-7 px-2"
-                >
-                    <CheckSquare class="h-3 w-3 mr-1" />
-                    {option.label}
-                </Button.Root>
-            {/each}
+    {#if allTodoKeywords.length > 0}
+        <div class="space-y-1">
+            <Label.Root class="text-xs font-medium text-muted-foreground"
+                >TODO Status</Label.Root
+            >
+            <div class="space-y-1">
+                {#each allTodoKeywords as keyword}
+                    <div class="flex items-center space-x-2">
+                        <Checkbox.Root
+                            id="todo-{keyword}"
+                            checked={todoFilter.includes(keyword)}
+                            onCheckedChange={() => toggleTodoKeyword(keyword)}
+                        />
+                        <Label.Root
+                            for="todo-{keyword}"
+                            class="text-xs font-normal cursor-pointer flex items-center gap-1"
+                        >
+                            <CheckSquare class="h-3 w-3" />
+                            {keyword}
+                        </Label.Root>
+                    </div>
+                {/each}
+            </div>
         </div>
-    </div>
+    {/if}
 
     <!-- Date Filter -->
     <div class="space-y-1">
@@ -242,12 +263,18 @@
                 </Button.Root>
             </div>
             <div class="flex flex-wrap gap-1">
-                {#if todoFilter !== "all"}
+                {#each todoFilter as keyword}
                     <Badge variant="secondary" class="text-xs h-5">
-                        TODO: {todoFilterOptions.find((o) => o.value === todoFilter)
-                            ?.label}
+                        <CheckSquare class="h-3 w-3 mr-1" />
+                        {keyword}
+                        <button
+                            onclick={() => removeTodoKeyword(keyword)}
+                            class="ml-1"
+                        >
+                            <X class="h-3 w-3" />
+                        </button>
                     </Badge>
-                {/if}
+                {/each}
                 {#if dateFilter !== "all"}
                     <Badge variant="secondary" class="text-xs h-5">
                         Date: {dateFilterOptions.find((o) => o.value === dateFilter)

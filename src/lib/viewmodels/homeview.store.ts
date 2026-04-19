@@ -57,24 +57,17 @@ export const displayModes: {
 export const filterOptions = ["all", "today", "week", "overdue"];
 
 // Sidebar filter state types
-export type TodoFilterValue = "all" | "todo" | "done" | "in-progress" | "waiting";
+// TodoFilterValue is now an array of selected keywords (empty = all items)
+export type TodoFilterValue = string[];
 export type DateFilterValue = "all" | "today" | "this-week" | "this-month" | "overdue" | "scheduled" | "no-date";
 
 // Sidebar filter state stores
-export const todoFilter = writable<TodoFilterValue>("all");
+// Empty array means "all items" (no filter applied)
+export const todoFilter = writable<TodoFilterValue>([]);
 export const dateFilter = writable<DateFilterValue>("all");
 export const searchQuery = writable("");
 export const selectedTags = writable<string[]>([]);
 export const selectedCategories = writable<string[]>([]);
-
-// Available filter options for sidebar
-export const todoFilterOptions: { value: TodoFilterValue; label: string }[] = [
-  { value: "all", label: "All Items" },
-  { value: "todo", label: "TODO" },
-  { value: "done", label: "DONE" },
-  { value: "in-progress", label: "IN-PROGRESS" },
-  { value: "waiting", label: "WAITING" },
-];
 
 export const dateFilterOptions: { value: DateFilterValue; label: string }[] = [
   { value: "all", label: "All Dates" },
@@ -89,6 +82,18 @@ export const dateFilterOptions: { value: DateFilterValue; label: string }[] = [
 // Filter setter functions
 export function setTodoFilter(value: TodoFilterValue): void {
   todoFilter.set(value);
+  focusedIndex.set(-1);
+}
+
+// Toggle a single TODO keyword in the filter
+export function toggleTodoKeyword(keyword: string): void {
+  todoFilter.update(current => {
+    if (current.includes(keyword)) {
+      return current.filter(k => k !== keyword);
+    } else {
+      return [...current, keyword];
+    }
+  });
   focusedIndex.set(-1);
 }
 
@@ -113,7 +118,7 @@ export function setCategories(categories: string[]): void {
 }
 
 export function clearAllFilters(): void {
-  todoFilter.set("all");
+  todoFilter.set([]);
   dateFilter.set("all");
   searchQuery.set("");
   selectedTags.set([]);
@@ -246,29 +251,19 @@ function matchesDateFilter(
 }
 
 // Helper function to check if a headline matches the TODO filter
+// Empty array means "all items" (no filter applied)
 function matchesTodoFilter(
   headline: OrgHeadline,
   filter: TodoFilterValue,
 ): boolean {
-  if (filter === "all") return true;
+  // Empty array means no filter (show all)
+  if (filter.length === 0) return true;
 
   const todoKeyword = headline.title.todo_keyword;
   if (!todoKeyword) return false;
 
-  const keyword = todoKeyword.toLowerCase();
-
-  switch (filter) {
-    case "todo":
-      return keyword === "todo";
-    case "done":
-      return keyword === "done";
-    case "in-progress":
-      return keyword === "in-progress" || keyword === "in_progress";
-    case "waiting":
-      return keyword === "waiting";
-    default:
-      return true;
-  }
+  // Check if headline's TODO keyword is in the selected filter
+  return filter.includes(todoKeyword);
 }
 
 // Helper function to check if a headline matches the search query
@@ -650,7 +645,6 @@ const listViewStore = {
   searchQuery: { subscribe: searchQuery.subscribe },
   selectedTags: { subscribe: selectedTags.subscribe },
   selectedCategories: { subscribe: selectedCategories.subscribe },
-  todoFilterOptions,
   dateFilterOptions,
   // Actions
   refresh,
@@ -669,6 +663,7 @@ const listViewStore = {
   triggerRefresh,
   // New filter actions
   setTodoFilter,
+  toggleTodoKeyword,
   setDateFilter,
   setSearchQuery,
   setTags,
