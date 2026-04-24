@@ -30,6 +30,7 @@
     } from "$lib/viewmodels/homeview.store";
 
     import { useShortcuts } from "$lib/shortcuts";
+    import { handleOpenInEditor } from "$lib/shortcuts/handlers";
 
     import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
@@ -244,7 +245,10 @@
 
     function handleOpenEditor(event: KeyboardEvent) {
         event.preventDefault();
-        handleQuickAction("open-editor", undefined, openDetailView);
+        if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+            const headline = $filteredHeadlines[$focusedIndex];
+            handleOpenInEditor(headline);
+        }
     }
 
     function handleMarkDone(event: KeyboardEvent) {
@@ -285,6 +289,7 @@
             { key: "Enter", handler: handleOpenDetail, description: "Open detail" },
             { key: "o", handler: handleOpenDetail, description: "Open detail" },
             { key: " ", handler: handleToggleQuickLook, description: "Toggle quick look" },
+            { key: "e", handler: handleOpenEditor, description: "Open in external editor" },
             {
                 key: "1",
                 modifiers: { meta: true },
@@ -316,7 +321,6 @@
     const quickActionsShortcuts = $derived.by(() => {
         if (!$showQuickActions) return [];
         return [
-            { key: "e", handler: handleOpenEditor, description: "Open in editor" },
             { key: "d", handler: handleMarkDone, description: "Mark as done" },
             { key: "+", handler: handlePriorityUp, description: "Increase priority" },
             { key: "-", handler: handlePriorityDown, description: "Decrease priority" },
@@ -561,6 +565,8 @@
                         >Enter/o</kbd
                     >
                     Open •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">e</kbd>
+                    Editor •
                     <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
                         >Space</kbd
                     >

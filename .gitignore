@@ -13,4 +13,3 @@ vite.config.ts.timestamp-*
 .worktrees/
 .planning/
 /openspec/*
-!/openspec/changes/
