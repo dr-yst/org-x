@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import {
         documents,
         loading,
@@ -29,6 +28,9 @@
         handleQuickAction,
         exposeGlobalRefresh,
     } from "$lib/viewmodels/homeview.store";
+
+    import { useShortcuts } from "$lib/shortcuts";
+    import { handleOpenInEditor } from "$lib/shortcuts/handlers";
 
     import type { OrgHeadline } from "../bindings";
     import HeadlinesList from "./HeadlinesList.svelte";
@@ -191,109 +193,158 @@
         closeDetailView();
     }
 
-    // Handle keyboard navigation
-    function handleKeyDown(event: KeyboardEvent) {
-        const target = event.target as HTMLElement | null;
-        const tag = target?.tagName?.toLowerCase();
-        const isEditable =
-            tag === "input" ||
-            tag === "textarea" ||
-            (target && target.isContentEditable);
+    // Shortcut handlers
+    function handleMoveDown(event: KeyboardEvent) {
+        event.preventDefault();
+        moveFocusDown();
+    }
 
-        // Only trigger shortcuts if NOT typing in an input/textarea/contenteditable
-        if (isEditable) return;
+    function handleMoveUp(event: KeyboardEvent) {
+        event.preventDefault();
+        moveFocusUp();
+    }
 
-        // Only handle keyboard events when documents are loaded
-        if ($documentCount === 0 || $loading) return;
+    function handleCycleFilter(event: KeyboardEvent) {
+        event.preventDefault();
+        cycleFilter();
+    }
 
-        if (event.key === "j" || event.key === "ArrowDown") {
-            // Move focus down
-            event.preventDefault();
-            moveFocusDown();
-        } else if (event.key === "k" || event.key === "ArrowUp") {
-            // Move focus up
-            event.preventDefault();
-            moveFocusUp();
-        } else if (event.key === "f") {
-            // Cycle through filter options
-            event.preventDefault();
-            cycleFilter();
-        } else if (event.key === ".") {
-            // Show quick actions menu
-            event.preventDefault();
-            if ($focusedIndex >= 0) {
-                toggleQuickActions();
-            }
-        } else if (event.key === "Escape") {
-            // Close quick actions menu or detail view
-            event.preventDefault();
-            if ($showQuickActions) {
-                hideQuickActions();
-            } else if (showDetailView) {
-                closeDetailView();
-            } else if ($showQuickLook) {
-                closeQuickLook();
-            }
-        } else if (event.key === "Enter" || event.key === "o") {
-            // Open detail view for the selected headline
-            event.preventDefault();
-            if (
-                $focusedIndex >= 0 &&
-                $focusedIndex < $filteredHeadlines.length
-            ) {
-                const headline = $filteredHeadlines[$focusedIndex];
-                openDetailView(headline);
-            }
-        } else if (event.key == " ") {
-            // Toggle quick look view with spacebar
-            event.preventDefault();
-            if (
-                $focusedIndex >= 0 &&
-                $focusedIndex < $filteredHeadlines.length
-            ) {
-                const headline = $filteredHeadlines[$focusedIndex];
-                toggleQuickLook(headline);
-            }
-        } else if (event.key === "e" && $showQuickActions) {
-            // Open in external editor
-            event.preventDefault();
-            handleQuickAction("open-editor", undefined, openDetailView);
-        } else if (event.key === "d" && $showQuickActions) {
-            // Mark as done
-            event.preventDefault();
-            handleQuickAction("mark-done", undefined, openDetailView);
-        } else if (event.key === "+" && $showQuickActions) {
-            // Increase priority
-            event.preventDefault();
-            handleQuickAction("priority-up", undefined, openDetailView);
-        } else if (event.key === "-" && $showQuickActions) {
-            // Decrease priority
-            event.preventDefault();
-            handleQuickAction("priority-down", undefined, openDetailView);
-        } else if (event.key === "1" && (event.metaKey || event.ctrlKey)) {
-            // Switch to Task List mode (⌘+1 or Ctrl+1)
-            event.preventDefault();
-            setDisplayMode("task-list");
-        } else if (event.key === "2" && (event.metaKey || event.ctrlKey)) {
-            // Switch to Headline List mode (⌘+2 or Ctrl+2)
-            event.preventDefault();
-            setDisplayMode("headline-list");
+    function handleShowQuickActions(event: KeyboardEvent) {
+        event.preventDefault();
+        if ($focusedIndex >= 0) {
+            toggleQuickActions();
         }
     }
 
-    onMount(() => {
-        console.log("🚀 ListView onMount called");
+    function handleEscape(event: KeyboardEvent) {
+        event.preventDefault();
+        if ($showQuickActions) {
+            hideQuickActions();
+        } else if (showDetailView) {
+            closeDetailView();
+        } else if ($showQuickLook) {
+            closeQuickLook();
+        }
+    }
+
+    function handleOpenDetail(event: KeyboardEvent) {
+        event.preventDefault();
+        if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+            const headline = $filteredHeadlines[$focusedIndex];
+            openDetailView(headline);
+        }
+    }
+
+    function handleToggleQuickLook(event: KeyboardEvent) {
+        event.preventDefault();
+        if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+            const headline = $filteredHeadlines[$focusedIndex];
+            toggleQuickLook(headline);
+        }
+    }
+
+    function handleOpenEditor(event: KeyboardEvent) {
+        event.preventDefault();
+        if ($focusedIndex >= 0 && $focusedIndex < $filteredHeadlines.length) {
+            const headline = $filteredHeadlines[$focusedIndex];
+            handleOpenInEditor(headline);
+        }
+    }
+
+    function handleMarkDone(event: KeyboardEvent) {
+        event.preventDefault();
+        handleQuickAction("mark-done", undefined, openDetailView);
+    }
+
+    function handlePriorityUp(event: KeyboardEvent) {
+        event.preventDefault();
+        handleQuickAction("priority-up", undefined, openDetailView);
+    }
+
+    function handlePriorityDown(event: KeyboardEvent) {
+        event.preventDefault();
+        handleQuickAction("priority-down", undefined, openDetailView);
+    }
+
+    function handleTaskListMode(event: KeyboardEvent) {
+        event.preventDefault();
+        setDisplayMode("task-list");
+    }
+
+    function handleHeadlineListMode(event: KeyboardEvent) {
+        event.preventDefault();
+        setDisplayMode("headline-list");
+    }
+
+    // Shortcut definitions
+    const baseShortcuts = $derived.by(() => {
+        const shortcuts = [
+            { key: "j", handler: handleMoveDown, description: "Move focus down" },
+            { key: "k", handler: handleMoveUp, description: "Move focus up" },
+            { key: "ArrowDown", handler: handleMoveDown, description: "Move focus down" },
+            { key: "ArrowUp", handler: handleMoveUp, description: "Move focus up" },
+            { key: "f", handler: handleCycleFilter, description: "Cycle filter" },
+            { key: ".", handler: handleShowQuickActions, description: "Show quick actions" },
+            { key: "Escape", handler: handleEscape, description: "Close/Cancel" },
+            { key: "Enter", handler: handleOpenDetail, description: "Open detail" },
+            { key: "o", handler: handleOpenDetail, description: "Open detail" },
+            { key: " ", handler: handleToggleQuickLook, description: "Toggle quick look" },
+            { key: "e", handler: handleOpenEditor, description: "Open in external editor" },
+            {
+                key: "1",
+                modifiers: { meta: true },
+                handler: handleTaskListMode,
+                description: "Task List mode (⌘+1)"
+            },
+            {
+                key: "2",
+                modifiers: { meta: true },
+                handler: handleHeadlineListMode,
+                description: "Headline List mode (⌘+2)"
+            },
+            {
+                key: "1",
+                modifiers: { ctrl: true },
+                handler: handleTaskListMode,
+                description: "Task List mode (Ctrl+1)"
+            },
+            {
+                key: "2",
+                modifiers: { ctrl: true },
+                handler: handleHeadlineListMode,
+                description: "Headline List mode (Ctrl+2)"
+            },
+        ];
+        return shortcuts;
+    });
+
+    const quickActionsShortcuts = $derived.by(() => {
+        if (!$showQuickActions) return [];
+        return [
+            { key: "d", handler: handleMarkDone, description: "Mark as done" },
+            { key: "+", handler: handlePriorityUp, description: "Increase priority" },
+            { key: "-", handler: handlePriorityDown, description: "Decrease priority" },
+        ];
+    });
+
+    const allShortcuts = $derived([...baseShortcuts, ...quickActionsShortcuts]);
+
+    // Create shortcuts action with global scope (default)
+    const shortcutsAction = useShortcuts();
+
+    // Getter function for use:shortcutsAction
+    function shortcutsGetter() {
+        return allShortcuts;
+    }
+
+    // Initialize on mount
+    $effect(() => {
         refresh();
         exposeGlobalRefresh();
-
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
     });
 </script>
 
-<div class="w-full h-full">
+<div class="w-full h-full" use:shortcutsAction={shortcutsGetter}>
     {#if showDetailView}
         <!-- Main DetailView when showDetailView is true -->
         <div class="space-y-4 p-4">
@@ -514,6 +565,8 @@
                         >Enter/o</kbd
                     >
                     Open •
+                    <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">e</kbd>
+                    Editor •
                     <kbd class="px-2 py-1 bg-gray-200 rounded text-xs"
                         >Space</kbd
                     >

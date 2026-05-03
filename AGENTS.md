@@ -139,11 +139,46 @@ pub fn load_file(path: &str) -> Result<String, AppError> {
 - Mock Tauri API calls in `test-setup.ts`
 - Run tests before committing: `pnpm test && cargo test`
 
+## OpenSpec Planning Workflow
+
+This project uses OpenSpec for planning and tracking implementation work.
+
+### Planning Artifacts
+
+OpenSpec changes are stored in `openspec/changes/` with the following structure:
+
+| Artifact | Purpose |
+|----------|---------|
+| `proposal.md` | Why this change is needed and what capabilities it introduces |
+| `design.md` | Technical approach, decisions, and trade-offs |
+| `specs/` | Detailed requirements with testable scenarios |
+| `tasks.md` | Implementation checklist |
+
+### Active Changes
+
+- `phase-1-table-views` — Core table infrastructure, detail view, display modes
+- `phase-2-filtering-search` — Multi-condition filtering and search
+- `phase-3-keyboard-file-sync` — Keyboard navigation and file monitoring
+- `phase-4-performance` — Performance optimization and hardening
+
+### Workflow Commands
+
+- `/opsx-propose <name>` — Create a new change with all artifacts
+- `/opsx-apply` — Implement tasks from the current change
+- `/opsx-archive` — Archive a completed change
+- `/opsx-status` — Show status of active changes
+
+### Legacy Planning Files
+
+Historical planning documents (GSD workflow) are archived in `.planning/archive/` for reference.
+
 ## Memory System
 
 Read all files in `dev-docs/` before starting work:
 1. `projectbrief.md` → Foundation
 2. `activeContext.md` → Current focus
-3. Other core files as needed
+3. `openspec/changes/` → Current changes and phases
+4. `.planning/archive/PROJECT.md` → Historical project context (reference only)
+5. Other core files as needed
 
 Update memory system after significant changes.

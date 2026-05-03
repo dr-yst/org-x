@@ -1,0 +1,47 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "oracle": {
+      "model": "opencode-go/glm-5.1",
+      "variant": "high",
+      "options": {},
+      "permission": {}
+    },
+    "orchestrator": {
+      "model": "opencode-go/kimi-k2.6",
+      "variant": "high",
+      "options": {},
+      "permission": {}
+    },
+    "explorer": {
+      "model": "opencode-go/qwen3.6-plus",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    },
+    "librarian": {
+      "model": "opencode-go/kimi-k2.5",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    },
+    "designer": {
+      "model": "opencode-go/glm-5",
+      "variant": "medium",
+      "options": {},
+      "permission": {}
+    },
+    "fixer": {
+      "model": "opencode-go/minimax-m2.7",
+      "variant": "low",
+      "options": {},
+      "permission": {}
+    },
+    "council": {
+      "model": "opencode-go/kimi-k2.6",
+      "variant": "high",
+      "options": {},
+      "permission": {}
+    }
+  }
+}

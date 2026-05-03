@@ -1,8 +1,10 @@
 <script lang="ts">
     import type { OrgHeadline } from "$lib/bindings";
     import { Badge } from "$lib/components/ui/badge";
-    import HeadlinesList from "$lib/components/HeadlinesList.svelte";
+    import HeadlinesList from "./HeadlinesList.svelte";
     import DetailView from "./DetailView.svelte";
+    import { useShortcuts } from "$lib/shortcuts";
+    import { handleOpenInEditor } from "$lib/shortcuts/handlers";
 
     // Pure, stateless props interface for recursive navigation support
     const {
@@ -177,9 +179,27 @@
             onHeadlineSelected(event.detail);
         }
     }
+
+    // Open in editor shortcut handler
+    function handleEditorShortcut(event: KeyboardEvent) {
+        event.preventDefault();
+        if (headline) {
+            handleOpenInEditor(headline);
+        }
+    }
+
+    // Detail view shortcuts
+    function getDetailShortcuts() {
+        if (!headline) return [];
+        return [
+            { key: "e", handler: handleEditorShortcut, description: "Open in external editor" }
+        ];
+    }
+
+    const detailShortcutsAction = useShortcuts({ scope: "detail-view" });
 </script>
 
-<div class="w-full h-full">
+<div class="w-full h-full" use:detailShortcutsAction={getDetailShortcuts}>
     {#if !headline}
         <!-- Empty state when no headline is provided -->
         <div
